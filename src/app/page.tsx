@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LogoMark, Wordmark } from "@/components/brand/Logo";
 import { StampCard } from "@/components/loyalty/StampCard";
 import { PILOT_CAMPAIGN } from "@/domain/loyalty/campaign";
@@ -63,9 +64,9 @@ export default function Home() {
                 bebida que ya te ganaste.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <a href="#registro" className="btn btn-primario">
+                <Link href="/tarjeta/acceso" className="btn btn-primario">
                   Quiero mi tarjeta
-                </a>
+                </Link>
                 <a href="#como-funciona" className="btn btn-contorno">
                   Ver cómo funciona
                 </a>
@@ -129,25 +130,33 @@ export default function Home() {
               teléfono, correo ni tus sellos, y caduca a los pocos minutos. El personal solo ve lo necesario para atenderte.
             </p>
             <p className="mt-4 leading-7 text-tabaco/80">
-              Podrás guardar tu tarjeta en Apple Wallet o Google Wallet cuando esa opción esté habilitada para el piloto.
+              Podrás guardar tu tarjeta en Apple Wallet o Google Wallet cuando esa opción esté habilitada para el piloto. Consulta el{" "}
+              <Link href="/privacidad" className="font-semibold underline underline-offset-4">
+                aviso de privacidad
+              </Link>
+              .
             </p>
           </div>
         </section>
 
-        {/* Registro: honesto mientras no esté habilitado */}
+        {/* Registro */}
         <section id="registro" aria-labelledby="registro-titulo" className="mx-3 mb-10 scroll-mt-6 rounded-[2rem] bg-mostaza px-6 py-16 text-center text-tabaco sm:mx-6 lg:mx-8">
           <LogoMark className="mx-auto h-14 w-14" />
-          <p className="bitacora mx-auto mt-6 inline-block rounded-full border border-tabaco/40 px-4 py-2 font-bold">Piloto en preparación</p>
+          <p className="bitacora mx-auto mt-6 inline-block rounded-full border border-tabaco/40 px-4 py-2 font-bold">Piloto en San Pedro Cholula</p>
           <h2 id="registro-titulo" className="mx-auto mt-6 max-w-2xl text-4xl leading-tight sm:text-5xl">
             Tu mesa de siempre, ahora también en tu bolsillo.
           </h2>
           <p className="mx-auto mt-5 max-w-lg leading-7 text-tabaco">
-            El registro digital se abrirá al iniciar el piloto en nuestra barra de San Pedro Cholula. Pregunta por tu tarjeta en tu próxima
-            visita.
+            Crea tu tarjeta en un minuto con tu correo. Sin contraseñas y sin descargar nada.
           </p>
-          <a href={BUSINESS_URL} className="btn btn-oscuro mt-8">
-            Conoce la tecnología detrás
-          </a>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/tarjeta/acceso" className="btn btn-oscuro">
+              Crear mi tarjeta
+            </Link>
+            <a href={BUSINESS_URL} className="btn min-h-12 border border-tabaco/40 px-6 text-tabaco hover:border-tabaco">
+              Conoce la tecnología detrás
+            </a>
+          </div>
         </section>
       </main>
 

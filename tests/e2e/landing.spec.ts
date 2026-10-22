@@ -8,8 +8,8 @@ test("la landing presenta el programa con CTA hacia iautomexa", async ({ page })
   await expect(page.getByRole("link", { name: "Conoce la tecnología detrás" })).toHaveAttribute("href", "https://iautomexa.com");
   // La tarjeta de la portada está marcada como ejemplo (no simula datos reales).
   await expect(page.getByRole("figure", { name: /Tarjeta de fidelidad de ejemplo/ })).toBeVisible();
-  // El registro aún no está habilitado y se dice con claridad.
-  await expect(page.getByText("Piloto en preparación")).toBeVisible();
+  // El registro lleva al acceso con código.
+  await expect(page.getByRole("link", { name: "Crear mi tarjeta" })).toHaveAttribute("href", "/tarjeta/acceso");
 });
 
 test("navegación por teclado: enlace para saltar al contenido", async ({ page, isMobile }) => {
