@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+:root {
+  --tobacco: #3d2c24;
+  --cream: #f5ebe6;
+  --mustard: #d48c46;
+  --clay: #a65d46;
+  --ink: #241914;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; }
+.grain { background-image: radial-gradient(rgba(61,44,36,.08) .7px, transparent .7px); background-size: 7px 7px; }
+.stamp { border: 1px solid rgba(61,44,36,.24); letter-spacing: .16em; }
