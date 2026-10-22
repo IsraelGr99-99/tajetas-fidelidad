@@ -19,7 +19,6 @@ const serverEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: optional,
   SUPABASE_SECRET_KEY: optional,
   PURCHASE_REFERENCE_PEPPER: optional,
-  SCAN_TOKEN_SECRET: optional,
   APPLE_TEAM_ID: optional,
   APPLE_PASS_TYPE_ID: optional,
   APPLE_PASS_CERT_BASE64: optional,
