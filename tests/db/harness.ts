@@ -119,7 +119,7 @@ export class TestDb {
   /** Cliente inscrito con tarjeta. */
   async createCustomer(opts: { email?: string; phone?: string } = {}) {
     const userId = await this.createUser(opts.email || opts.phone ? opts : { email: `cliente-${randomUUID().slice(0, 8)}@correo.test` });
-    const r = await this.rpc(userId, "enroll_customer", ["cafe-nomada", "Viajera"]);
+    const r = await this.rpc(userId, "enroll_customer", ["cafe-nomada", "Viajera", "2026-10-23"]);
     if (!r.ok) throw new Error(`enroll falló: ${JSON.stringify(r)}`);
     return { userId, cardId: r.card_id as string };
   }

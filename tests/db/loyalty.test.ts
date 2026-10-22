@@ -44,7 +44,7 @@ async function earn(
 describe("registro de clientes", () => {
   test("se inscribe con correo verificado y no guarda teléfono", async () => {
     const userId = await db.createUser({ email: "Ana@Correo.test" });
-    const r = await db.rpc(userId, "enroll_customer", ["cafe-nomada", "Ana"]);
+    const r = await db.rpc(userId, "enroll_customer", ["cafe-nomada", "Ana", "2026-10-23"]);
     expect(r).toMatchObject({ ok: true, already_enrolled: false, stamps_balance: 0, stamps_required: 9 });
     const [c] = await db.admin<{ contact_channel: string; contact_email: string; contact_phone: string | null }>(
       "select contact_channel, contact_email, contact_phone from public.customers where auth_user_id = $1",
@@ -55,7 +55,7 @@ describe("registro de clientes", () => {
 
   test("se inscribe con teléfono verificado (formato E.164)", async () => {
     const userId = await db.createUser({ phone: "522221234567" });
-    const r = await db.rpc(userId, "enroll_customer", ["cafe-nomada", null]);
+    const r = await db.rpc(userId, "enroll_customer", ["cafe-nomada", null, "2026-10-23"]);
     expect(r.ok).toBe(true);
     const [c] = await db.admin<{ contact_phone: string }>("select contact_phone from public.customers where auth_user_id = $1", [userId]);
     expect(c.contact_phone).toBe("+522221234567");
@@ -63,18 +63,18 @@ describe("registro de clientes", () => {
 
   test("rechaza un canal no verificado", async () => {
     const userId = await db.createUser({ email: "sinverificar@correo.test", verified: false });
-    expect(await db.rpc(userId, "enroll_customer", ["cafe-nomada", null])).toMatchObject({ ok: false, code: "contact_not_verified" });
+    expect(await db.rpc(userId, "enroll_customer", ["cafe-nomada", null, "2026-10-23"])).toMatchObject({ ok: false, code: "contact_not_verified" });
   });
 
   test("inscribirse dos veces devuelve la misma tarjeta", async () => {
     const userId = await db.createUser({ email: "doble@correo.test" });
-    const a = await db.rpc(userId, "enroll_customer", ["cafe-nomada", null]);
-    const b = await db.rpc(userId, "enroll_customer", ["cafe-nomada", null]);
+    const a = await db.rpc(userId, "enroll_customer", ["cafe-nomada", null, "2026-10-23"]);
+    const b = await db.rpc(userId, "enroll_customer", ["cafe-nomada", null, "2026-10-23"]);
     expect(b).toMatchObject({ ok: true, already_enrolled: true, card_id: a.card_id });
   });
 
   test("anon no puede inscribirse", async () => {
-    await expect(db.rpc(null, "enroll_customer", ["cafe-nomada", null])).rejects.toThrow(/permission denied/);
+    await expect(db.rpc(null, "enroll_customer", ["cafe-nomada", null, "2026-10-23"])).rejects.toThrow(/permission denied/);
   });
 });
 
@@ -364,5 +364,24 @@ describe("límites por empleado", () => {
       last = await earn(c, [{ product_id: americano, quantity: 1 }], { staffUserId: staff.userId });
     }
     expect(last).toMatchObject({ ok: false, code: "rate_limited" });
+  });
+});
+
+describe("aviso de privacidad", () => {
+  test("el alta exige versión del aviso y la registra", async () => {
+    const userId = await db.createUser({ email: "privacidad@correo.test" });
+    expect(await db.rpc(userId, "enroll_customer", ["cafe-nomada", null, null])).toMatchObject({ ok: false, code: "invalid_request" });
+    expect(await db.rpc(userId, "enroll_customer", ["cafe-nomada", null, "v1"])).toMatchObject({ ok: false, code: "invalid_request" });
+    expect((await db.rpc(userId, "enroll_customer", ["cafe-nomada", null, "2026-10-23"])).ok).toBe(true);
+    const [c] = await db.admin<{ privacy_version: string; accepted: boolean }>(
+      "select privacy_version, privacy_accepted_at is not null as accepted from public.customers where auth_user_id = $1",
+      [userId],
+    );
+    expect(c).toEqual({ privacy_version: "2026-10-23", accepted: true });
+  });
+
+  test("la firma anterior sin aviso ya no existe", async () => {
+    const userId = await db.createUser({ email: "firma-vieja@correo.test" });
+    await expect(db.rpc(userId, "enroll_customer", ["cafe-nomada", null])).rejects.toThrow(/does not exist/);
   });
 });
