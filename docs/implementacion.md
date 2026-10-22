@@ -25,8 +25,22 @@
    values ('00000000-0000-4000-8000-000000000001', '<uuid-del-usuario>', 'owner', 'Nombre');
    ```
 
-### Verificación gratuita para el demo
-- **Correo (recomendado para el piloto)**: SMTP propio de capa gratuita (Resend o Brevo) en **Authentication → Emails → SMTP Settings**. Requiere verificar el dominio de envío (registros DNS en `iautomexa.com`). El SMTP integrado de Supabase no sirve para clientes reales.
+### Correo con Resend (SMTP de capa gratuita)
+El SMTP integrado de Supabase no sirve para clientes reales: solo envía a miembros del equipo y con un límite muy bajo.
+
+1. Crea una cuenta en [resend.com](https://resend.com). En la capa gratuita, a la fecha: 3,000 correos al mes y 100 al día.
+2. **Domains → Add domain**: usa un subdominio de envío, por ejemplo `notificaciones.iautomexa.com`. Así no afectas el correo principal del dominio.
+3. Agrega en el DNS de `iautomexa.com` los registros que muestra Resend: MX y TXT de SPF del subdominio, TXT de DKIM (`resend._domainkey…`) y, opcional, DMARC. Espera a que aparezcan como *Verified*.
+4. Conecta con Supabase. Elige una de dos vías:
+   - **Integración oficial**: Resend → *Integrations → Supabase* → elige el proyecto. Configura el SMTP sola.
+   - **Manual**: Resend → *API Keys* → crea una llave con permiso **Sending access** limitado al dominio. Luego, en Supabase → **Authentication → Emails → SMTP Settings**, llena estos datos:
+     - Host `smtp.resend.com`, puerto `465`, usuario `resend`, contraseña = la API key.
+     - Remitente `no-responder@notificaciones.iautomexa.com`, nombre `Café Nómada`.
+5. **Authentication → Emails → Templates**: en *Confirm signup* y en *Magic Link*, asunto “Tu código de Café Nómada” y como cuerpo el contenido de `supabase/templates/codigo.html`. Usa `{{ .Token }}`, sin enlace.
+6. **Authentication → Rate Limits**: sube el límite de correos por hora; con SMTP propio, el valor por defecto es bajo. Para el piloto bastan 30–60 por hora.
+7. Prueba: el primer envío real lo hacemos juntos, con tu correo, al terminar la etapa 4.
+
+La API key de Resend es un secreto. Solo vive en Supabase y en el gestor de secretos; nunca en `.env.example`, en Git ni en chats.
 - **Teléfono**: no hay SMS gratuito real. Para demostraciones internas usa números de prueba de Supabase Auth (**Phone → Test OTP**) o el crédito de prueba de Twilio (solo números verificados). Para clientes reales se necesita un proveedor con costo por mensaje (Twilio Verify, MessageBird, Vonage).
 
 ## 2. Apple Wallet (etapa 7)
