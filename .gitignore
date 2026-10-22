@@ -1,7 +1,27 @@
 node_modules/
 .next/
 out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Secretos: nunca versionar
 .env
 .env.local
 .env.*.local
+*.pem
+*.p12
+*.p8
+*.key
+secrets/
+
+# Pruebas
+test-results/
+playwright-report/
+coverage/
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
+
 *.log
+.DS_Store
