@@ -1,49 +1,165 @@
-const benefits = [
-  ["01", "Acumula", "Cada compra elegible suma una visita a tu tarjeta."],
-  ["02", "Completa", "Llega a 9 visitas y desbloquea una bebida estándar."],
-  ["03", "Disfruta", "Canjea tu recompensa en Café Nómada, sin letras pequeñas."],
+import { LogoMark, Wordmark } from "@/components/brand/Logo";
+import { StampCard } from "@/components/loyalty/StampCard";
+import { PILOT_CAMPAIGN } from "@/domain/loyalty/campaign";
+
+const BUSINESS_URL = "https://iautomexa.com";
+
+const steps = [
+  {
+    n: "01",
+    title: "Regístrate con un solo dato",
+    body: "Elige tu correo o tu teléfono, el que prefieras. Lo verificamos con un código y no te pedimos nada más.",
+  },
+  {
+    n: "02",
+    title: "Muestra tu tarjeta al pagar",
+    body: "El barista escanea tu código y confirma la compra. Cada compra elegible suma un sello a tu bitácora.",
+  },
+  {
+    n: "03",
+    title: `Al sello ${PILOT_CAMPAIGN.stampsRequired}, la siguiente va por la casa`,
+    body: "Tu recompensa queda guardada hasta que decidas canjearla. Tú confirmas el canje desde tu teléfono.",
+  },
+];
+
+const fairPlay = [
+  "Un sello por compra elegible completada.",
+  "No suman las compras anuladas, devueltas, cortesías ni bebidas gratuitas.",
+  "La bebida de recompensa vale hasta lo que costó la bebida elegible más económica del ticket que completó tu tarjeta.",
+  "Cada movimiento queda registrado y puedes consultarlo en tu historial.",
 ];
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-hidden">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 lg:px-10">
-        <a href="#inicio" className="flex items-center gap-3 text-sm font-bold tracking-[.18em] text-[#3D2C24]" aria-label="Café Nómada, inicio">
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-[#3D2C24] text-xl text-[#F5EBE6]" aria-hidden="true">✦</span>
-          CAFÉ NÓMADA
+    <>
+      <header className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5 text-tabaco sm:px-8">
+        <a href="#contenido" aria-label="Café Nómada, ir al inicio" className="rounded-full">
+          <Wordmark />
         </a>
-        <div className="hidden items-center gap-8 text-sm text-[#3D2C24]/75 sm:flex">
-          <a href="#como-funciona" className="hover:text-[#A65D46]">Cómo funciona</a>
-          <a href="https://iautomexa.com" className="rounded-full bg-[#3D2C24] px-5 py-3 text-[#F5EBE6] transition hover:bg-[#A65D46]">Conoce iautomexa</a>
-        </div>
-      </nav>
+        <nav aria-label="Principal" className="flex items-center gap-6 text-sm font-medium">
+          <a href="#como-funciona" className="hidden underline-offset-4 hover:underline sm:inline">
+            Cómo funciona
+          </a>
+          <a href="#reglas" className="hidden underline-offset-4 hover:underline sm:inline">
+            Reglas claras
+          </a>
+          <a href={BUSINESS_URL} className="btn btn-oscuro min-h-11 whitespace-nowrap px-4 text-sm sm:px-5">
+            Conoce iautomexa
+          </a>
+        </nav>
+      </header>
 
-      <section id="inicio" className="grain relative mx-4 overflow-hidden rounded-[2rem] bg-[#3D2C24] px-6 py-16 text-[#F5EBE6] sm:mx-6 sm:px-12 lg:mx-10 lg:px-20 lg:py-24">
-        <div className="relative z-10 max-w-3xl">
-          <p className="mb-6 text-xs font-bold uppercase tracking-[.32em] text-[#D48C46]">San Pedro Cholula · Puebla</p>
-          <h1 className="max-w-2xl text-5xl leading-[.98] sm:text-7xl">Historias que se cuentan taza a taza.</h1>
-          <p className="mt-8 max-w-xl text-lg leading-8 text-[#F5EBE6]/75">Tu próxima historia empieza con un buen café. Guarda tus visitas, descubre tu progreso y vuelve por esa bebida que ya te ganaste.</p>
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-            <a href="#registro" className="rounded-full bg-[#D48C46] px-7 py-4 text-center font-bold text-[#3D2C24] transition hover:bg-[#F5EBE6]">Crear mi tarjeta</a>
-            <a href="#como-funciona" className="rounded-full border border-[#F5EBE6]/30 px-7 py-4 text-center font-bold transition hover:border-[#D48C46] hover:text-[#D48C46]">Ver cómo funciona</a>
+      <main id="contenido" tabIndex={-1} className="outline-none">
+        {/* Portada */}
+        <section className="grain relative mx-3 overflow-hidden rounded-[2rem] bg-tabaco text-crema sm:mx-6 lg:mx-8">
+          <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-14 sm:px-10 lg:grid-cols-[1.15fr_.85fr] lg:py-24">
+            <div>
+              <p className="bitacora text-mostaza">San Pedro Cholula · Puebla</p>
+              <h1 className="mt-5 text-[2.75rem] leading-[1.02] sm:text-6xl lg:text-7xl">
+                Historias que se cuentan <em className="text-mostaza not-italic">taza a taza.</em>
+              </h1>
+              <p className="mt-6 max-w-xl text-lg leading-8 text-crema/80">
+                El hogar lejos de casa ahora también vive en tu teléfono. Junta sellos con cada visita, sigue tu progreso y vuelve por esa
+                bebida que ya te ganaste.
+              </p>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <a href="#registro" className="btn btn-primario">
+                  Quiero mi tarjeta
+                </a>
+                <a href="#como-funciona" className="btn btn-contorno">
+                  Ver cómo funciona
+                </a>
+              </div>
+            </div>
+
+            <div className="relative mx-auto w-full max-w-sm lg:rotate-2">
+              <StampCard
+                sample
+                stampsBalance={4}
+                stampsRequired={PILOT_CAMPAIGN.stampsRequired}
+                rewardsAvailable={0}
+                rewardDescription={PILOT_CAMPAIGN.rewardDescription}
+              />
+            </div>
           </div>
-        </div>
-        <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full border border-[#D48C46]/30 sm:h-96 sm:w-96" aria-hidden="true" />
-        <div className="absolute bottom-8 right-8 hidden max-w-[210px] rotate-3 rounded-2xl bg-[#F5EBE6] p-5 text-[#3D2C24] shadow-2xl sm:block">
-          <p className="text-xs font-bold uppercase tracking-[.2em] text-[#A65D46]">Tu tarjeta</p>
-          <div className="mt-5 grid grid-cols-5 gap-2">{Array.from({ length: 9 }, (_, i) => <span key={i} className="grid h-7 w-7 place-items-center rounded-full border border-[#D48C46] text-xs">{i < 4 ? "✦" : i + 1}</span>)}<span className="grid h-7 w-7 place-items-center rounded-full bg-[#D48C46] text-xs">★</span></div>
-          <p className="mt-4 text-xs text-[#3D2C24]/60">4 de 9 visitas</p>
-        </div>
-      </section>
+          <svg className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 text-mostaza/25" viewBox="0 0 200 200" aria-hidden="true">
+            <circle cx="100" cy="100" r="96" fill="none" stroke="currentColor" strokeDasharray="2 6" />
+            <circle cx="100" cy="100" r="70" fill="none" stroke="currentColor" />
+          </svg>
+        </section>
 
-      <section id="como-funciona" className="mx-auto max-w-6xl px-6 py-20 lg:px-10">
-        <div className="max-w-xl"><p className="mb-4 text-xs font-bold uppercase tracking-[.25em] text-[#A65D46]">El ritual continúa</p><h2 className="text-4xl leading-tight text-[#3D2C24] sm:text-5xl">Una tarjeta para volver a lo que te hace bien.</h2></div>
-        <div className="mt-12 grid gap-5 md:grid-cols-3">{benefits.map(([number, title, body]) => <article key={number} className="rounded-2xl border border-[#3D2C24]/10 bg-white/40 p-7"><span className="text-sm text-[#A65D46]">{number}</span><h3 className="mt-12 text-2xl text-[#3D2C24]">{title}</h3><p className="mt-3 leading-7 text-[#3D2C24]/65">{body}</p></article>)}</div>
-      </section>
+        {/* Cómo funciona */}
+        <section id="como-funciona" aria-labelledby="como-funciona-titulo" className="mx-auto max-w-6xl scroll-mt-6 px-5 py-20 sm:px-8">
+          <p className="bitacora text-arcilla-texto">Cómo funciona</p>
+          <h2 id="como-funciona-titulo" className="mt-3 max-w-2xl text-4xl leading-tight text-tabaco sm:text-5xl">
+            Una tarjeta para volver a lo que te hace bien.
+          </h2>
+          <ol className="mt-12 grid gap-5 md:grid-cols-3">
+            {steps.map((s) => (
+              <li key={s.n} className="rounded-3xl border border-tabaco/10 bg-papel p-7">
+                <span className="bitacora text-arcilla-texto">Parada {s.n}</span>
+                <h3 className="mt-8 text-2xl leading-snug text-tabaco">{s.title}</h3>
+                <p className="mt-3 leading-7 text-tabaco/75">{s.body}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
 
-      <section id="registro" className="mx-6 mb-10 rounded-[2rem] bg-[#D48C46] px-6 py-14 text-center text-[#3D2C24] lg:mx-10 lg:px-10"><p className="stamp mx-auto inline-block rounded-full px-4 py-2 text-xs font-bold">PRÓXIMAMENTE EN LÍNEA</p><h2 className="mx-auto mt-6 max-w-2xl text-4xl leading-tight sm:text-5xl">Tu mesa de siempre, ahora también en tu bolsillo.</h2><p className="mx-auto mt-5 max-w-lg leading-7 text-[#3D2C24]/75">El registro digital estará disponible muy pronto. Mientras tanto, pasa a visitarnos y pregunta por tu tarjeta de Café Nómada.</p><a href="https://iautomexa.com" className="mt-8 inline-block rounded-full bg-[#3D2C24] px-7 py-4 font-bold text-[#F5EBE6] transition hover:bg-[#A65D46]">Conoce la tecnología detrás</a></section>
+        {/* Reglas y privacidad */}
+        <section id="reglas" aria-labelledby="reglas-titulo" className="mx-auto grid max-w-6xl scroll-mt-6 gap-6 px-5 pb-20 sm:px-8 lg:grid-cols-2">
+          <div className="rounded-3xl bg-arcilla-texto p-8 text-crema sm:p-10">
+            <p className="bitacora text-mostaza-200">Reglas claras</p>
+            <h2 id="reglas-titulo" className="mt-3 text-3xl leading-tight sm:text-4xl">
+              Sin letras pequeñas.
+            </h2>
+            <ul className="mt-6 space-y-4">
+              {fairPlay.map((rule) => (
+                <li key={rule} className="flex gap-3 leading-7">
+                  <span aria-hidden="true" className="mt-2.5 h-2 w-2 shrink-0 rotate-45 bg-mostaza" />
+                  {rule}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-3xl border border-tabaco/10 bg-papel p-8 sm:p-10">
+            <p className="bitacora text-arcilla-texto">Tus datos</p>
+            <h2 className="mt-3 text-3xl leading-tight text-tabaco sm:text-4xl">Pedimos lo mínimo, y lo cuidamos.</h2>
+            <p className="mt-6 leading-7 text-tabaco/80">
+              Solo necesitamos un medio de contacto verificado: correo <strong>o</strong> teléfono. Tu código QR no contiene tu nombre,
+              teléfono, correo ni tus sellos, y caduca a los pocos minutos. El personal solo ve lo necesario para atenderte.
+            </p>
+            <p className="mt-4 leading-7 text-tabaco/80">
+              Podrás guardar tu tarjeta en Apple Wallet o Google Wallet cuando esa opción esté habilitada para el piloto.
+            </p>
+          </div>
+        </section>
 
-      <footer className="mx-auto flex max-w-6xl flex-col gap-3 px-6 pb-8 text-xs text-[#3D2C24]/55 sm:flex-row sm:items-center sm:justify-between lg:px-10"><span>© 2026 Café Nómada</span><span>Una experiencia de <a className="underline" href="https://iautomexa.com">iautomexa</a></span></footer>
-    </main>
+        {/* Registro: honesto mientras no esté habilitado */}
+        <section id="registro" aria-labelledby="registro-titulo" className="mx-3 mb-10 scroll-mt-6 rounded-[2rem] bg-mostaza px-6 py-16 text-center text-tabaco sm:mx-6 lg:mx-8">
+          <LogoMark className="mx-auto h-14 w-14" />
+          <p className="bitacora mx-auto mt-6 inline-block rounded-full border border-tabaco/40 px-4 py-2 font-bold">Piloto en preparación</p>
+          <h2 id="registro-titulo" className="mx-auto mt-6 max-w-2xl text-4xl leading-tight sm:text-5xl">
+            Tu mesa de siempre, ahora también en tu bolsillo.
+          </h2>
+          <p className="mx-auto mt-5 max-w-lg leading-7 text-tabaco">
+            El registro digital se abrirá al iniciar el piloto en nuestra barra de San Pedro Cholula. Pregunta por tu tarjeta en tu próxima
+            visita.
+          </p>
+          <a href={BUSINESS_URL} className="btn btn-oscuro mt-8">
+            Conoce la tecnología detrás
+          </a>
+        </section>
+      </main>
+
+      <footer className="mx-auto flex max-w-6xl flex-col gap-3 px-5 pb-10 text-sm text-tabaco/75 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <span>© {new Date().getFullYear()} Café Nómada · Café de origen, alma de viajero</span>
+        <span>
+          Tecnología de{" "}
+          <a className="font-semibold underline underline-offset-4" href={BUSINESS_URL}>
+            iautomexa
+          </a>
+        </span>
+      </footer>
+    </>
   );
 }

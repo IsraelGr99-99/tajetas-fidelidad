@@ -1,16 +1,95 @@
 @import "tailwindcss";
 
-:root {
-  --tobacco: #3d2c24;
-  --cream: #f5ebe6;
-  --mustard: #d48c46;
-  --clay: #a65d46;
-  --ink: #241914;
+/*
+ * Sistema visual Café Nómada.
+ * Contraste verificado (WCAG AA texto normal ≥ 4.5:1):
+ *  - tabaco sobre crema ≈ 11.3:1   - crema sobre tabaco ≈ 11.3:1
+ *  - arcilla-texto sobre crema ≈ 5.8:1; crema sobre arcilla-texto ≈ 5.8:1
+ *  - crema sobre arcilla de marca #A65D46 ≈ 4.2:1: solo superficies decorativas o texto grande
+ *  - tabaco al 75 % sobre crema/papel ≥ 5.4:1 (mínimo para texto secundario)
+ *  - tabaco sobre mostaza ≈ 4.8:1 (sin transparencia)  - mostaza sobre tabaco ≈ 4.8:1
+ * La mostaza nunca se usa como color de texto sobre crema (≈ 2.4:1).
+ */
+@theme {
+  --color-tabaco: #3d2c24;
+  --color-tabaco-900: #2a1e18;
+  --color-crema: #f5ebe6;
+  --color-papel: #fbf7f4;
+  --color-mostaza: #d48c46;
+  --color-mostaza-200: #f0d3b4;
+  --color-arcilla: #a65d46;
+  --color-arcilla-texto: #8a4935;
+  --color-tinta: #241914;
+  --color-exito: #2f6b4f;
+  --color-alerta: #9a3412;
+
+  --font-display: var(--font-fraunces), "Georgia", serif;
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-courier), ui-monospace, "Courier New", monospace;
+
+  --radius-ticket: 1.75rem;
 }
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--cream); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
-h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; }
-.grain { background-image: radial-gradient(rgba(61,44,36,.08) .7px, transparent .7px); background-size: 7px 7px; }
-.stamp { border: 1px solid rgba(61,44,36,.24); letter-spacing: .16em; }
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-crema);
+    color: var(--color-tinta);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-variation-settings: "SOFT" 100, "WONK" 0;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-mostaza);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+@layer components {
+  /* Textura de papel muy sutil; decorativa, sin afectar contraste. */
+  .grain {
+    background-image: radial-gradient(rgb(245 235 230 / 0.07) 0.7px, transparent 0.7px);
+    background-size: 7px 7px;
+  }
+  /* Etiqueta tipo sello de bitácora: mono, espaciada, usar con moderación. */
+  .bitacora {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  /* Borde perforado de boleto, para tarjetas. */
+  .ticket-edge {
+    background-image: radial-gradient(circle at 0 50%, transparent 9px, currentColor 9.5px);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    border-radius: 999px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 700;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+  }
+  .btn-primario { background: var(--color-mostaza); color: var(--color-tabaco); }
+  .btn-primario:hover { background: var(--color-crema); }
+  .btn-oscuro { background: var(--color-tabaco); color: var(--color-crema); }
+  .btn-oscuro:hover { background: var(--color-arcilla); }
+  .btn-contorno { border: 1px solid rgb(245 235 230 / 0.35); color: var(--color-crema); }
+  .btn-contorno:hover { border-color: var(--color-mostaza); color: var(--color-mostaza); }
+}
