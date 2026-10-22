@@ -102,7 +102,11 @@ export class TestDb {
       [businessId, userId, role, `Persona ${role}`],
     );
     if (opts.branchAccess ?? true) {
-      const [branch] = await this.admin<{ id: string }>("select id from public.branches where business_id = $1 limit 1", [businessId]);
+      // La sucursal del seed si es Café Nómada; si no, la más antigua de esa empresa.
+      const [branch] = await this.admin<{ id: string }>(
+        "select id from public.branches where business_id = $1 order by (id = $2) desc, created_at, id limit 1",
+        [businessId, IDS.branch],
+      );
       await this.admin("insert into public.staff_branch_access (staff_member_id, branch_id, business_id) values ($1, $2, $3)", [
         staff.id,
         branch.id,
