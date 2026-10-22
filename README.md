@@ -1,30 +1,39 @@
 # Café Nómada · Fidelidad
 
-Sistema de fidelidad digital para el piloto de Café Nómada en San Pedro Cholula. La aplicación está diseñada como una base multiempresa: el negocio, sucursal, actor y programa siempre serán parte del contexto de autorización.
+Sistema de fidelidad digital de [iautomexa](https://iautomexa.com) para el piloto de Café Nómada en San Pedro Cholula, Puebla. Arquitectura multiempresa; destino de demo: `https://fidelidad-demo.iautomexa.com` (aún **no publicado**).
 
-## Estado actual
+## Estado
 
-Etapa 1 completada: base Next.js + TypeScript estricto, landing responsive y configuración de entorno sin secretos. La landing es una vista de producto; no simula registros, sellos ni integraciones Wallet.
+- ✅ **Etapa 1**: Next.js 16 + TypeScript estricto, sistema visual de marca, landing accesible y headers de seguridad.
+- ✅ **Etapa 2** (verificada localmente): esquema multiempresa, ledger append-only, campañas versionadas, RLS y funciones transaccionales para acreditar, canjear, revertir y ajustar.
+- ⏳ Siguiente: autenticación del personal y registro de clientes (etapa 3–4). Ver [docs/hoja-de-ruta.md](docs/hoja-de-ruta.md).
+
+No hay todavía login, registro ni integraciones Wallet funcionando, y la landing lo dice.
 
 ## Ejecutar localmente
 
 ```bash
 npm install
-copy .env.example .env.local
+cp .env.example .env.local   # en Windows PowerShell: Copy-Item .env.example .env.local
 npm run dev
 ```
 
-## Credenciales que faltan
+## Verificación
 
-1. **Supabase:** crea un proyecto en [supabase.com](https://supabase.com), copia `Project URL` a `NEXT_PUBLIC_SUPABASE_URL` y `anon public key` a `NEXT_PUBLIC_SUPABASE_ANON_KEY`. La `service_role key` se coloca únicamente en `.env.local` del servidor y nunca se publica.
-2. **Apple Wallet:** primero se necesita una cuenta Apple Developer, un Pass Type ID y un certificado para firmar pases. Los valores se guardarán como variables de servidor; la llave privada no debe entrar a Git.
-3. **Google Wallet:** crea un issuer en Google Pay & Wallet Console, una cuenta de servicio con permisos mínimos y guarda su JSON como secreto en `GOOGLE_WALLET_SERVICE_ACCOUNT_JSON`.
-4. **Dominio:** cuando exista el despliegue autorizado, `NEXT_PUBLIC_APP_URL` será `https://fidelidad-demo.iautomexa.com`.
+```bash
+npm run check      # typecheck + lint + 61 pruebas (unitarias y de base de datos)
+npm run build
+npx playwright install chromium   # solo la primera vez
+npm run test:e2e
+```
 
-## Próximo bloque
+Las pruebas de base de datos aplican las migraciones reales en PostgreSQL (PGlite, en memoria) con un stub de Supabase Auth; no requieren Docker ni credenciales.
 
-La siguiente etapa implementará migraciones de Supabase con empresas, sucursales, usuarios, campañas versionadas, ledger append-only, idempotencia y políticas RLS. Las credenciales no son necesarias para escribir las migraciones; sí lo serán para ejecutar y verificar contra un proyecto real.
+## Documentación
 
-## Límites declarados
-
-No hay emisión real de tarjetas Wallet, autenticación, acreditación de visitas ni datos demo en producción todavía. No se deben presentar como integrados hasta conectar y probar las credenciales correspondientes.
+- [Arquitectura y contratos](docs/arquitectura.md)
+- [Decisiones](docs/decisiones.md)
+- [Seguridad](docs/seguridad.md) · [Privacidad](docs/privacidad.md)
+- [Sello NFC](docs/nfc-sello.md)
+- [Configuración externa: Supabase, Wallet, dominio](docs/implementacion.md)
+- [Hoja de ruta](docs/hoja-de-ruta.md)
