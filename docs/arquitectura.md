@@ -52,6 +52,7 @@ Todas devuelven `jsonb`: `{ "ok": true, ... }` o `{ "ok": false, "code": "<códi
 | `reverse_ledger_event(event_id, reason, idem_key, purchase_status)` | gerente (su sucursal), admin, owner | motivo 5–300 car. | `event_id` del reverso |
 | `adjust_stamps(card_id, delta, reason, idem_key)` | admin, owner | delta ±1..50 | `event_id`, recompensas emitidas |
 | `publish_campaign_version(campaign_id, rules, reason)` | admin, owner | `rules` = `CampaignRules` (`src/domain/loyalty/campaign.ts`) | `version` |
+| `get_staff_context()` | cualquier usuario autenticado | — | empresas donde es personal activo, rol y sucursales operables |
 
 ### Códigos de rechazo
 

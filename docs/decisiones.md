@@ -31,5 +31,14 @@ Ventana fija en `private.rate_limit_hits`, sin Redis ni servicios externos. Sufi
 ## 2026-10-22 · ADR-009 Verificación de contacto gratuita para el demo
 Correo: Supabase Auth con OTP de 6 dígitos y SMTP propio de capa gratuita (Resend o Brevo). El SMTP integrado de Supabase no sirve para clientes reales (solo envía a miembros del equipo y con límite muy bajo). Teléfono: no existe SMS gratuito real; para el demo se usan números de prueba (`auth.sms.test_otp`) o el crédito de prueba de Twilio (solo números verificados). En la UI el canal teléfono se muestra como “no disponible” mientras no haya proveedor configurado.
 
+## 2026-10-23 · ADR-011 Sesión del personal
+- `@supabase/ssr` + `@supabase/supabase-js`: librerías oficiales para guardar la sesión en cookies y leerla en Server Components, Server Actions y `proxy.ts`.
+- El login (`signInWithPassword`) ocurre en el navegador: así los límites por IP de Supabase Auth aplican a cada dispositivo. Si fuera en el servidor, todos los intentos saldrían de la misma IP.
+- El servidor confía solo en `getClaims()` (JWT verificado), nunca en `getSession()`.
+- `proxy.ts` refresca la sesión y redirige a login a quien no tiene sesión en `/personal/*`. Es una primera barrera: cada página y Server Action vuelve a verificar, y la base valida otra vez.
+- La sucursal elegida vive en la cookie `cn_sucursal` (httpOnly, `path=/personal`, 12 h). No es credencial: se valida contra `get_staff_context()` en cada petición.
+- `?siguiente=` solo acepta rutas internas de `/personal` (anti open-redirect).
+- Piloto: una empresa por persona en la UI (el backend ya soporta varias).
+
 ## 2026-10-22 · ADR-010 Identidad visual
 Fraunces (serif de remates suaves, eje SOFT) para títulos, Figtree para texto y Courier Prime con moderación para etiquetas tipo bitácora. Las fuentes se sirven desde el propio dominio vía `next/font`. Paleta de marca con variante `arcilla-texto` (#8A4935) para cumplir contraste AA. El logotipo es un placeholder vectorial reemplazable (`src/components/brand/Logo.tsx`, `public/brand/logo.svg`).

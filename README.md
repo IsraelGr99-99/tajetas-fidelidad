@@ -5,10 +5,11 @@ Sistema de fidelidad digital de [iautomexa](https://iautomexa.com) para el pilot
 ## Estado
 
 - ✅ **Etapa 1**: Next.js 16 + TypeScript estricto, sistema visual de marca, landing accesible y headers de seguridad.
-- ✅ **Etapa 2** (verificada localmente): esquema multiempresa, ledger append-only, campañas versionadas, RLS y funciones transaccionales para acreditar, canjear, revertir y ajustar.
-- ⏳ Siguiente: autenticación del personal y registro de clientes (etapa 3–4). Ver [docs/hoja-de-ruta.md](docs/hoja-de-ruta.md).
+- ✅ **Etapa 2** (aplicada en Supabase): esquema multiempresa, ledger append-only, campañas versionadas, RLS y funciones transaccionales para acreditar, canjear, revertir y ajustar.
+- ✅ **Etapa 3**: acceso del personal en `/personal` (login, logout, roles y sucursal).
+- ⏳ Siguiente: registro de clientes con verificación y QR (etapa 4). Ver [docs/hoja-de-ruta.md](docs/hoja-de-ruta.md).
 
-No hay todavía login, registro ni integraciones Wallet funcionando, y la landing lo dice.
+Todavía no funcionan el registro de clientes, las visitas ni Wallet; la UI lo indica con claridad.
 
 ## Ejecutar localmente
 
@@ -21,7 +22,7 @@ npm run dev
 ## Verificación
 
 ```bash
-npm run check      # typecheck + lint + 61 pruebas (unitarias y de base de datos)
+npm run check      # typecheck + lint + pruebas unitarias y de base de datos
 npm run build
 npx playwright install chromium   # solo la primera vez
 npm run test:e2e

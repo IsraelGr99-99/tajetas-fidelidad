@@ -3,8 +3,8 @@
 | # | Etapa | Estado | Criterio de aceptación verificable |
 |---|---|---|---|
 | 1 | Fundamentos y documentación | ✅ hecho | `npm run check`, `npm run build` y `npm run test:e2e` pasan; landing accesible (contraste AA, teclado, sin scroll horizontal en móvil) |
-| 2 | Esquema, migraciones y ledger | ✅ hecho (local) | Migraciones aplican en PostgreSQL (PGlite); 54 pruebas de reglas, RLS, idempotencia y append-only. **Falta**: aplicar en el proyecto Supabase |
-| 3 | Auth, roles, empresa y sucursal | ⏳ | Login/logout del personal; middleware de sesión; selección de sucursal; owner da de alta personal |
+| 2 | Esquema, migraciones y ledger | ✅ hecho | Migraciones aplicadas en Supabase con `db lint` sin errores; pruebas de reglas, RLS, idempotencia y append-only en PGlite |
+| 3 | Auth, roles, empresa y sucursal | ✅ hecho | Login/logout del personal, `proxy.ts` de sesión, contexto de roles (`get_staff_context`), selección de sucursal, páginas de “sin acceso”. **Falta**: alta de personal desde la UI (etapa 5, administración) y MFA |
 | 4 | API de registro y visitas | ⏳ | Registro con OTP por correo; Server Actions con zod; HMAC de ticket; generación de QR; mapeo de códigos de error |
 | 5 | Flujos de empleado y cliente | ⏳ | Escaneo QR, confirmación, canje, historial, estados vacíos/carga/error; e2e de cada flujo |
 | 6 | QR y NFC | ⏳ | Ruta `/s/<public_id>`; QR con rotación automática; alta de sellos NFC en admin |
