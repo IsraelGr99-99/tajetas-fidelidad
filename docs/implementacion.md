@@ -17,7 +17,7 @@
    npx supabase db push
    ```
 4. Carga los datos iniciales (solo en un proyecto nuevo; los precios son de ejemplo): SQL Editor → pega `supabase/seed.sql`.
-5. **Authentication → Providers → Email**: activa “Confirm email”; OTP de 6 dígitos y caducidad de 600 s.
+5. **Authentication → Providers → Email**: activa “Confirm email”; **Email OTP Length = 8** y **Email OTP Expiration = 600** s. La app acepta códigos de 6 a 10 dígitos.
 6. **Authentication → URL Configuration**: Site URL y redirects (`http://localhost:3000/**`, `https://fidelidad-demo.iautomexa.com/**`).
 7. Alta del primer propietario: crea el usuario en **Authentication → Users** y luego, en SQL Editor:
    ```sql

@@ -21,10 +21,19 @@ export const mxPhoneSchema = z
   .refine((v) => /^[2-9]\d{9}$/.test(v), "Escribe tu número a 10 dígitos, por ejemplo 222 123 4567.")
   .transform((v) => `+52${v}`);
 
+/**
+ * Código de verificación de Supabase Auth. Su longitud se configura en el proyecto
+ * (6 a 10 dígitos; el piloto usa 8), así que la UI no asume un número fijo.
+ */
+export const OTP_MIN_LENGTH = 6;
+export const OTP_MAX_LENGTH = 10;
 export const otpSchema = z
   .string()
   .transform((v) => v.replace(/\D/g, ""))
-  .refine((v) => /^\d{6}$/.test(v), "El código tiene 6 dígitos.");
+  .refine(
+    (v) => v.length >= OTP_MIN_LENGTH && v.length <= OTP_MAX_LENGTH,
+    "Escribe el código completo que te enviamos (solo números).",
+  );
 
 export const displayNameSchema = z
   .string()

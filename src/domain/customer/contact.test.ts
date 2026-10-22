@@ -16,9 +16,12 @@ describe("contacto", () => {
   test.each(["12345", "0221234567", "+1 415 555 0100", "abc"])("teléfono inválido %s", (input) =>
     expect(mxPhoneSchema.safeParse(input).success).toBe(false),
   );
-  test("código de 6 dígitos", () => {
+  test("código de 6 a 10 dígitos (la longitud la define Supabase)", () => {
     expect(otpSchema.parse("123 456")).toBe("123456");
+    expect(otpSchema.parse("1234-5678")).toBe("12345678");
+    expect(otpSchema.parse("1234567890")).toBe("1234567890");
     expect(otpSchema.safeParse("12345").success).toBe(false);
+    expect(otpSchema.safeParse("12345678901").success).toBe(false);
   });
   test("nombre opcional y seguro", () => {
     expect(displayNameSchema.parse("  ")).toBeNull();

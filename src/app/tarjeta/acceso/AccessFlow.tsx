@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { type ContactChannel, emailSchema, mxPhoneSchema, otpSchema } from "@/domain/customer/contact";
+import { type ContactChannel, OTP_MAX_LENGTH, emailSchema, mxPhoneSchema, otpSchema } from "@/domain/customer/contact";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Step = { name: "contact" } | { name: "code"; channel: ContactChannel; destination: string; display: string };
@@ -138,7 +138,7 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
     return (
       <form onSubmit={onCodeSubmit} noValidate className="space-y-5">
         <p className="leading-7 text-tabaco/80">
-          Enviamos un código de 6 dígitos a <strong className="text-tabaco">{step.display}</strong>. Caduca en 10 minutos.
+          Enviamos un código de verificación a <strong className="text-tabaco">{step.display}</strong>. Caduca en 10 minutos.
         </p>
         <div>
           <label htmlFor="code" className="block text-sm font-semibold text-tabaco">
@@ -151,11 +151,11 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
             inputMode="numeric"
             autoComplete="one-time-code"
             pattern="[0-9 ]*"
-            maxLength={7}
+            maxLength={OTP_MAX_LENGTH + 4}
             required
             disabled={busy}
             aria-describedby={feedback ? feedbackId : undefined}
-            className="mt-2 block min-h-14 w-full rounded-xl border border-tabaco/25 bg-papel px-4 text-center font-mono text-2xl tracking-[0.5em] text-tinta outline-none focus:border-tabaco focus-visible:outline-3 focus-visible:outline-mostaza disabled:opacity-60"
+            className="mt-2 block min-h-14 w-full rounded-xl border border-tabaco/25 bg-papel px-4 text-center font-mono text-2xl tracking-[0.3em] text-tinta outline-none focus:border-tabaco focus-visible:outline-3 focus-visible:outline-mostaza disabled:opacity-60"
           />
         </div>
         {feedbackBox}
@@ -245,7 +245,7 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
           aria-describedby={feedback ? feedbackId : undefined}
           className="mt-2 block min-h-12 w-full rounded-xl border border-tabaco/25 bg-papel px-4 text-base text-tinta outline-none placeholder:text-tabaco/45 focus:border-tabaco focus-visible:outline-3 focus-visible:outline-mostaza disabled:opacity-60"
         />
-        <p className="mt-2 text-sm text-tabaco/75">Te enviaremos un código de 6 dígitos. Solo guardamos este dato.</p>
+        <p className="mt-2 text-sm text-tabaco/75">Te enviaremos un código de verificación. Solo guardamos este dato.</p>
       </div>
       {feedbackBox}
       <button type="submit" disabled={busy} className="btn btn-oscuro w-full disabled:cursor-wait disabled:opacity-70">
