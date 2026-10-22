@@ -31,6 +31,13 @@ Ventana fija en `private.rate_limit_hits`, sin Redis ni servicios externos. Sufi
 ## 2026-10-22 · ADR-009 Verificación de contacto gratuita para el demo
 Correo: Supabase Auth con OTP de 6 dígitos y SMTP propio de capa gratuita (Resend o Brevo). El SMTP integrado de Supabase no sirve para clientes reales (solo envía a miembros del equipo y con límite muy bajo). Teléfono: no existe SMS gratuito real; para el demo se usan números de prueba (`auth.sms.test_otp`) o el crédito de prueba de Twilio (solo números verificados). En la UI el canal teléfono se muestra como “no disponible” mientras no haya proveedor configurado.
 
+## 2026-10-23 · ADR-012 Registro de clientes y QR
+- Acceso del cliente sin contraseña: OTP de 6 dígitos (correo vía Resend; teléfono cuando haya SMS, controlado por `NEXT_PUBLIC_PHONE_AUTH_ENABLED`). Mismo flujo para crear la tarjeta y para volver a entrar. Corre en el navegador por la misma razón que el login del personal (ADR-011).
+- `enroll_customer` exige la versión del aviso de privacidad (`PRIVACY_VERSION`) y guarda fecha de aceptación. El contacto lo lee la base desde `auth.users` ya verificado; el navegador nunca lo envía.
+- QR: `CN1.<32 bytes base64url>` generado en el servidor; la base guarda solo SHA-256, TTL 120 s, un uso. No requiere secreto de firma porque la validación es contra la base (se retiró `SCAN_TOKEN_SECRET`). Se renueva solo mientras la pantalla está visible y hasta 4 veces seguidas, para no agotar el límite de 30 códigos cada 10 min.
+- Nueva dependencia `qrcode`: genera el SVG del QR en el servidor (sin JS extra en el navegador). Implementar un codificador QR propio no se justifica.
+- Folios de ticket: `hashPurchaseReference` (HMAC-SHA256 con pepper, separado por empresa), listo para la etapa 5.
+
 ## 2026-10-23 · ADR-011 Sesión del personal
 - `@supabase/ssr` + `@supabase/supabase-js`: librerías oficiales para guardar la sesión en cookies y leerla en Server Components, Server Actions y `proxy.ts`.
 - El login (`signInWithPassword`) ocurre en el navegador: así los límites por IP de Supabase Auth aplican a cada dispositivo. Si fuera en el servidor, todos los intentos saldrían de la misma IP.

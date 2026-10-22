@@ -43,7 +43,7 @@ Todas devuelven `jsonb`: `{ "ok": true, ... }` o `{ "ok": false, "code": "<códi
 
 | Función | Quién | Entrada | Éxito |
 |---|---|---|---|
-| `enroll_customer(slug, display_name?)` | cliente con canal verificado en Auth | — | `card_id`, saldos |
+| `enroll_customer(slug, display_name, privacy_version)` | cliente con canal verificado en Auth | `privacy_version` = fecha `AAAA-MM-DD` del aviso aceptado | `card_id`, saldos |
 | `get_my_card(slug)` | cliente | — | tarjeta, campaña, contacto enmascarado, historial (sin actores ni hashes) |
 | `issue_scan_token(card_id, purpose, token_hash, ttl)` | dueño de la tarjeta | `purpose`: `identify`/`redeem`, TTL 30–300 s | `expires_at` |
 | `staff_lookup_card(branch_id, token_hash)` | personal de la sucursal | — | datos mínimos y enmascarados; no consume el código |

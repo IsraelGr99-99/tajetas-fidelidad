@@ -5,7 +5,7 @@
 | 1 | Fundamentos y documentación | ✅ hecho | `npm run check`, `npm run build` y `npm run test:e2e` pasan; landing accesible (contraste AA, teclado, sin scroll horizontal en móvil) |
 | 2 | Esquema, migraciones y ledger | ✅ hecho | Migraciones aplicadas en Supabase con `db lint` sin errores; pruebas de reglas, RLS, idempotencia y append-only en PGlite |
 | 3 | Auth, roles, empresa y sucursal | ✅ hecho | Login/logout del personal, `proxy.ts` de sesión, contexto de roles (`get_staff_context`), selección de sucursal, páginas de “sin acceso”. **Falta**: alta de personal desde la UI (etapa 5, administración) y MFA |
-| 4 | API de registro y visitas | ⏳ | Registro con OTP por correo; Server Actions con zod; HMAC de ticket; generación de QR; mapeo de códigos de error |
+| 4 | Registro de clientes y QR | ✅ hecho | Acceso con OTP por correo (teléfono listo tras activar SMS), alta con aviso de privacidad, tarjeta con sellos e historial, QR temporal de identificación y de canje, HMAC de ticket, mensajes por código de error. **Falta**: prueba manual de envío real de correo |
 | 5 | Flujos de empleado y cliente | ⏳ | Escaneo QR, confirmación, canje, historial, estados vacíos/carga/error; e2e de cada flujo |
 | 6 | QR y NFC | ⏳ | Ruta `/s/<public_id>`; QR con rotación automática; alta de sellos NFC en admin |
 | 7 | Apple Wallet y Google Wallet | ⏳ | Adaptadores con estado “no configurado”; con credenciales: pase firmado, web service de Apple, objeto de Google actualizado al cambiar el ledger |
@@ -15,7 +15,7 @@
 - [ ] Precios y catálogo reales de Café Nómada (el seed usa precios de ejemplo).
 - [ ] Logotipo oficial.
 - [ ] SMTP con dominio verificado.
-- [ ] Aviso de privacidad revisado legalmente.
+- [ ] Aviso de privacidad revisado legalmente (borrador en `/privacidad` con datos “por completar”).
 - [ ] Pruebas con personal real en la sucursal (QR con cámara del dispositivo de barra).
 - [ ] Respaldo y monitoreo de la base (PITR o respaldos diarios).
 
