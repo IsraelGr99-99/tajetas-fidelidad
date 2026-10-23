@@ -38,6 +38,9 @@ test("credenciales inválidas muestran un mensaje genérico", async ({ page }) =
 
 test("código por correo: misma respuesta para correos no autorizados (no revela quién es personal)", async ({ page }) => {
   test.skip(!process.env.SUPABASE_SECRET_KEY, "Requiere la llave secreta del servidor");
+  // Con CAPTCHA real activo, Turnstile puede marcar al navegador automatizado como bot.
+  // Para probar este flujo en CI, usar las llaves de prueba de Cloudflare (docs/despliegue.md).
+  test.skip(Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY), "CAPTCHA real activo");
   await page.goto("/entrar");
   await page.getByRole("tab", { name: "Código por correo" }).click();
   // Correo distinto por corrida: el servidor limita a 5 solicitudes por correo y hora.

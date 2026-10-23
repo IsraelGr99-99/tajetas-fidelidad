@@ -282,6 +282,7 @@ function sendErrorMessage(code: string | undefined, status: number | undefined) 
   }
   if (code === "sms_send_failed" || code === "phone_provider_disabled") return "Por ahora no podemos enviar SMS. Usa tu correo.";
   if (code === "email_address_invalid") return "Ese correo no parece válido.";
+  if (code === "captcha_failed") return "La verificación de seguridad no pasó. Espera a que se complete e inténtalo de nuevo.";
   if (code === "signup_disabled") return "El registro está cerrado por el momento.";
   return "No pudimos enviar el código. Inténtalo de nuevo en un momento.";
 }

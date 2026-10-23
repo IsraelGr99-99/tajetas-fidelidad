@@ -45,6 +45,9 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
   2. Pon su **Secret Key** en Supabase y activa CAPTCHA.
   3. Define `NEXT_PUBLIC_TURNSTILE_SITE_KEY` con la **Site Key**.
   4. Activa los dos lados juntos: si solo lo activas en Supabase, las altas fallan.
+  5. En **Hostname Management** del widget agrega `fidelidad-demo.iautomexa.com` y, mientras desarrollas, `localhost`. Si falta el dominio, el widget muestra "No es posible conectarse al sitio web" (error **110200**). Quita `localhost` antes de producción.
+  6. Las direcciones IP (por ejemplo `192.168.100.25`) no se pueden autorizar. Para probar desde el celular en la red local, usa el dominio publicado.
+  7. Pruebas automáticas (Playwright): Cloudflare recomienda sus llaves de prueba (`1x00000000000000000000AA` y el secreto `1x0000000000000000000000000000000AA`) en un proyecto de Supabase de pruebas, no en el de producción.
 - **Authentication → Multi-Factor:** confirma que TOTP está habilitado. Después, en `/cuenta`, activa tu verificación en dos pasos como propietario.
 - **Authentication → Rate Limits:** con SMTP propio, sube "emails per hour" según tu plan de Resend. Mantén los demás límites.
 - **Integrations → Cron:** confirma que existe el trabajo `fidelidad-limpieza-temporal`. Si no aparece, créalo con `select private.cleanup_ephemeral()` cada hora.

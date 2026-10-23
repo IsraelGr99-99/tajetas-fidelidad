@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Cloudflare Turnstile (gratuito) para frenar el abuso del envío de códigos.
@@ -33,9 +33,18 @@ function loadScript() {
   return loader;
 }
 
+/** Mensaje claro para los errores más comunes de Turnstile (códigos de Cloudflare). */
+function captchaErrorMessage(code: string): string {
+  if (code.startsWith("1102")) return "La verificación de seguridad no está autorizada para este sitio. Administración debe agregar este dominio en Cloudflare Turnstile.";
+  if (code.startsWith("1101")) return "La llave de la verificación de seguridad no es válida. Avisa a administración.";
+  if (code.startsWith("300") || code.startsWith("600")) return "No pudimos verificar que eres una persona. Recarga la página e inténtalo de nuevo.";
+  return "La verificación de seguridad falló. Recarga la página e inténtalo de nuevo.";
+}
+
 /** Widget de verificación. `resetKey` cambia para pedir un token nuevo (cada token es de un solo uso). */
 export function Captcha({ onToken, resetKey = 0 }: { onToken: (token: string | null) => void; resetKey?: number }) {
   const box = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<string | null>(null);
   const widget = useRef<string | null>(null);
   const callback = useRef(onToken);
 
@@ -53,12 +62,22 @@ export function Captcha({ onToken, resetKey = 0 }: { onToken: (token: string | n
           sitekey: CAPTCHA_SITE_KEY,
           language: "es",
           theme: "light",
-          callback: (t: string) => callback.current(t),
+          callback: (t: string) => {
+            setError(null);
+            callback.current(t);
+          },
           "expired-callback": () => callback.current(null),
-          "error-callback": () => callback.current(null),
+          "error-callback": (code: string) => {
+            callback.current(null);
+            setError(`${captchaErrorMessage(String(code))} (código ${code})`);
+            return true;
+          },
         });
       })
-      .catch(() => callback.current(null));
+      .catch(() => {
+        callback.current(null);
+        setError("No se pudo cargar la verificación de seguridad. Revisa tu conexión.");
+      });
     return () => {
       cancelled = true;
       if (widget.current) window.turnstile?.remove(widget.current);
@@ -74,5 +93,14 @@ export function Captcha({ onToken, resetKey = 0 }: { onToken: (token: string | n
   }, [resetKey]);
 
   if (!CAPTCHA_SITE_KEY) return null;
-  return <div ref={box} className="min-h-16" aria-label="Verificación de seguridad" />;
+  return (
+    <div>
+      <div ref={box} className="min-h-16" aria-label="Verificación de seguridad" />
+      {error ? (
+        <p role="alert" className="mt-2 text-sm text-alerta">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
 }

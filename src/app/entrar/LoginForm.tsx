@@ -215,6 +215,7 @@ function messageFor(code: string | undefined, httpStatus: number | undefined): s
     return "Demasiados intentos. Espera unos minutos antes de volver a intentar.";
   }
   if (code === "email_not_confirmed") return "Tu correo aún no está confirmado. Pide a administración que lo revise.";
+  if (code === "captcha_failed") return "La verificación de seguridad no pasó. Espera a que se complete e inténtalo de nuevo.";
   if (code === "user_banned") return "Esta cuenta está suspendida. Habla con administración.";
   // Mismo mensaje para usuario inexistente o contraseña errónea: no revela qué cuentas existen.
   return "Correo o contraseña incorrectos.";
