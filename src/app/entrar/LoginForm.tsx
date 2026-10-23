@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { OTP_MAX_LENGTH, emailSchema, otpSchema } from "@/domain/customer/contact";
-import { requestStaffCodeAction } from "@/actions/staff-login";
+import { checkStaffCodeAction } from "@/actions/staff-login";
 import { MfaChallenge, needsSecondFactor } from "@/components/staff/Mfa";
 import { Captcha, CAPTCHA_SITE_KEY } from "@/components/ui/Captcha";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -75,10 +75,24 @@ export function LoginForm({ next }: { next: string }) {
     if (needCaptcha && !captcha) return setStatus({ kind: "error", message: "Completa la verificación de seguridad." });
     setStatus({ kind: "submitting" });
     try {
-      // El servidor decide si el correo está autorizado; aquí nunca se sabe la respuesta.
-      const r = await requestStaffCodeAction(parsed.data, captcha);
-      setCaptchaReset((n) => n + 1);
-      if (!r.ok) return setStatus({ kind: "error", message: r.message });
+      // 1) El servidor revisa si el correo es de personal activo o invitado.
+      const check = await checkStaffCodeAction(parsed.data);
+      if (!check.ok) return setStatus({ kind: "error", message: check.message });
+      // 2) Solo entonces el navegador pide el código, con su propio token de CAPTCHA
+      //    (Supabase valida el token del visitante en su propia petición).
+      if (check.eligible) {
+        const supabase = createSupabaseBrowserClient();
+        if (!supabase) return setStatus({ kind: "error", message: "El acceso no está configurado en este entorno." });
+        const { error } = await supabase.auth.signInWithOtp({
+          email: parsed.data,
+          options: { shouldCreateUser: true, captchaToken: captcha ?? undefined },
+        });
+        setCaptchaReset((n) => n + 1);
+        if (error) return setStatus({ kind: "error", message: sendErrorMessage(error.code, error.status) });
+      } else {
+        setCaptchaReset((n) => n + 1);
+      }
+      // Mismo mensaje en ambos casos.
       setStatus({ kind: "code_sent", email: parsed.data });
     } catch {
       setStatus({ kind: "error", message: "No hay conexión con el servidor." });
@@ -219,4 +233,12 @@ function messageFor(code: string | undefined, httpStatus: number | undefined): s
   if (code === "user_banned") return "Esta cuenta está suspendida. Habla con administración.";
   // Mismo mensaje para usuario inexistente o contraseña errónea: no revela qué cuentas existen.
   return "Correo o contraseña incorrectos.";
+}
+
+function sendErrorMessage(code: string | undefined, httpStatus: number | undefined): string {
+  if (code === "captcha_failed") return "La verificación de seguridad no pasó. Espera a que se complete e inténtalo de nuevo.";
+  if (code === "over_email_send_rate_limit" || code === "over_request_rate_limit" || httpStatus === 429) {
+    return "Se alcanzó el límite de envíos. Espera unos minutos antes de pedir otro código.";
+  }
+  return "No pudimos enviar el código. Inténtalo de nuevo en un momento.";
 }

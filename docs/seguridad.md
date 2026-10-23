@@ -12,7 +12,7 @@ Un agente auditor revisó en modo de solo lectura las migraciones, el proxy, las
 | M4 | Media | Owner/admin solo con contraseña | ✅ MFA TOTP opcional: con un factor verificado, administrar exige sesión `aal2`. 🟡 Hacerlo obligatorio antes de producción |
 | B1 | Baja | Usuarios ajenos llenaban la bitácora de la empresa | ✅ Rechazos ajenos se guardan sin empresa, con límite por usuario; IP tomada de la cabecera del proveedor |
 | B2 | Baja | Carrera en "último owner" y "última sucursal activa" | ✅ Bloqueo de filas antes de contar |
-| B3 | Baja | El tiempo de respuesta revelaba qué correos son del personal | ✅ El envío ocurre después de responder (`after`) |
+| B3 | Baja | El tiempo de respuesta revelaba qué correos son del personal | ⚠️ Riesgo aceptado: con CAPTCHA activo, el código lo debe pedir el navegador (Supabase valida el token del visitante; reenviarlo desde el servidor daba `captcha_failed`). Quien inspeccione la red puede deducir si un correo es del personal; queda limitado a 5 consultas por correo y 20 por dispositivo por hora |
 | B4 | Baja | Cambiar la regla emitía recompensas en masa | ✅ Como máximo una recompensa por evento |
 | B5 | Baja | Datos demo mezclados, sucursal demo reactivable, `setseed` | ✅ Sucursal demo bloqueada y sin `setseed`. ℹ️ El panel incluye DEMO por defecto, con aviso y botón para ocultarlo (decisión para presentar) |
 | B6 | Baja | Folio único por empresa y no por sucursal | ✅ El HMAC incluye la sucursal |

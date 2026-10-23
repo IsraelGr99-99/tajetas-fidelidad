@@ -1,14 +1,11 @@
 "use server";
 
 import { createHash } from "node:crypto";
-import { createClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
-import { after } from "next/server";
 import { emailSchema } from "@/domain/customer/contact";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { publicSupabaseConfig } from "@/lib/supabase/config";
 
-export type StaffCodeResult = { ok: true } | { ok: false; message: string };
+export type StaffCodeCheck = { ok: true; eligible: boolean } | { ok: false; message: string };
 
 /**
  * IP del cliente, seudonimizada para el límite de intentos. Solo se confía en la cabecera
@@ -23,37 +20,23 @@ async function clientHash() {
 }
 
 /**
- * Pide un código de acceso para el personal. Solo se envía si el correo es de
- * personal activo o tiene invitación pendiente. La respuesta y su tiempo son iguales
- * en ambos casos: el envío ocurre después de responder (`after`).
+ * ¿Puede este correo recibir un código de acceso del personal? (personal activo o
+ * invitación pendiente). Con límite por correo y por dispositivo.
+ *
+ * El envío lo hace el navegador con su propio token de CAPTCHA: Supabase valida el
+ * token del visitante en su petición. Reenviarlo desde el servidor lo hacía fallar
+ * (`captcha_failed`). Riesgo aceptado: quien inspeccione la red puede saber si un
+ * correo es del personal (limitado a 5 consultas por correo y hora).
  */
-export async function requestStaffCodeAction(rawEmail: string, captchaToken?: string | null): Promise<StaffCodeResult> {
+export async function checkStaffCodeAction(rawEmail: string): Promise<StaffCodeCheck> {
   const parsed = emailSchema.safeParse(String(rawEmail ?? ""));
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Correo inválido." };
 
   const admin = createSupabaseAdminClient();
-  const config = publicSupabaseConfig();
-  if (!admin || !config) return { ok: false, message: "El acceso no está configurado en este entorno." };
+  if (!admin) return { ok: false, message: "El acceso no está configurado en este entorno." };
 
   const { data, error } = await admin.rpc("request_staff_login_code", { p_email: parsed.data, p_client_hash: await clientHash() });
   if (error) return { ok: false, message: "No se pudo contactar al servidor. Intenta de nuevo." };
-  // El límite de intentos aplica igual a cualquier correo, así que revelarlo no filtra nada.
   if (!data?.ok) return { ok: false, message: data?.code === "rate_limited" ? "Demasiados intentos. Espera unos minutos." : "Revisa el correo e inténtalo de nuevo." };
-
-  if (data.eligible) {
-    const email = parsed.data;
-    after(async () => {
-      const anon = createClient(config.url, config.key, { auth: { persistSession: false, autoRefreshToken: false } });
-      const { error: sendError } = await anon.auth
-        .signInWithOtp({ email, options: { shouldCreateUser: true, captchaToken: captchaToken ?? undefined } })
-        .catch(() => ({ error: { code: "network", status: 0 } }));
-      // Un fallo de envío queda registrado (sin el correo) para poder diagnosticarlo.
-      if (sendError) {
-        await admin
-          .from("audit_log")
-          .insert({ action: "staff.login_code", outcome: "error", details: { code: sendError.code ?? "unknown", status: sendError.status ?? null } });
-      }
-    });
-  }
-  return { ok: true };
+  return { ok: true, eligible: Boolean(data.eligible) };
 }

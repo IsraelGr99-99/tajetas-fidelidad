@@ -43,6 +43,7 @@ Correo: Supabase Auth con OTP numérico y SMTP propio de capa gratuita (Resend o
 - CSP con nonce por petición en `proxy.ts` y render dinámico de todas las páginas (`connection()` en el layout). Para estilos se permite `unsafe-inline` porque React usa atributos `style`.
 - MFA TOTP de Supabase. Se exige `aal2` para administrar solo si el usuario ya tiene un factor verificado, así nadie queda bloqueado al activarla. Volverla obligatoria es un pendiente explícito.
 - CAPTCHA con Cloudflare Turnstile (gratuito), activado solo si existe la llave pública. Supabase valida el token en el servidor.
+- Código del personal: el servidor solo verifica que el correo esté autorizado (`checkStaffCodeAction`) y el **navegador** pide el código con su token de CAPTCHA. Reenviar el token desde el servidor hacía que Supabase lo rechazara (`captcha_failed`). Se acepta el riesgo bajo de enumeración (ver B3 en `docs/seguridad.md`).
 - Retención: `private.cleanup_ephemeral()` programada con pg_cron. Si pg_cron no está disponible, la migración no falla y se avisa.
 - El folio del ticket se identifica por sucursal (HMAC con empresa + sucursal + folio).
 
