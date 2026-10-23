@@ -4,11 +4,13 @@ import { redirect } from "next/navigation";
 import { Wordmark } from "@/components/brand/Logo";
 import { CardQr } from "@/components/customer/CardQr";
 import { DeleteAccount } from "@/components/customer/DeleteAccount";
+import { WalletSection } from "@/components/customer/WalletSection";
 import { StampCard } from "@/components/loyalty/StampCard";
 import { describeHistoryEntry } from "@/domain/customer/card";
 import { describeRewardCap } from "@/domain/loyalty/campaign";
 import { formatDateTime, formatMxn } from "@/lib/format";
 import { getCustomerSession } from "@/lib/customer/session";
+import { walletStatusForCard } from "@/lib/wallet/sync";
 import { customerSignOutAction } from "./actions";
 
 export const metadata: Metadata = { title: "Mi tarjeta" };
@@ -19,6 +21,7 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
   if (session.status !== "enrolled") redirect("/tarjeta/acceso");
 
   const { card, customer, campaign, history } = session.card;
+  const wallet = await walletStatusForCard(card.id);
   const greeting = customer.display_name ? `Hola, ${customer.display_name}` : "Hola, viajero";
 
   return (
@@ -61,19 +64,7 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
           <p className="rounded-2xl bg-papel p-5 text-tabaco">El programa de fidelidad está en pausa. Tus sellos siguen guardados.</p>
         )}
 
-        <section aria-labelledby="wallet-titulo" className="rounded-[2rem] border border-tabaco/10 bg-papel p-6">
-          <h2 id="wallet-titulo" className="text-2xl text-tabaco">
-            Guárdala en tu teléfono
-          </h2>
-          <p className="mt-2 leading-7 text-tabaco/75">
-            Pronto podrás agregarla a Apple Wallet o Google Wallet. Esta integración todavía no está habilitada; mientras tanto, guarda esta
-            página en tu pantalla de inicio.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="bitacora rounded-full border border-tabaco/25 px-3 py-1.5 text-[0.65rem] text-tabaco/75">Apple Wallet · no configurado</span>
-            <span className="bitacora rounded-full border border-tabaco/25 px-3 py-1.5 text-[0.65rem] text-tabaco/75">Google Wallet · no configurado</span>
-          </div>
-        </section>
+        <WalletSection {...wallet} />
 
         <section aria-labelledby="historial-titulo" className="rounded-[2rem] bg-papel p-6">
           <h2 id="historial-titulo" className="text-2xl text-tabaco">

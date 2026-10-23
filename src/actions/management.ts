@@ -7,6 +7,7 @@ import { rpcErrorMessage } from "@/domain/loyalty/messages";
 import { type Capability, STAFF_ROLES, can } from "@/domain/staff/permissions";
 import { getStaffSession } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { syncWalletAfterResponse } from "@/lib/wallet/sync";
 
 /**
  * Acciones de gerencia y administración. Cada una revalida identidad y capacidad
@@ -41,8 +42,10 @@ function fromZod(error: z.ZodError): ActionState {
 async function run(rpc: PromiseLike<{ data: unknown; error: unknown }>, success: string, paths: string[]): Promise<ActionState> {
   const { data, error } = await rpc;
   if (error) return { ok: false, message: "No se pudo contactar al servidor. Intenta de nuevo." };
-  const result = data as { ok?: boolean; code?: string } | null;
+  const result = data as { ok?: boolean; code?: string; card_id?: string } | null;
   if (!result?.ok) return { ok: false, message: rpcErrorMessage(result?.code) };
+  // Reversos y ajustes cambian la tarjeta: actualizar su pase de Wallet en segundo plano.
+  syncWalletAfterResponse(result.card_id);
   for (const p of paths) revalidatePath(p);
   return { ok: true, message: success };
 }

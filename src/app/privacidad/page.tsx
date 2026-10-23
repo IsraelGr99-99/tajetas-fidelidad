@@ -67,8 +67,9 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl text-tabaco">Proveedores</h2>
             <p className="mt-2">
-              Usamos Supabase (base de datos y autenticación) y un proveedor de envío de correo para mandarte tus códigos. Solo reciben lo necesario
-              para prestar ese servicio.
+              Usamos Supabase (base de datos y autenticación) y un proveedor de envío de correo para mandarte tus códigos. Si decides agregar tu
+              tarjeta a Google Wallet, Google recibe tu nombre corto (si lo diste), el número corto de tu tarjeta y tus sellos; nunca tu correo ni tu
+              teléfono. Solo reciben lo necesario para prestar ese servicio.
             </p>
           </section>
         </div>

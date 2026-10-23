@@ -7,6 +7,7 @@ import { hashPurchaseReference } from "@/lib/purchase-reference";
 import { generateHoldToken, parseHoldToken, parseScanPayload } from "@/lib/scan-token";
 import { getStaffSession } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { syncWalletAfterResponse } from "@/lib/wallet/sync";
 
 /**
  * Operaciones de barra. Las Server Actions son invocables por POST directo, así que
@@ -157,6 +158,7 @@ export async function recordEarnAction(input: z.input<typeof earnInput>): Promis
     const base = fail(data?.code);
     return typeof data?.retry_after_seconds === "number" ? { ...base, retryAfterSeconds: data.retry_after_seconds } : base;
   }
+  syncWalletAfterResponse(data.card_id);
   return {
     ok: true,
     replayed: Boolean(data.replayed),
@@ -193,6 +195,7 @@ export async function redeemAction(input: z.input<typeof redeemInput>): Promise<
   });
   if (error) return networkFailure;
   if (!data?.ok) return fail(data?.code);
+  syncWalletAfterResponse(data.card_id);
   return {
     ok: true,
     replayed: Boolean(data.replayed),

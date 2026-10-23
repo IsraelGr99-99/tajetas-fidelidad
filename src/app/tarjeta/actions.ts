@@ -7,6 +7,8 @@ import { PRIVACY_VERSION, displayNameSchema } from "@/domain/customer/contact";
 import { rpcErrorMessage } from "@/domain/loyalty/messages";
 import { PILOT_BUSINESS_SLUG } from "@/lib/business";
 import { generateScanToken } from "@/lib/scan-token";
+import { googleWalletConfig, saveUrl } from "@/lib/wallet/google";
+import { createGoogleWalletPass } from "@/lib/wallet/sync";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -140,4 +142,36 @@ export async function deleteMyDataAction(_prev: FormState, formData: FormData): 
   }
   await supabase.auth.signOut({ scope: "global" }).catch(() => undefined);
   redirect("/tarjeta/acceso?eliminada=1");
+}
+
+export type WalletResult = { ok: true; url: string } | { ok: false; error: string };
+
+/**
+ * Crea o actualiza el pase de Google Wallet de la tarjeta del cliente y devuelve el
+ * enlace firmado para guardarlo. La propiedad de la tarjeta se verifica con la sesión.
+ */
+export async function addToGoogleWalletAction(): Promise<WalletResult> {
+  const config = googleWalletConfig();
+  if (!config) return { ok: false, error: "Google Wallet no está configurado en este entorno." };
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false, error: "El servicio no está configurado." };
+  const { data } = await supabase.rpc("get_my_card", { p_business_slug: PILOT_BUSINESS_SLUG });
+  const cardId = data?.ok ? (data.card?.id as string | undefined) : undefined;
+  if (!cardId) return { ok: false, error: rpcErrorMessage(data?.code ?? "not_enrolled") };
+  if (!rateLimitWallet(cardId)) return { ok: false, error: "Espera un momento antes de volver a intentarlo." };
+  try {
+    const objectId = await createGoogleWalletPass(cardId);
+    return { ok: true, url: saveUrl(config, objectId) };
+  } catch {
+    return { ok: false, error: "No pudimos preparar tu pase de Google Wallet. Inténtalo más tarde." };
+  }
+}
+
+// Freno simple por instancia (el pase se puede regenerar sin riesgo; solo evita ráfagas).
+const lastWalletRequest = new Map<string, number>();
+function rateLimitWallet(cardId: string) {
+  const now = Date.now();
+  if ((lastWalletRequest.get(cardId) ?? 0) > now - 5_000) return false;
+  lastWalletRequest.set(cardId, now);
+  return true;
 }

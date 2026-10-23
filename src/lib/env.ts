@@ -30,6 +30,8 @@ const serverEnvSchema = z.object({
   GOOGLE_WALLET_ISSUER_ID: optional,
   GOOGLE_WALLET_SERVICE_ACCOUNT_JSON_BASE64: optional,
   GOOGLE_WALLET_MODE: z.enum(["demo", "public"]).default("demo"),
+  /** Imagen pública HTTPS del logotipo (Google la descarga para mostrarla en el pase). */
+  GOOGLE_WALLET_LOGO_URL: z.url().optional().or(z.literal("").transform(() => undefined)),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;
