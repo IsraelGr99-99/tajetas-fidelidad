@@ -6,6 +6,7 @@ import { OTP_MAX_LENGTH, emailSchema, otpSchema } from "@/domain/customer/contac
 import { checkStaffCodeAction } from "@/actions/staff-login";
 import { MfaChallenge, needsSecondFactor } from "@/components/staff/Mfa";
 import { Captcha, CAPTCHA_SITE_KEY } from "@/components/ui/Captcha";
+import { captchaFailedMessage } from "@/lib/auth-errors";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Mode = "password" | "code";
@@ -61,7 +62,7 @@ export function LoginForm({ next }: { next: string }) {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken: captcha ?? undefined } });
       setCaptchaReset((n) => n + 1);
-      if (error) return setStatus({ kind: "error", message: messageFor(error.code, error.status) });
+      if (error) return setStatus({ kind: "error", message: error.code === "captcha_failed" ? captchaFailedMessage(error.message) : messageFor(error.code, error.status) });
       await done();
     } catch {
       setStatus({ kind: "error", message: "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo." });
@@ -88,7 +89,7 @@ export function LoginForm({ next }: { next: string }) {
           options: { shouldCreateUser: true, captchaToken: captcha ?? undefined },
         });
         setCaptchaReset((n) => n + 1);
-        if (error) return setStatus({ kind: "error", message: sendErrorMessage(error.code, error.status) });
+        if (error) return setStatus({ kind: "error", message: sendErrorMessage(error.code, error.status, error.message) });
       } else {
         setCaptchaReset((n) => n + 1);
       }
@@ -235,8 +236,8 @@ function messageFor(code: string | undefined, httpStatus: number | undefined): s
   return "Correo o contraseña incorrectos.";
 }
 
-function sendErrorMessage(code: string | undefined, httpStatus: number | undefined): string {
-  if (code === "captcha_failed") return "La verificación de seguridad no pasó. Espera a que se complete e inténtalo de nuevo.";
+function sendErrorMessage(code: string | undefined, httpStatus: number | undefined, message?: string): string {
+  if (code === "captcha_failed") return captchaFailedMessage(message);
   if (code === "over_email_send_rate_limit" || code === "over_request_rate_limit" || httpStatus === 429) {
     return "Se alcanzó el límite de envíos. Espera unos minutos antes de pedir otro código.";
   }

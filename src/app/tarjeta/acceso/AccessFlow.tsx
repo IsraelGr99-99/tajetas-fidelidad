@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { type ContactChannel, OTP_MAX_LENGTH, emailSchema, mxPhoneSchema, otpSchema } from "@/domain/customer/contact";
 import { Captcha, CAPTCHA_SITE_KEY } from "@/components/ui/Captcha";
+import { captchaFailedMessage } from "@/lib/auth-errors";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Step = { name: "contact" } | { name: "code"; channel: ContactChannel; destination: string; display: string };
@@ -68,7 +69,7 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
     try {
       const error = await sendCode(channel, parsed.data);
       if (error) {
-        setFeedback({ kind: "error", text: sendErrorMessage(error.code, error.status) });
+        setFeedback({ kind: "error", text: (error.code === "captcha_failed" ? captchaFailedMessage(error.message) : sendErrorMessage(error.code, error.status)) });
         return;
       }
       setStep({ name: "code", channel, destination: parsed.data, display: channel === "email" ? parsed.data : formatPhone(parsed.data) });
@@ -120,7 +121,7 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
     setBusy(true);
     try {
       const error = await sendCode(step.channel, step.destination);
-      if (error) setFeedback({ kind: "error", text: sendErrorMessage(error.code, error.status) });
+      if (error) setFeedback({ kind: "error", text: (error.code === "captcha_failed" ? captchaFailedMessage(error.message) : sendErrorMessage(error.code, error.status)) });
       else {
         setFeedback({ kind: "info", text: "Te enviamos un código nuevo." });
         setCooldown(RESEND_SECONDS);
@@ -282,7 +283,6 @@ function sendErrorMessage(code: string | undefined, status: number | undefined) 
   }
   if (code === "sms_send_failed" || code === "phone_provider_disabled") return "Por ahora no podemos enviar SMS. Usa tu correo.";
   if (code === "email_address_invalid") return "Ese correo no parece válido.";
-  if (code === "captcha_failed") return "La verificación de seguridad no pasó. Espera a que se complete e inténtalo de nuevo.";
   if (code === "signup_disabled") return "El registro está cerrado por el momento.";
   return "No pudimos enviar el código. Inténtalo de nuevo en un momento.";
 }
