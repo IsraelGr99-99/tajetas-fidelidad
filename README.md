@@ -6,7 +6,7 @@ Sistema de fidelidad digital de [iautomexa](https://iautomexa.com) para el pilot
 
 - ✅ **Etapa 1**: Next.js 16 + TypeScript estricto, sistema visual de marca, landing accesible y headers de seguridad.
 - ✅ **Etapa 2** (aplicada en Supabase): esquema multiempresa, ledger append-only, campañas versionadas, RLS y funciones transaccionales para acreditar, canjear, revertir y ajustar.
-- ✅ **Etapa 3**: acceso del personal en `/personal` (login, logout, roles y sucursal).
+- ✅ **Etapa 3**: acceso del personal en `/entrar` (login, logout, roles y sucursal).
 - ✅ **Etapa 4**: registro de clientes con código por correo, tarjeta con historial y QR temporal en `/tarjeta`.
 - ✅ **Etapa 5**: barra unificada (`/barra`), movimientos y reversos (`/movimientos`), negocio (`/negocio`: panel, ventas y gastos, catálogo con Excel, programa, equipo, clientes) y tarjeta del cliente en vivo (`/tarjeta`).
 - ⏳ Siguiente: sello NFC (etapa 6), Wallet (etapa 7), auditoría y despliegue (etapa 8).
