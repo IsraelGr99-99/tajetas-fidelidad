@@ -9,7 +9,9 @@ Sistema de fidelidad digital de [iautomexa](https://iautomexa.com) para el pilot
 - ✅ **Etapa 3**: acceso del personal en `/entrar` (login, logout, roles y sucursal).
 - ✅ **Etapa 4**: registro de clientes con código por correo, tarjeta con historial y QR temporal en `/tarjeta`.
 - ✅ **Etapa 5**: barra unificada (`/barra`), movimientos y reversos (`/movimientos`), negocio (`/negocio`: panel, ventas y gastos, catálogo con Excel, programa, equipo, clientes) y tarjeta del cliente en vivo (`/tarjeta`).
-- ⏳ Siguiente: sello NFC (etapa 6), Wallet (etapa 7), auditoría y despliegue (etapa 8).
+- ✅ **Etapa 7 (Google)**: pase de Google Wallet que se actualiza con cada sello. Apple Wallet queda para producción.
+- 🟡 **Etapa 8**: auditoría independiente y correcciones aplicadas (ver `docs/seguridad.md`); falta publicar (ver `docs/despliegue.md`).
+- ⏳ Pendiente: sello NFC (etapa 6).
 
 ### Rutas principales
 | Quién | Ruta |
@@ -46,4 +48,5 @@ Las pruebas de base de datos aplican las migraciones reales en PostgreSQL (PGlit
 - [Seguridad](docs/seguridad.md) · [Privacidad](docs/privacidad.md)
 - [Sello NFC](docs/nfc-sello.md)
 - [Configuración externa: Supabase, Wallet, dominio](docs/implementacion.md)
+- [Despliegue](docs/despliegue.md)
 - [Hoja de ruta](docs/hoja-de-ruta.md)

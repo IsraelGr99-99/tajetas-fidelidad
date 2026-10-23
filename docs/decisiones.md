@@ -39,6 +39,13 @@ Correo: Supabase Auth con OTP numérico y SMTP propio de capa gratuita (Resend o
 - Cliente: el QR aparece solo; `my_card_status` se consulta cada 3 s mientras la pantalla está visible para mostrar “Código escaneado” y “¡Sello registrado!” sin recargar.
 - Seguridad (ADR-011 corregido): el código por correo del personal ya no se envía a cualquiera. `request_staff_login_code` (solo `service_role`) verifica que el correo sea de personal activo o esté invitado, limita intentos por correo y dispositivo y responde igual en ambos casos. Limitación: la API pública de Supabase Auth sigue permitiendo altas (las necesita el registro de clientes); esas cuentas no obtienen acceso a la consola. Para endurecerlo, agregar CAPTCHA (Turnstile) en la etapa 8.
 
+## 2026-10-28 · ADR-018 Endurecimiento tras la auditoría
+- CSP con nonce por petición en `proxy.ts` y render dinámico de todas las páginas (`connection()` en el layout). Para estilos se permite `unsafe-inline` porque React usa atributos `style`.
+- MFA TOTP de Supabase. Se exige `aal2` para administrar solo si el usuario ya tiene un factor verificado, así nadie queda bloqueado al activarla. Volverla obligatoria es un pendiente explícito.
+- CAPTCHA con Cloudflare Turnstile (gratuito), activado solo si existe la llave pública. Supabase valida el token en el servidor.
+- Retención: `private.cleanup_ephemeral()` programada con pg_cron. Si pg_cron no está disponible, la migración no falla y se avisa.
+- El folio del ticket se identifica por sucursal (HMAC con empresa + sucursal + folio).
+
 ## 2026-10-27 · ADR-017 Google Wallet (Apple Wallet pospuesto a producción)
 - Adaptador propio (`src/lib/wallet/google.ts`): token OAuth con la cuenta de servicio firmado con `node:crypto` (RS256), API REST de Wallet Objects y enlace "Agregar a Google Wallet" firmado. No se agregó la librería de Google.
 - Una `LoyaltyClass` por negocio (`<issuer>.<slug>-fidelidad`) y un `LoyaltyObject` por tarjeta (`<issuer>.tarjeta-<public_serial>`). Datos enviados a Google: número corto de tarjeta, nombre opcional, sellos y recompensas. Nunca correo ni teléfono.

@@ -1,32 +1,55 @@
-# Seguridad: modelo de amenazas y controles
+# Seguridad: modelo de amenazas, controles y auditoría
 
-Estado: controles de base de datos implementados y probados en PGlite (`tests/db`). **Pendiente**: auditoría independiente, pruebas contra Supabase real, CSP con nonce y revisión del despliegue. Nada de esto se considera “seguro para producción” hasta completar la etapa 8.
+## Auditoría independiente (2026-10-28)
 
-## Activos
-Saldos y recompensas, datos de contacto de clientes, credenciales del personal, llaves de Supabase/Wallet, integridad del historial.
+Un agente auditor revisó en modo de solo lectura las migraciones, el proxy, las Server Actions, la integración con Wallet y las cabeceras. También ejecutó pruebas propias contra PGlite. **No encontró hallazgos críticos ni altos.** Estos fueron los hallazgos y su estado:
 
-## Amenazas y controles
+| Id | Severidad | Hallazgo | Estado |
+|---|---|---|---|
+| M1 | Media | El personal podía acreditarse sellos en su propia tarjeta de cliente | ✅ `self_service_forbidden` al apartar, acreditar y canjear |
+| M2 | Media | Tras eliminar la cuenta, el pase de Google Wallet seguía activo y con el nombre | ✅ La versión de la tarjeta se incrementa y el pase se sincroniza (inactivo, sin nombre) |
+| M3 | Media | Abuso del envío de códigos (agotar el cupo de correos o SMS) | 🟡 CAPTCHA Turnstile listo en la app. **Falta activarlo en Supabase** (ver despliegue) |
+| M4 | Media | Owner/admin solo con contraseña | ✅ MFA TOTP opcional: con un factor verificado, administrar exige sesión `aal2`. 🟡 Hacerlo obligatorio antes de producción |
+| B1 | Baja | Usuarios ajenos llenaban la bitácora de la empresa | ✅ Rechazos ajenos se guardan sin empresa, con límite por usuario; IP tomada de la cabecera del proveedor |
+| B2 | Baja | Carrera en "último owner" y "última sucursal activa" | ✅ Bloqueo de filas antes de contar |
+| B3 | Baja | El tiempo de respuesta revelaba qué correos son del personal | ✅ El envío ocurre después de responder (`after`) |
+| B4 | Baja | Cambiar la regla emitía recompensas en masa | ✅ Como máximo una recompensa por evento |
+| B5 | Baja | Datos demo mezclados, sucursal demo reactivable, `setseed` | ✅ Sucursal demo bloqueada y sin `setseed`. ℹ️ El panel incluye DEMO por defecto, con aviso y botón para ocultarlo (decisión para presentar) |
+| B6 | Baja | Folio único por empresa y no por sucursal | ✅ El HMAC incluye la sucursal |
+| B7 | Baja | CSP sin `script-src` | ✅ CSP con nonce por petición en `proxy.ts` (`strict-dynamic`). ℹ️ Las cookies de sesión de `@supabase/ssr` no son httpOnly por diseño de la librería |
+| B8 | Baja | Revertir un descuento manual no emitía la recompensa | ✅ Se llama a `issue_rewards` |
+| I1 | Info | Owner/admin pueden leer contacto completo por PostgREST | ℹ️ Por diseño: administración puede ver datos de clientes; la UI los muestra enmascarados |
+| I2 | Info | Campañas legibles entre empresas | ✅ Solo personal o clientes de esa empresa |
+| I3 | Info | Un gerente leía todas las tarjetas | ✅ Solo dueño de la tarjeta y administración |
+| I4 | Info | `staff_lookup_card` obsoleta y sin validar apartados | ✅ Revocada |
+| I5 | Info | Riesgo de funciones ejecutables por accidente | ✅ Prueba de inventario: `anon` no ejecuta nada y `authenticated` solo una lista permitida |
+| I6 | Info | "Append-only incluido superusuario" exagerado | ✅ Corregido: un superusuario puede desactivar triggers; la protección es contra roles de la app |
+| I7–I9 | Info | Reverso en cascada (FIFO), límites internos de admin, abuso de ajustes | ℹ️ Aceptados y auditados; pendiente agregar alertas en el panel |
+
+Pruebas de regresión: `tests/db/audit-fixes.test.ts`.
+
+## Controles vigentes
 
 | Amenaza | Control | Verificación |
 |---|---|---|
-| Acceso anónimo a datos | `revoke all` a `anon`; solo `businesses`/`branches` públicos; RPC solo para `authenticated` | `security.test.ts` |
-| IDOR/BOLA entre empresas o clientes | Cada RPC valida rol + objeto; eventos de otra empresa responden `not_found`; RLS por fila | `security.test.ts` |
-| Barista acredita a conocidos sin el cliente | Acreditar sin QR exige gerente+ y queda marcado `staff_lookup` | `loyalty.test.ts` |
-| Repetición de QR | Token aleatorio, hash en BD, caducidad ≤10 min, consumo atómico de un uso | `loyalty.test.ts` |
-| Clonado/repetición de NFC | El id NFC es público y solo indica sucursal; no autoriza nada | `loyalty.test.ts` |
-| Doble acreditación | Idempotency key única por empresa, ticket único (HMAC), 1 sello por compra, espera mínima, máximo diario | `loyalty.test.ts` |
-| Doble canje / saldo negativo | `FOR UPDATE` en tarjeta, CHECK `>= 0`, token de canje de un uso | `loyalty.test.ts` (secuencial) |
-| Manipulación de precio/elegibilidad | Precios y elegibilidad salen del catálogo; el navegador solo envía ids y cantidades | `loyalty.test.ts` |
-| Alteración del historial | Triggers append-only (incluido superusuario y TRUNCATE) | `security.test.ts` |
-| Fuerza bruta / abuso | Rate limits: alta 10/h, QR 30/10 min, lookup 120/10 min, acreditación 60/10 min, canje y ajustes 30/10 min | `security.test.ts`, `loyalty.test.ts` |
-| Fuga de PII al personal | Barista no lee `customers`; lookup devuelve contacto enmascarado | `security.test.ts` |
-| Secretos en repositorio/logs | `.env*` ignorados; auditoría sin tokens; `server-only` en `src/lib/env.ts` | revisión |
-| Clickjacking / sniffing | `frame-ancestors 'none'`, `nosniff`, HSTS, `Referrer-Policy` | `landing.spec.ts` |
+| Acceso anónimo | `anon` no ejecuta ninguna función; solo lee nombre de negocio y sucursales | `security.test.ts`, `audit-fixes.test.ts` (inventario) |
+| IDOR/BOLA | Cada RPC deriva la empresa del objeto y valida rol y sucursal; lo ajeno responde `not_found` | `security.test.ts`, `admin.test.ts` |
+| Repetición de QR | Token de 256 bits, solo hash en BD, TTL ≤ 5 min, un uso; el apartado queda ligado a barista y sucursal | `loyalty.test.ts`, `bar-flow.test.ts` |
+| NFC clonado | El id NFC solo indica sucursal; no autoriza nada | `loyalty.test.ts` |
+| Doble acreditación o canje | Idempotencia, folio único por sucursal (HMAC), `FOR UPDATE`, CHECK ≥ 0 | `loyalty.test.ts` |
+| Fraude interno | Sin auto-acreditación; acreditar sin QR exige gerente; reversos y ajustes con motivo y actor | `audit-fixes.test.ts` |
+| Robo de credenciales de administración | MFA TOTP con `aal2` para administrar | `audit-fixes.test.ts` |
+| Abuso de envíos | Límites en la BD + Supabase; CAPTCHA Turnstile (activar) | `staff-login.test.ts` |
+| XSS | CSP con nonce y `strict-dynamic`; sin HTML de usuarios; el QR es SVG generado en el servidor | `landing.spec.ts` (sin violaciones de CSP) |
+| Clickjacking y sniffing | `frame-ancestors 'none'`, `nosniff`, HSTS | `landing.spec.ts` |
+| Alteración del historial | Triggers append-only (ledger, auditoría, versiones de campaña) para los roles de la app | `security.test.ts` |
+| Fuga de PII | El barista ve contacto enmascarado; la auditoría no guarda tokens ni búsquedas; Google no recibe contacto | `security.test.ts`, `wallet.test.ts` |
+| Datos temporales | `private.cleanup_ephemeral()` cada hora con pg_cron | `audit-fixes.test.ts` |
 
-## Pendientes conocidos
-- Probar concurrencia real (varias conexiones) contra Supabase: PGlite usa una sola conexión.
-- CSP completa con nonce (`proxy.ts`) y CSRF en Server Actions (Next valida `Origin`; revisar con dominio final).
-- Limpieza periódica de `scan_tokens` vencidos y `private.rate_limit_hits` (pg_cron).
-- MFA para owner/admin (Supabase Auth TOTP).
-- Rate limit por IP en endpoints públicos (registro/OTP) en la capa de app, además del de Supabase Auth.
-- Revisión de los `security definer` por un auditor independiente.
+## Pendientes antes de producción
+- Activar CAPTCHA en Supabase y definir `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
+- Hacer obligatoria la MFA para owner/admin (hoy es opcional y se recomienda en Cuenta).
+- Pruebas de concurrencia con varias conexiones contra Supabase. PGlite usa una sola, así que las carreras de bloqueo no se pudieron reproducir.
+- Alertas: barista con proporción alta de sellos, ajustes grandes, reversos de canje.
+- Cruce de ventas con tarjeta contra el POS importado, por folio y día.
+- Confirmar en el proyecto en la nube la política de contraseñas, la confirmación de correo y los límites de Auth.
