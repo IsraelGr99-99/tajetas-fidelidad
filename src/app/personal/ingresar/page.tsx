@@ -35,7 +35,7 @@ export default async function StaffLoginPage({ searchParams }: { searchParams: P
           </div>
           <p className="bitacora mt-10 text-arcilla-texto lg:mt-0">Personal</p>
           <h1 className="mt-2 text-4xl text-tabaco">Inicia tu turno</h1>
-          <p className="mt-3 leading-7 text-tabaco/75">Usa el correo y la contraseña que te dio administración.</p>
+          <p className="mt-3 leading-7 text-tabaco/75">Entra con tu contraseña o, si te invitaron, con un código enviado a tu correo.</p>
 
           {params.salida ? (
             <p role="status" className="mt-6 rounded-xl border border-exito/30 bg-exito/5 px-4 py-3 text-sm text-exito">

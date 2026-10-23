@@ -33,10 +33,20 @@ export const getStaffSession = cache(async (): Promise<StaffSession> => {
   const claims = claimsData?.claims;
   if (!claims?.sub) return { status: "anonymous" };
 
-  const { data, error } = await supabase.rpc("get_staff_context");
-  if (error) throw new Error(`get_staff_context falló (${error.code ?? "sin código"})`);
-  const context = staffContextSchema.parse(data);
+  const fetchContext = async () => {
+    const { data, error } = await supabase.rpc("get_staff_context");
+    if (error) throw new Error(`get_staff_context falló (${error.code ?? "sin código"})`);
+    return staffContextSchema.parse(data);
+  };
+  let context = await fetchContext();
   if (!context.ok) return { status: "anonymous" };
+
+  // Primer ingreso de alguien invitado: acepta sus invitaciones (correo verificado) y recarga.
+  if (context.memberships.length === 0) {
+    const { data: claim } = await supabase.rpc("claim_staff_invitations");
+    if (claim?.ok && Number(claim.claimed) > 0) context = await fetchContext();
+    if (!context.ok) return { status: "anonymous" };
+  }
 
   // Piloto: una empresa por persona. Multiempresa en la UI queda para después; el backend ya lo soporta.
   const membership = context.memberships[0];

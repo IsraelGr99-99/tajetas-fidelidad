@@ -24,8 +24,8 @@ export default async function ConsoleHomePage() {
   const tiles = [
     { title: "Registrar visita", body: "Captura el ticket, escanea el QR del cliente y confirma el sello.", show: can(role, "earn_with_qr"), href: "/personal/visita" },
     { title: "Canjear recompensa", body: "El cliente confirma el canje desde su teléfono y tú lo escaneas.", show: can(role, "redeem"), href: "/personal/canje" },
-    { title: "Movimientos y reversos", body: "Consulta la bitácora de la sucursal y corrige con motivo.", show: can(role, "view_branch_ledger"), href: null },
-    { title: "Administración", body: "Campaña, personal, sucursales y clientes.", show: can(role, "manage_staff"), href: null },
+    { title: "Movimientos y reversos", body: "Consulta la bitácora de la sucursal y corrige con motivo.", show: can(role, "view_branch_ledger"), href: "/personal/movimientos" },
+    { title: "Administración", body: "Campaña, personal, sucursales y clientes.", show: can(role, "manage_staff"), href: "/personal/admin" },
   ].filter((t) => t.show);
 
   return (
@@ -68,7 +68,6 @@ export default async function ConsoleHomePage() {
             ),
           )}
         </ul>
-        <p className="mt-4 text-sm text-tabaco/75">Las tarjetas marcadas “Próximamente” se habilitan en la siguiente etapa del piloto.</p>
       </section>
 
       <section aria-labelledby="permisos-titulo" className="rounded-3xl bg-papel p-6 sm:p-8">
