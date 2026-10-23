@@ -31,6 +31,14 @@ Ventana fija en `private.rate_limit_hits`, sin Redis ni servicios externos. Sufi
 ## 2026-10-22 · ADR-009 Verificación de contacto gratuita para el demo
 Correo: Supabase Auth con OTP numérico y SMTP propio de capa gratuita (Resend o Brevo). El SMTP integrado de Supabase no sirve para clientes reales (solo envía a miembros del equipo y con límite muy bajo). Teléfono: no existe SMS gratuito real; para el demo se usan números de prueba (`auth.sms.test_otp`) o el crédito de prueba de Twilio (solo números verificados). En la UI el canal teléfono se muestra como “no disponible” mientras no haya proveedor configurado.
 
+## 2026-10-23 · ADR-013 Operación en barra (visita y canje)
+- Orden del flujo de visita: ticket (folio + productos) → QR del cliente → confirmación. El QR se escanea al final para que sus 120 s no se agoten mientras se captura.
+- El folio es obligatorio (los tickets de Café Nómada lo traen impreso). Se convierte en HMAC en el servidor con `PURCHASE_REFERENCE_PEPPER`; la base nunca ve el folio en claro. **El pepper no debe cambiar una vez en producción**: si cambia, un ticket ya usado tendría otro hash y podría volver a sumar.
+- La llave de idempotencia se crea al llegar a “Confirmar” y se reutiliza en cada reintento: un corte de red no duplica sellos ni canjes.
+- Lector QR: `BarcodeDetector` nativo cuando existe; si no, `jsqr` (nueva dependencia, sin dependencias propias, se carga solo en ese caso). También acepta lectores USB tipo teclado. Lo leído se trata como entrada no confiable.
+- El canje solo acepta QR con propósito `redeem`, que el cliente genera tras confirmar en su teléfono.
+- Pruebas e2e: `tests/e2e/global-setup.ts` calienta Chromium. En Windows, sus primeras navegaciones tardaban más de 15 s aunque el servidor respondía en milisegundos.
+
 ## 2026-10-23 · ADR-012 Registro de clientes y QR
 - Acceso del cliente sin contraseña: OTP de 8 dígitos (la UI acepta de 6 a 10 para no depender del ajuste del proyecto) (correo vía Resend; teléfono cuando haya SMS, controlado por `NEXT_PUBLIC_PHONE_AUTH_ENABLED`). Mismo flujo para crear la tarjeta y para volver a entrar. Corre en el navegador por la misma razón que el login del personal (ADR-011).
 - `enroll_customer` exige la versión del aviso de privacidad (`PRIVACY_VERSION`) y guarda fecha de aceptación. El contacto lo lee la base desde `auth.users` ya verificado; el navegador nunca lo envía.

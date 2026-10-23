@@ -43,6 +43,9 @@ El SMTP integrado de Supabase no sirve para clientes reales: solo envía a miemb
 La API key de Resend es un secreto. Solo vive en Supabase y en el gestor de secretos; nunca en `.env.example`, en Git ni en chats.
 - **Teléfono**: no hay SMS gratuito real. Para demostraciones internas usa números de prueba de Supabase Auth (**Phone → Test OTP**) o el crédito de prueba de Twilio (solo números verificados). Para clientes reales se necesita un proveedor con costo por mensaje (Twilio Verify, MessageBird, Vonage).
 
+### Secretos de la app
+- `PURCHASE_REFERENCE_PEPPER`: genera uno por entorno (`node -e "console.log(require(crypto).randomBytes(48).toString(base64url))"`) y guárdalo en el gestor de secretos del hosting. No lo cambies después de abrir el piloto (ver ADR-013).
+
 ## 2. Apple Wallet (etapa 7)
 Requiere Apple Developer Program. Crear un **Pass Type ID** (`pass.com.iautomexa.fidelidad`), generar su certificado, descargar el certificado WWDR G4 y una llave APNs (.p8). Guardar en el gestor de secretos del hosting como base64 (`APPLE_*` en `.env.example`). La llave privada nunca va a Git.
 

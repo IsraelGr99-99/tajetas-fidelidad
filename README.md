@@ -8,9 +8,9 @@ Sistema de fidelidad digital de [iautomexa](https://iautomexa.com) para el pilot
 - ✅ **Etapa 2** (aplicada en Supabase): esquema multiempresa, ledger append-only, campañas versionadas, RLS y funciones transaccionales para acreditar, canjear, revertir y ajustar.
 - ✅ **Etapa 3**: acceso del personal en `/personal` (login, logout, roles y sucursal).
 - ✅ **Etapa 4**: registro de clientes con código por correo, tarjeta con historial y QR temporal en `/tarjeta`.
-- ⏳ Siguiente: flujos del personal para registrar visitas y canjes (etapa 5). Ver [docs/hoja-de-ruta.md](docs/hoja-de-ruta.md).
+- 🟡 **Etapa 5**: el personal ya registra visitas (`/personal/visita`) y canjes (`/personal/canje`). Faltan reversos y administración. Ver [docs/hoja-de-ruta.md](docs/hoja-de-ruta.md).
 
-Todavía no se pueden registrar visitas ni canjes desde la consola, ni usar Wallet; la UI lo indica con claridad.
+Todavía no hay reversos ni administración desde la UI, ni Wallet; la UI lo indica con claridad.
 
 ## Ejecutar localmente
 
