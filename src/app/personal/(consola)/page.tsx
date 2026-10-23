@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { type Capability, ROLE_LABELS, can } from "@/domain/staff/permissions";
 import { requireStaffWithBranch } from "@/lib/staff/session";
 
@@ -21,10 +22,10 @@ export default async function ConsoleHomePage() {
   const firstName = membership.display_name.split(" ")[0];
 
   const tiles = [
-    { title: "Registrar visita", body: "Escanea el QR del cliente, confirma la compra y suma el sello.", show: can(role, "earn_with_qr") },
-    { title: "Canjear recompensa", body: "El cliente confirma el canje desde su teléfono y tú lo escaneas.", show: can(role, "redeem") },
-    { title: "Movimientos y reversos", body: "Consulta la bitácora de la sucursal y corrige con motivo.", show: can(role, "view_branch_ledger") },
-    { title: "Administración", body: "Campaña, personal, sucursales y clientes.", show: can(role, "manage_staff") },
+    { title: "Registrar visita", body: "Captura el ticket, escanea el QR del cliente y confirma el sello.", show: can(role, "earn_with_qr"), href: "/personal/visita" },
+    { title: "Canjear recompensa", body: "El cliente confirma el canje desde su teléfono y tú lo escaneas.", show: can(role, "redeem"), href: "/personal/canje" },
+    { title: "Movimientos y reversos", body: "Consulta la bitácora de la sucursal y corrige con motivo.", show: can(role, "view_branch_ledger"), href: null },
+    { title: "Administración", body: "Campaña, personal, sucursales y clientes.", show: can(role, "manage_staff"), href: null },
   ].filter((t) => t.show);
 
   return (
@@ -42,17 +43,32 @@ export default async function ConsoleHomePage() {
           Acciones
         </h2>
         <ul className="grid gap-4 sm:grid-cols-2">
-          {tiles.map((tile) => (
-            <li key={tile.title} className="rounded-3xl border border-dashed border-tabaco/25 bg-papel/70 p-6">
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-2xl text-tabaco">{tile.title}</h3>
-                <span className="bitacora shrink-0 rounded-full border border-tabaco/25 px-2.5 py-1 text-[0.6rem] text-tabaco/75">Próximamente</span>
-              </div>
-              <p className="mt-3 leading-7 text-tabaco/75">{tile.body}</p>
-            </li>
-          ))}
+          {tiles.map((tile) =>
+            tile.href ? (
+              <li key={tile.title}>
+                <Link
+                  href={tile.href}
+                  className="block h-full rounded-3xl bg-tabaco p-6 text-crema transition hover:bg-arcilla-texto focus-visible:outline-3 focus-visible:outline-mostaza"
+                >
+                  <h3 className="text-2xl">{tile.title}</h3>
+                  <p className="mt-3 leading-7 text-crema/80">{tile.body}</p>
+                  <span aria-hidden="true" className="mt-4 inline-block font-semibold text-mostaza">
+                    Empezar →
+                  </span>
+                </Link>
+              </li>
+            ) : (
+              <li key={tile.title} className="rounded-3xl border border-dashed border-tabaco/25 bg-papel/70 p-6">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-2xl text-tabaco">{tile.title}</h3>
+                  <span className="bitacora shrink-0 rounded-full border border-tabaco/25 px-2.5 py-1 text-[0.6rem] text-tabaco/75">Próximamente</span>
+                </div>
+                <p className="mt-3 leading-7 text-tabaco/75">{tile.body}</p>
+              </li>
+            ),
+          )}
         </ul>
-        <p className="mt-4 text-sm text-tabaco/75">Estas acciones se habilitan en la siguiente etapa del piloto; todavía no registran movimientos.</p>
+        <p className="mt-4 text-sm text-tabaco/75">Las tarjetas marcadas “Próximamente” se habilitan en la siguiente etapa del piloto.</p>
       </section>
 
       <section aria-labelledby="permisos-titulo" className="rounded-3xl bg-papel p-6 sm:p-8">
