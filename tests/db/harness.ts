@@ -30,6 +30,16 @@ create function auth.uid() returns uuid language sql stable as $$
     (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
   ), '')::uuid
 $$;
+create function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb
+$$;
+create table auth.mfa_factors (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  factor_type text not null default 'totp',
+  status text not null default 'unverified'
+);
+grant execute on function auth.jwt() to anon, authenticated, service_role;
 grant usage on schema auth to anon, authenticated, service_role;
 grant execute on function auth.uid() to anon, authenticated, service_role;
 grant usage on schema public to anon, authenticated, service_role;
@@ -66,8 +76,8 @@ export class TestDb {
   }
 
   /** Ejecuta como un usuario de Supabase (rol `authenticated` + claims) o como `anon`. */
-  async as<T = Json>(userId: string | null, sql: string, params: unknown[] = []): Promise<T[]> {
-    const claims = userId ? JSON.stringify({ sub: userId, role: "authenticated" }) : "";
+  async as<T = Json>(userId: string | null, sql: string, params: unknown[] = [], aal: "aal1" | "aal2" = "aal1"): Promise<T[]> {
+    const claims = userId ? JSON.stringify({ sub: userId, role: "authenticated", aal }) : "";
     await this.pg.query("select set_config('request.jwt.claims', $1, false)", [claims]);
     await this.pg.exec(`set role ${userId ? "authenticated" : "anon"}`);
     try {
@@ -89,9 +99,9 @@ export class TestDb {
   }
 
   /** Llama a una RPC y devuelve su jsonb. */
-  async rpc(userId: string | null, fn: string, args: unknown[]): Promise<Json> {
+  async rpc(userId: string | null, fn: string, args: unknown[], aal: "aal1" | "aal2" = "aal1"): Promise<Json> {
     const placeholders = args.map((_, i) => `$${i + 1}`).join(", ");
-    const rows = await this.as<{ r: Json }>(userId, `select public.${fn}(${placeholders}) as r`, args);
+    const rows = await this.as<{ r: Json }>(userId, `select public.${fn}(${placeholders}) as r`, args, aal);
     return rows[0].r;
   }
 

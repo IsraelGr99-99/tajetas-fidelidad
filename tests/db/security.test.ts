@@ -96,13 +96,14 @@ describe("aislamiento entre clientes y roles (IDOR/BOLA)", () => {
     expect((await db.as(owner.userId, "select contact_email from public.customers")).length).toBeGreaterThan(0);
   });
 
-  test("lookup de tarjeta enmascara el contacto y no consume el código", async () => {
+  test("escanear enmascara el contacto; la consulta antigua sin consumo ya no está disponible", async () => {
     const barista = await db.createStaff("barista");
     const c = await db.createCustomer({ email: "lucia.viajera@correo.test" });
     const token = await db.scanToken(c.userId, c.cardId);
-    const r = await db.rpc(barista.userId, "staff_lookup_card", [IDS.branch, token]);
+    const r = await db.rpc(barista.userId, "staff_claim_card", [IDS.branch, token, ticketHash()]);
     expect(r).toMatchObject({ ok: true, card_id: c.cardId, contact_masked: "l•••@correo.test" });
-    expect((await db.rpc(barista.userId, "staff_lookup_card", [IDS.branch, token])).ok).toBe(true);
+    expect(JSON.stringify(r)).not.toContain("lucia.viajera");
+    await expect(db.rpc(barista.userId, "staff_lookup_card", [IDS.branch, token])).rejects.toThrow(/permission denied/);
   });
 
   test("personal de otra empresa no puede operar ni descubrir eventos", async () => {
@@ -114,7 +115,7 @@ describe("aislamiento entre clientes y roles (IDOR/BOLA)", () => {
     const items = JSON.stringify([{ product_id: americano, quantity: 1 }]);
 
     expect(await db.rpc(outsider.userId, "record_earn", [IDS.branch, idemKey(), ticketHash(), items, token, null, null])).toMatchObject({ code: "forbidden" });
-    expect(await db.rpc(outsider.userId, "staff_lookup_card", [IDS.branch, token])).toMatchObject({ code: "forbidden" });
+    expect(await db.rpc(outsider.userId, "staff_claim_card", [IDS.branch, token, ticketHash()])).toMatchObject({ code: "forbidden" });
     // En su propia sucursal, el token de otra empresa no existe.
     expect(await db.rpc(outsider.userId, "record_earn", [otherBranch, idemKey(), ticketHash(), items, token, null, null])).toMatchObject({ code: "token_invalid" });
 
@@ -128,7 +129,7 @@ describe("aislamiento entre clientes y roles (IDOR/BOLA)", () => {
     const barista = await db.createStaff("barista", { branchAccess: false });
     const c = await db.createCustomer();
     const token = await db.scanToken(c.userId, c.cardId);
-    expect(await db.rpc(barista.userId, "staff_lookup_card", [IDS.branch, token])).toMatchObject({ code: "forbidden" });
+    expect(await db.rpc(barista.userId, "staff_claim_card", [IDS.branch, token, ticketHash()])).toMatchObject({ code: "forbidden" });
   });
 
   test("personal desactivado pierde acceso de inmediato", async () => {
@@ -136,18 +137,20 @@ describe("aislamiento entre clientes y roles (IDOR/BOLA)", () => {
     await db.admin("update public.staff_members set active = false where user_id = $1", [barista.userId]);
     const c = await db.createCustomer();
     const token = await db.scanToken(c.userId, c.cardId);
-    expect(await db.rpc(barista.userId, "staff_lookup_card", [IDS.branch, token])).toMatchObject({ code: "forbidden" });
+    expect(await db.rpc(barista.userId, "staff_claim_card", [IDS.branch, token, ticketHash()])).toMatchObject({ code: "forbidden" });
   });
 
-  test("los rechazos quedan auditados sin tokens", async () => {
+  test("los rechazos quedan auditados sin tokens y fuera de la bitácora ajena", async () => {
     const intruder = await db.createUser({ email: `x-${randomUUID().slice(0, 6)}@correo.test` });
     const hash = ticketHash();
-    await db.rpc(intruder, "staff_lookup_card", [IDS.branch, hash]);
-    const rows = await db.admin<{ outcome: string; details: unknown }>(
-      "select outcome, details from public.audit_log where actor_user_id = $1",
+    await db.rpc(intruder, "staff_claim_card", [IDS.branch, hash, ticketHash()]);
+    const rows = await db.admin<{ outcome: string; details: unknown; business_id: string | null }>(
+      "select outcome, details, business_id from public.audit_log where actor_user_id = $1",
       [intruder],
     );
     expect(rows[0].outcome).toBe("denied");
+    // Quien no pertenece a la empresa no ensucia su bitácora (B1).
+    expect(rows[0].business_id).toBeNull();
     expect(JSON.stringify(rows)).not.toContain(hash);
   });
 });
