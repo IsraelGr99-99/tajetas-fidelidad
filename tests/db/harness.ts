@@ -77,6 +77,17 @@ export class TestDb {
     }
   }
 
+  /** Ejecuta como el servidor con la llave secreta (rol `service_role`). */
+  async service<T = Json>(sql: string, params: unknown[] = []): Promise<T[]> {
+    await this.pg.query("select set_config('request.jwt.claims', '', false)");
+    await this.pg.exec("set role service_role");
+    try {
+      return (await this.pg.query<T>(sql, params)).rows;
+    } finally {
+      await this.pg.exec("reset role");
+    }
+  }
+
   /** Llama a una RPC y devuelve su jsonb. */
   async rpc(userId: string | null, fn: string, args: unknown[]): Promise<Json> {
     const placeholders = args.map((_, i) => `$${i + 1}`).join(", ");

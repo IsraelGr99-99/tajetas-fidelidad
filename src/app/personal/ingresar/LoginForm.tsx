@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { OTP_MAX_LENGTH, emailSchema, otpSchema } from "@/domain/customer/contact";
+import { requestStaffCodeAction } from "@/lib/staff/login-actions";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Mode = "password" | "code";
@@ -20,7 +21,7 @@ const fieldClass =
  * Inicio de sesión del personal, en el navegador para que los límites por IP de
  * Supabase Auth apliquen a cada dispositivo. Dos opciones:
  *  - Contraseña (cuentas existentes).
- *  - Código por correo (personal invitado; no hay que compartir contraseñas).
+ *  - Código por correo (personal invitado): el servidor solo lo envía a correos autorizados.
  * El servidor solo confía en la sesión tras verificar el JWT en cada petición.
  */
 export function LoginForm({ next }: { next: string }) {
@@ -57,18 +58,11 @@ export function LoginForm({ next }: { next: string }) {
     event.preventDefault();
     const parsed = emailSchema.safeParse(String(new FormData(event.currentTarget).get("email") ?? ""));
     if (!parsed.success) return setStatus({ kind: "error", message: parsed.error.issues[0]?.message ?? "Correo inválido." });
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) return setStatus({ kind: "error", message: "El acceso no está configurado en este entorno." });
     setStatus({ kind: "submitting" });
     try {
-      const { error } = await supabase.auth.signInWithOtp({ email: parsed.data, options: { shouldCreateUser: true } });
-      if (error) {
-        const limited = error.status === 429 || error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit";
-        return setStatus({
-          kind: "error",
-          message: limited ? "Ya pediste varios códigos. Espera unos minutos." : "No pudimos enviar el código. Inténtalo de nuevo en un momento.",
-        });
-      }
+      // El servidor decide si el correo está autorizado; aquí nunca se sabe la respuesta.
+      const r = await requestStaffCodeAction(parsed.data);
+      if (!r.ok) return setStatus({ kind: "error", message: r.message });
       setStatus({ kind: "code_sent", email: parsed.data });
     } catch {
       setStatus({ kind: "error", message: "No hay conexión con el servidor." });
@@ -153,7 +147,7 @@ export function LoginForm({ next }: { next: string }) {
       ) : pendingEmail ? (
         <form onSubmit={(e) => onVerifyCode(e, pendingEmail)} noValidate className="space-y-5">
           <p className="leading-7 text-tabaco/80">
-            Enviamos un código a <strong className="text-tabaco">{pendingEmail}</strong>.
+            Si <strong className="text-tabaco">{pendingEmail}</strong> está autorizado para el personal, te llegará un código en unos segundos.
           </p>
           <div>
             <label htmlFor="code" className="block text-sm font-semibold text-tabaco">

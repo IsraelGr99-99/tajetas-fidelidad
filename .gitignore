@@ -27,3 +27,5 @@ supabase/.branches/
 .DS_Store
 
 service-account.json
+# Configuración local del entorno de Claude
+.claude/launch.json
