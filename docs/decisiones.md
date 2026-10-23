@@ -31,6 +31,14 @@ Ventana fija en `private.rate_limit_hits`, sin Redis ni servicios externos. Sufi
 ## 2026-10-22 · ADR-009 Verificación de contacto gratuita para el demo
 Correo: Supabase Auth con OTP numérico y SMTP propio de capa gratuita (Resend o Brevo). El SMTP integrado de Supabase no sirve para clientes reales (solo envía a miembros del equipo y con límite muy bajo). Teléfono: no existe SMS gratuito real; para el demo se usan números de prueba (`auth.sms.test_otp`) o el crédito de prueba de Twilio (solo números verificados). En la UI el canal teléfono se muestra como “no disponible” mientras no haya proveedor configurado.
 
+## 2026-10-24 · ADR-014 Gerencia y administración
+- Alta de personal por **invitación**: owner/admin registra correo, nombre, rol y sucursales. La persona entra con “código por correo”, y `claim_staff_invitations` crea su membresía solo si el correo está verificado. No se comparten contraseñas ni se usa la llave secreta para dar de alta.
+- Jerarquía: owner gestiona todo; admin solo gerentes y baristas; nadie cambia su propio rol o estado; siempre queda al menos un owner activo; no se puede desactivar la última sucursal activa.
+- Bitácora (`list_ledger`): el gerente ve solo su sucursal; admin ve todas. El contacto del cliente sale enmascarado y se muestra el actor de cada movimiento.
+- Clientes: no hay listado general. La búsqueda es exacta por correo, teléfono o serial; va por POST (no queda en la URL) y se audita el tipo de búsqueda, nunca el dato.
+- Baja de cuenta: `delete_my_customer_data` anonimiza al cliente y borra sus QR; después la app borra el usuario de Auth con la llave secreta (`src/lib/supabase/admin.ts`, único uso), excepto si esa cuenta también es de personal.
+- El resumen de administración se calcula en vivo desde la bitácora; no hay métricas inventadas.
+
 ## 2026-10-23 · ADR-013 Operación en barra (visita y canje)
 - Orden del flujo de visita: ticket (folio + productos) → QR del cliente → confirmación. El QR se escanea al final para que sus 120 s no se agoten mientras se captura.
 - El folio es obligatorio (los tickets de Café Nómada lo traen impreso). Se convierte en HMAC en el servidor con `PURCHASE_REFERENCE_PEPPER`; la base nunca ve el folio en claro. **El pepper no debe cambiar una vez en producción**: si cambia, un ticket ya usado tendría otro hash y podría volver a sumar.

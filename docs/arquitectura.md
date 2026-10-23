@@ -53,6 +53,13 @@ Todas devuelven `jsonb`: `{ "ok": true, ... }` o `{ "ok": false, "code": "<códi
 | `adjust_stamps(card_id, delta, reason, idem_key)` | admin, owner | delta ±1..50 | `event_id`, recompensas emitidas |
 | `publish_campaign_version(campaign_id, rules, reason)` | admin, owner | `rules` = `CampaignRules` (`src/domain/loyalty/campaign.ts`) | `version` |
 | `get_staff_context()` | cualquier usuario autenticado | — | empresas donde es personal activo, rol y sucursales operables |
+| `claim_staff_invitations()` | usuario con correo verificado | — | invitaciones aceptadas |
+| `list_ledger(business, branch?, limit, before?)` | gerente (su sucursal), admin, owner | paginación por fecha | eventos con actor, cliente enmascarado y si es reversible |
+| `business_summary(business)` | admin, owner | — | conteos reales de visitas, canjes, clientes y recompensas pendientes |
+| `upsert_product` / `upsert_branch` | admin, owner | — | id; auditoría con antes/después |
+| `invite_staff` / `revoke_staff_invitation` / `update_staff_member` / `list_staff` | admin, owner (con jerarquía) | — | — |
+| `admin_find_customers(business, query)` | admin, owner | correo, teléfono o serial exactos | hasta 10 tarjetas con contacto enmascarado |
+| `delete_my_customer_data(slug)` | cliente | — | anonimiza y borra códigos QR |
 
 ### Códigos de rechazo
 

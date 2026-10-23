@@ -40,7 +40,7 @@ test("sin sesión, la página de sin acceso manda al login", async ({ page }) =>
 });
 
 test.describe("operaciones de barra requieren sesión", () => {
-  for (const path of ["/personal/visita", "/personal/canje"]) {
+  for (const path of ["/personal/visita", "/personal/canje", "/personal/movimientos", "/personal/admin", "/personal/admin/clientes"]) {
     test(`${path} redirige al login`, async ({ page }) => {
       await page.goto(path);
       const url = new URL(page.url());
