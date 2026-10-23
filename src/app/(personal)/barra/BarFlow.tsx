@@ -28,8 +28,23 @@ const FINAL = new Set(["duplicate_purchase", "too_soon", "daily_limit", "card_in
  *  - código de canje → confirmar entrega de la recompensa
  * Al terminar vuelve sola a la cámara para el siguiente cliente.
  */
-export function BarFlow({ catalog, branchName }: { catalog: CatalogProduct[]; branchName: string }) {
-  const [phase, setPhase] = useState<Phase>({ name: "scan" });
+export function BarFlow({
+  catalog,
+  branchName,
+  initialClaim,
+}: {
+  catalog: CatalogProduct[];
+  branchName: string;
+  /** Solo para vistas previas y pruebas: arranca con una tarjeta ya apartada (el servidor valida el apartado igual). */
+  initialClaim?: Claim;
+}) {
+  const [phase, setPhase] = useState<Phase>(() =>
+    initialClaim
+      ? initialClaim.purpose === "redeem"
+        ? { name: "redeem", claim: initialClaim, key: "preview-redeem-key" }
+        : { name: "visit", claim: initialClaim, key: "preview-earn-key" }
+      : { name: "scan" },
+  );
   const [folio, setFolio] = useState("");
   const [lines, setLines] = useState<Record<string, Line>>({});
   const [now, setNow] = useState(() => Date.now());
@@ -277,7 +292,7 @@ export function BarFlow({ catalog, branchName }: { catalog: CatalogProduct[]; br
       </div>
 
       <section aria-labelledby="mas-vendidos">
-        <h2 id="mas-vendidos" className="text-sm font-semibold text-tabaco">
+        <h2 id="mas-vendidos" className="font-sans text-sm font-semibold tracking-normal text-tabaco">
           ¿Qué compró? <span className="font-normal text-tabaco/75">Toca para agregar</span>
         </h2>
         <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -336,7 +351,7 @@ export function BarFlow({ catalog, branchName }: { catalog: CatalogProduct[]; br
 
       {selected.length > 0 ? (
         <section aria-labelledby="ticket" className="rounded-2xl border border-tabaco/15 bg-papel p-4">
-          <h2 id="ticket" className="text-sm font-semibold text-tabaco">
+          <h2 id="ticket" className="font-sans text-sm font-semibold tracking-normal text-tabaco">
             Ticket
           </h2>
           <ul className="mt-2 space-y-2">

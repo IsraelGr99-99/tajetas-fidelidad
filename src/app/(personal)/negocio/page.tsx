@@ -1,52 +1,235 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { DailyBars, RankBars } from "@/components/charts/Charts";
 import { Notice } from "@/components/staff/OperationParts";
 import { rpcErrorMessage } from "@/domain/loyalty/messages";
+import { formatMxn, lastDaysRange } from "@/lib/format";
 import { requireCapability } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Administración" };
+export const metadata: Metadata = { title: "Panel" };
 
-type Summary = Record<
-  "customers_total" | "customers_new_7d" | "earns_today" | "earns_7d" | "redeems_7d" | "reversals_7d" | "rewards_outstanding" | "staff_active",
-  number
->;
+const RANGES = [7, 30, 90] as const;
 
-export default async function AdminHome() {
+type Dashboard = {
+  ok: true;
+  has_pos_data: boolean;
+  has_demo: boolean;
+  totals: {
+    pos_sales_cents: number;
+    cogs_cents: number;
+    cost_coverage: number | null;
+    gross_profit_cents: number;
+    expenses_cents: number;
+    net_profit_cents: number;
+    card_sales_cents: number;
+    card_visits: number;
+    card_share: number | null;
+    avg_card_ticket_cents: number | null;
+  };
+  loyalty: { new_customers: number; redemptions: number; rewards_outstanding: number; rewards_outstanding_value_cents: number };
+  by_day: { day: string; pos_sales_cents: number; expenses_cents: number; card_sales_cents: number }[];
+  top_products: { name: string; category: string | null; quantity: number; revenue_cents: number; profit_cents: number | null }[];
+  by_branch: { id: string; name: string; is_demo: boolean; pos_sales_cents: number; cogs_cents: number; expenses_cents: number; card_visits: number }[];
+  by_category: { category: string; revenue_cents: number }[];
+  expenses_by_category: { category: string; amount_cents: number }[];
+  unallocated_expenses_cents: number;
+};
+
+const pct = (n: number | null) => (n === null ? "—" : `${Math.round(n * 100)} %`);
+
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ rango?: string; demo?: string }> }) {
   const { membership } = await requireCapability("manage_staff");
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = (await supabase?.rpc("business_summary", { p_business_id: membership.business_id })) ?? { data: null, error: true };
-  const ok = !error && data?.ok;
-  const s = (ok ? data : null) as Summary | null;
+  const params = await searchParams;
+  const days = RANGES.find((r) => String(r) === params.rango) ?? 30;
+  const includeDemo = params.demo !== "0";
+  const { from, to } = lastDaysRange(days);
 
-  const tiles: { label: string; value: number | undefined; hint: string }[] = [
-    { label: "Visitas hoy", value: s?.earns_today, hint: "Sellos registrados hoy" },
-    { label: "Visitas 7 días", value: s?.earns_7d, hint: "Últimos 7 días" },
-    { label: "Canjes 7 días", value: s?.redeems_7d, hint: "Recompensas entregadas" },
-    { label: "Clientes", value: s?.customers_total, hint: `${s?.customers_new_7d ?? 0} nuevos en 7 días` },
-    { label: "Recompensas pendientes", value: s?.rewards_outstanding, hint: "Ganadas y aún sin canjear" },
-    { label: "Reversos 7 días", value: s?.reversals_7d, hint: "Correcciones con motivo" },
-  ];
+  const supabase = await createSupabaseServerClient();
+  const res = await supabase?.rpc("finance_dashboard", { p_business_id: membership.business_id, p_from: from, p_to: to, p_include_demo: includeDemo });
+  const d = (res?.data?.ok ? res.data : null) as Dashboard | null;
+  const href = (r: number, demo: boolean) => `/negocio?rango=${r}${demo ? "" : "&demo=0"}`;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="bitacora text-arcilla-texto">{membership.business_name}</p>
-        <h1 className="mt-2 text-4xl text-tabaco">Resumen</h1>
-        <p className="mt-2 max-w-2xl leading-7 text-tabaco/75">
-          Cifras calculadas en vivo desde la bitácora. {membership.is_demo ? "Este es un entorno de demostración: los datos pueden ser de prueba." : null}
-        </p>
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="bitacora text-arcilla-texto">{membership.business_name}</p>
+          <h1 className="mt-1 text-4xl text-tabaco">Panel</h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <nav aria-label="Periodo" className="flex gap-1 rounded-full bg-tabaco/5 p-1">
+            {RANGES.map((r) => (
+              <Link
+                key={r}
+                href={href(r, includeDemo)}
+                aria-current={r === days ? "page" : undefined}
+                className={`rounded-full px-3 py-1.5 text-sm font-semibold ${r === days ? "bg-papel text-tabaco shadow" : "text-tabaco/75"}`}
+              >
+                {r} días
+              </Link>
+            ))}
+          </nav>
+          {d?.has_demo ? (
+            <Link href={href(days, !includeDemo)} className="rounded-full border border-tabaco/20 px-3 py-1.5 text-sm font-semibold text-tabaco">
+              {includeDemo ? "Ocultar DEMO" : "Mostrar DEMO"}
+            </Link>
+          ) : null}
+        </div>
       </div>
-      {!ok ? <Notice tone="error" title={rpcErrorMessage(data?.code)} /> : null}
-      <dl className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        {tiles.map((t) => (
-          <div key={t.label} className="rounded-3xl bg-papel p-5">
-            <dt className="text-sm text-tabaco/75">{t.label}</dt>
-            <dd className="mt-1 font-display text-4xl text-tabaco tabular-nums">{t.value ?? "—"}</dd>
-            <dd className="mt-1 text-xs text-tabaco/75">{t.hint}</dd>
+
+      {!d ? <Notice tone="error" title={rpcErrorMessage(res?.data?.code)} /> : null}
+
+      {d && d.has_demo && includeDemo ? (
+        <p className="rounded-2xl bg-mostaza/30 px-4 py-3 text-sm text-tabaco">
+          <strong>Incluye datos DEMO</strong> (ventas, gastos y la sucursal “Angelópolis (DEMO)” son ficticios). Bórralos en{" "}
+          <Link href="/negocio/finanzas" className="font-semibold underline underline-offset-4">
+            Ventas y gastos
+          </Link>
+          .
+        </p>
+      ) : null}
+
+      {d && !d.has_pos_data ? (
+        <Notice tone="info" title="Aún no hay ventas del punto de venta en este periodo">
+          Importa tu reporte en{" "}
+          <Link href="/negocio/finanzas" className="font-semibold underline underline-offset-4">
+            Ventas y gastos
+          </Link>{" "}
+          o genera datos DEMO para ver el panel completo. Las cifras de fidelidad sí son reales.
+        </Notice>
+      ) : null}
+
+      {d ? (
+        <>
+          <dl className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+            <Kpi label="Ventas (POS)" value={formatMxn(d.totals.pos_sales_cents)} hint={`Últimos ${days} días`} strong />
+            <Kpi
+              label="Ganancia bruta"
+              value={formatMxn(d.totals.gross_profit_cents)}
+              hint={d.totals.cost_coverage === null ? "Sin ventas" : `Costo conocido en ${pct(d.totals.cost_coverage)} de las ventas`}
+            />
+            <Kpi label="Gastos" value={formatMxn(d.totals.expenses_cents)} hint="Registrados e importados" />
+            <Kpi
+              label="Utilidad neta"
+              value={formatMxn(d.totals.net_profit_cents)}
+              hint={d.totals.net_profit_cents < 0 ? "Pérdida en el periodo" : "Ventas − costo − gastos"}
+              tone={d.totals.net_profit_cents < 0 ? "negative" : "neutral"}
+            />
+            <Kpi
+              label="Ventas con tarjeta"
+              value={formatMxn(d.totals.card_sales_cents)}
+              hint={`${d.totals.card_visits} visitas${d.totals.card_share !== null ? ` · ${pct(d.totals.card_share)} del POS` : ""}`}
+            />
+            <Kpi
+              label="Recompensas pendientes"
+              value={String(d.loyalty.rewards_outstanding)}
+              hint={`Valor máximo ${formatMxn(d.loyalty.rewards_outstanding_value_cents)}`}
+            />
+          </dl>
+
+          <section aria-labelledby="ventas-dia" className="rounded-3xl bg-papel p-6">
+            <h2 id="ventas-dia" className="text-2xl text-tabaco">
+              Ventas por día
+            </h2>
+            <p className="text-sm text-tabaco/75">Reporte del punto de venta. Pasa el cursor sobre una barra para ver el monto.</p>
+            <div className="mt-4">
+              <DailyBars
+                title="Ventas por día"
+                points={d.by_day.map((x) => ({ day: x.day, value: x.pos_sales_cents }))}
+                emptyText="Sin ventas importadas en este periodo."
+              />
+            </div>
+          </section>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section aria-labelledby="top" className="rounded-3xl bg-papel p-6">
+              <h2 id="top" className="text-2xl text-tabaco">
+                Lo más vendido
+              </h2>
+              <div className="mt-4">
+                <RankBars
+                  emptyText="Sin ventas en este periodo."
+                  items={d.top_products.map((p) => ({
+                    label: p.name,
+                    value: p.revenue_cents,
+                    note: `${Number(p.quantity).toLocaleString("es-MX")} vendidos${p.profit_cents !== null ? ` · ganancia ${formatMxn(p.profit_cents)}` : " · sin costo"}`,
+                  }))}
+                />
+              </div>
+            </section>
+
+            <section aria-labelledby="sucursales-rank" className="rounded-3xl bg-papel p-6">
+              <h2 id="sucursales-rank" className="text-2xl text-tabaco">
+                Ventas por sucursal
+              </h2>
+              <div className="mt-4">
+                <RankBars
+                  emptyText="Sin ventas por sucursal en este periodo."
+                  items={d.by_branch.map((b) => ({
+                    label: b.name,
+                    value: b.pos_sales_cents,
+                    tag: b.is_demo ? "DEMO" : undefined,
+                    note: `Utilidad ${formatMxn(b.pos_sales_cents - b.cogs_cents - b.expenses_cents)} · ${b.card_visits} visitas con tarjeta`,
+                  }))}
+                />
+                {d.unallocated_expenses_cents > 0 ? (
+                  <p className="mt-3 text-xs text-tabaco/75">Gastos generales sin sucursal: {formatMxn(d.unallocated_expenses_cents)} (no incluidos arriba).</p>
+                ) : null}
+              </div>
+            </section>
+
+            <section aria-labelledby="categorias" className="rounded-3xl bg-papel p-6">
+              <h2 id="categorias" className="text-2xl text-tabaco">
+                Ventas por categoría
+              </h2>
+              <div className="mt-4">
+                <RankBars emptyText="Sin ventas en este periodo." items={d.by_category.map((c) => ({ label: c.category, value: c.revenue_cents }))} />
+              </div>
+            </section>
+
+            <section aria-labelledby="gastos-cat" className="rounded-3xl bg-papel p-6">
+              <h2 id="gastos-cat" className="text-2xl text-tabaco">
+                Gastos por categoría
+              </h2>
+              <div className="mt-4">
+                <RankBars emptyText="Sin gastos en este periodo." items={d.expenses_by_category.map((c) => ({ label: c.category, value: c.amount_cents }))} />
+              </div>
+            </section>
           </div>
-        ))}
-      </dl>
-      <p className="text-sm text-tabaco/75">Personal activo: {s?.staff_active ?? "—"}.</p>
+
+          <section aria-labelledby="fidelidad" className="rounded-3xl bg-tabaco p-6 text-crema">
+            <h2 id="fidelidad" className="text-2xl">
+              Programa de fidelidad
+            </h2>
+            <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <Mini label="Clientes nuevos" value={String(d.loyalty.new_customers)} />
+              <Mini label="Visitas con tarjeta" value={String(d.totals.card_visits)} />
+              <Mini label="Canjes" value={String(d.loyalty.redemptions)} />
+              <Mini label="Ticket promedio" value={d.totals.avg_card_ticket_cents === null ? "—" : formatMxn(d.totals.avg_card_ticket_cents)} />
+            </dl>
+          </section>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function Kpi({ label, value, hint, strong, tone = "neutral" }: { label: string; value: string; hint: string; strong?: boolean; tone?: "neutral" | "negative" }) {
+  return (
+    <div className={`rounded-3xl p-5 ${strong ? "bg-tabaco text-crema" : "bg-papel text-tabaco"}`}>
+      <dt className={`text-sm ${strong ? "text-crema/80" : "text-tabaco/75"}`}>{label}</dt>
+      <dd className={`mt-1 font-display text-3xl tabular-nums ${tone === "negative" ? "text-alerta" : ""}`}>{value}</dd>
+      <dd className={`mt-1 text-xs ${strong ? "text-crema/75" : "text-tabaco/75"}`}>{hint}</dd>
+    </div>
+  );
+}
+
+function Mini({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-sm text-crema/75">{label}</dt>
+      <dd className="font-display text-3xl tabular-nums">{value}</dd>
     </div>
   );
 }

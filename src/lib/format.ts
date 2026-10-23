@@ -20,3 +20,9 @@ export function formatDateTime(value: Date | string): string {
 export function formatDate(value: Date | string): string {
   return dateOnly.format(typeof value === "string" ? new Date(value) : value);
 }
+
+/** Rango de `days` días que termina hoy, como fechas "AAAA-MM-DD" en America/Mexico_City. */
+export function lastDaysRange(days: number, now: Date = new Date()): { from: string; to: string } {
+  const iso = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(d);
+  return { from: iso(new Date(now.getTime() - (days - 1) * 86_400_000)), to: iso(now) };
+}

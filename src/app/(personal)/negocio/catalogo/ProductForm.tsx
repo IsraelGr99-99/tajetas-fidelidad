@@ -5,18 +5,26 @@ import { type ActionState, upsertProductAction } from "@/actions/management";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { errorTextClass, inputClass, labelClass } from "@/components/ui/form";
 
-export type ProductValues = { id: string | null; name: string; category: string; priceCents: number; eligible: boolean; active: boolean };
+export type ProductValues = {
+  id: string | null;
+  name: string;
+  category: string;
+  priceCents: number;
+  costCents: number | null;
+  eligible: boolean;
+  active: boolean;
+};
 
 export function ProductForm({ product, categories }: { product: ProductValues | null; categories: string[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(upsertProductAction, { ok: false, message: null });
-  const p = product ?? { id: null, name: "", category: categories[0] ?? "Bebidas", priceCents: 0, eligible: true, active: true };
+  const p = product ?? { id: null, name: "", category: categories[0] ?? "Bebidas", priceCents: 0, costCents: null, eligible: true, active: true };
   const uid = p.id ?? "nuevo";
   const err = state.fieldErrors ?? {};
 
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="productId" value={p.id ?? ""} />
-      <div className="grid gap-4 sm:grid-cols-[2fr_1.2fr_1fr]">
+      <div className="grid gap-4 sm:grid-cols-[2fr_1.2fr_1fr_1fr]">
         <div>
           <label htmlFor={`${uid}-name`} className={labelClass}>
             Nombre
@@ -45,6 +53,20 @@ export function ProductForm({ product, categories }: { product: ProductValues | 
             className={inputClass}
           />
           {err.price ? <p className={errorTextClass}>{err.price}</p> : null}
+        </div>
+        <div>
+          <label htmlFor={`${uid}-cost`} className={labelClass}>
+            Costo <span className="font-normal text-tabaco/75">(opcional)</span>
+          </label>
+          <input
+            id={`${uid}-cost`}
+            name="cost"
+            defaultValue={p.costCents !== null ? (p.costCents / 100).toFixed(2) : ""}
+            inputMode="decimal"
+            placeholder="14.50"
+            className={inputClass}
+          />
+          {err.cost ? <p className={errorTextClass}>{err.cost}</p> : null}
         </div>
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-tabaco">

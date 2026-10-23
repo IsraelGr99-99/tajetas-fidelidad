@@ -90,6 +90,11 @@ const productSchema = z.object({
     .trim()
     .regex(/^\d{1,5}(\.\d{1,2})?$/, "Precio en pesos, por ejemplo 65 o 65.50.")
     .transform((v) => Math.round(Number(v) * 100)),
+  cost: z
+    .string()
+    .trim()
+    .regex(/^(\d{1,5}(\.\d{1,2})?)?$/, "Costo en pesos, por ejemplo 14.50 (o vacío).")
+    .transform((v) => (v === "" ? null : Math.round(Number(v) * 100))),
   eligible: checkbox,
   active: checkbox,
 });
@@ -100,7 +105,7 @@ export async function upsertProductAction(_prev: ActionState, formData: FormData
   const ctx = await context("manage_campaigns");
   if ("error" in ctx) return { ok: false, message: ctx.error ?? null };
   const d = parsed.data;
-  return run(
+  const saved = await run(
     ctx.supabase.rpc("upsert_product", {
       p_business_id: ctx.businessId,
       p_product_id: d.productId,
@@ -113,6 +118,15 @@ export async function upsertProductAction(_prev: ActionState, formData: FormData
     d.productId ? "Producto actualizado." : "Producto agregado.",
     ["/negocio/catalogo", "/barra"],
   );
+  if (!saved.ok) return saved;
+  // El costo es interno (solo administración); se guarda aparte para no exponerlo al personal.
+  const productId =
+    d.productId ??
+    (await ctx.supabase.rpc("admin_catalog", { p_business_id: ctx.businessId })).data?.products?.find(
+      (p: { name: string }) => p.name.toLowerCase() === d.name.toLowerCase(),
+    )?.id;
+  if (productId) await ctx.supabase.rpc("set_product_cost", { p_business_id: ctx.businessId, p_product_id: productId, p_cost_cents: d.cost });
+  return saved;
 }
 
 // ---------------------------------------------------------------------
