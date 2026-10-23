@@ -2,12 +2,9 @@ import type { NextConfig } from "next";
 import { LEGACY_REDIRECTS } from "./src/domain/staff/routes";
 
 /**
- * Cabeceras de seguridad base. La CSP completa con nonce para scripts se agrega
- * en la etapa de hardening (requiere `proxy.ts` y render dinámico); estas directivas
- * no rompen el renderizado y ya bloquean clickjacking, inyección de <base> y plugins.
+ * Cabeceras de seguridad base. La CSP (con nonce por petición) la pone `src/proxy.ts`.
  */
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

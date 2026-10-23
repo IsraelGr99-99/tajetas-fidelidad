@@ -31,6 +31,7 @@ const membership: Membership = {
   business_slug: "cafe-nomada",
   business_name: "Café Nómada",
   is_demo: true,
+  mfa_pending: false,
   branches: [
     { id: "00000000-0000-4000-8000-0000000000b1", slug: "a", name: "A" },
     { id: "00000000-0000-4000-8000-0000000000b2", slug: "b", name: "B" },

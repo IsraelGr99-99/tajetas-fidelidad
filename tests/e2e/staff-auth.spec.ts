@@ -40,7 +40,8 @@ test("código por correo: misma respuesta para correos no autorizados (no revela
   test.skip(!process.env.SUPABASE_SECRET_KEY, "Requiere la llave secreta del servidor");
   await page.goto("/entrar");
   await page.getByRole("tab", { name: "Código por correo" }).click();
-  await page.getByLabel("Correo con el que te invitaron").fill("nadie-autorizado@ejemplo.test");
+  // Correo distinto por corrida: el servidor limita a 5 solicitudes por correo y hora.
+  await page.getByLabel("Correo con el que te invitaron").fill(`nadie-${Date.now()}-${Math.floor(Math.random() * 1e6)}@ejemplo.test`);
   await page.getByRole("button", { name: "Enviarme el código" }).click();
   await expect(page.getByText(/está autorizado para el personal, te llegará un código/)).toBeVisible({ timeout: 20_000 });
 });

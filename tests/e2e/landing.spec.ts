@@ -32,6 +32,10 @@ test("cabeceras de seguridad presentes", async ({ request }) => {
   const h = res.headers();
   expect(h["x-content-type-options"]).toBe("nosniff");
   expect(h["content-security-policy"]).toContain("frame-ancestors 'none'");
+  // Nonce distinto por respuesta y sin 'unsafe-inline' en scripts.
+  expect(h["content-security-policy"]).toMatch(/script-src 'self' 'nonce-[A-Za-z0-9+/=]+' 'strict-dynamic'/);
+  const other = (await request.get("/")).headers()["content-security-policy"];
+  expect(other).not.toBe(h["content-security-policy"]);
   expect(h["x-powered-by"]).toBeUndefined();
 });
 
@@ -39,4 +43,20 @@ test("404 con estilo y regreso al inicio", async ({ page }) => {
   const res = await page.goto("/no-existe");
   expect(res?.status()).toBe(404);
   await expect(page.getByRole("link", { name: "Volver al inicio" })).toBeVisible();
+});
+
+test("las páginas principales cargan sin violaciones de CSP", async ({ page }) => {
+  const violations: string[] = [];
+  page.on("console", (m) => {
+    if (/Content Security Policy|Refused to (load|execute|apply)/i.test(m.text())) violations.push(m.text());
+  });
+  for (const path of ["/", "/tarjeta/acceso", "/entrar", "/privacidad"]) {
+    await page.goto(path);
+    await page.waitForLoadState("networkidle");
+  }
+  // La app hidrata: un botón interactivo responde (si los scripts se bloquearan, no lo haría).
+  await page.goto("/entrar");
+  await page.getByRole("tab", { name: "Código por correo" }).click();
+  await expect(page.getByLabel("Correo con el que te invitaron")).toBeVisible();
+  expect(violations).toEqual([]);
 });

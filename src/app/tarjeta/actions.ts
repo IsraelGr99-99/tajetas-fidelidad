@@ -8,7 +8,7 @@ import { rpcErrorMessage } from "@/domain/loyalty/messages";
 import { PILOT_BUSINESS_SLUG } from "@/lib/business";
 import { generateScanToken } from "@/lib/scan-token";
 import { googleWalletConfig, saveUrl } from "@/lib/wallet/google";
-import { createGoogleWalletPass } from "@/lib/wallet/sync";
+import { createGoogleWalletPass, syncGoogleWallet } from "@/lib/wallet/sync";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -131,9 +131,15 @@ export async function deleteMyDataAction(_prev: FormState, formData: FormData): 
   const userId = claims?.claims?.sub;
   if (!userId) redirect("/tarjeta/acceso");
 
+  const { data: mine } = await supabase.rpc("get_my_card", { p_business_slug: PILOT_BUSINESS_SLUG });
+  const cardId = mine?.ok ? (mine.card?.id as string | undefined) : undefined;
+
   const { data, error } = await supabase.rpc("delete_my_customer_data", { p_business_slug: PILOT_BUSINESS_SLUG });
   if (error) return { error: "No pudimos eliminar tus datos. Inténtalo de nuevo en un momento." };
   if (!data?.ok) return { error: rpcErrorMessage(data?.code) };
+
+  // El pase de Google Wallet queda inactivo y sin nombre (si falla, se reintenta con los pases atrasados).
+  if (cardId) await syncGoogleWallet(cardId, { force: true }).catch(() => undefined);
 
   if (!data.is_staff) {
     const admin = createSupabaseAdminClient();

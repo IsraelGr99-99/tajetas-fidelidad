@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { selectBranchAction } from "@/actions/staff-session";
 import { Notice } from "@/components/staff/OperationParts";
+import { MfaSetup } from "@/components/staff/Mfa";
 import { SignOutButton } from "@/components/staff/SignOutButton";
 import { ROLE_LABELS, capabilitiesOf } from "@/domain/staff/permissions";
 import { requireStaff } from "@/lib/staff/session";
@@ -77,6 +78,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           </ul>
         )}
       </section>
+
+      {membership.role === "owner" || membership.role === "admin" ? <MfaSetup /> : null}
 
       <SignOutButton className="btn w-full border border-tabaco/25 text-tabaco hover:border-tabaco" />
     </div>

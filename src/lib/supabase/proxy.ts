@@ -6,8 +6,10 @@ import { publicSupabaseConfig } from "./config";
  * Refresca la sesión de Supabase en cada navegación y devuelve si hay usuario
  * con JWT verificado (`getClaims`). No decide permisos: eso lo hace el servidor.
  */
-export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+export async function updateSession(request: NextRequest, requestHeaders: Headers = request.headers) {
+  // Los encabezados de la petición (p. ej. el nonce de la CSP) se reenvían a la página.
+  const next = () => NextResponse.next({ request: { headers: requestHeaders } });
+  let response = next();
   const config = publicSupabaseConfig();
   if (!config) return { response, userId: null as string | null };
 
@@ -18,7 +20,7 @@ export async function updateSession(request: NextRequest) {
       },
       setAll(cookiesToSet, headers) {
         for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
-        response = NextResponse.next({ request });
+        response = next();
         for (const { name, value, options } of cookiesToSet) response.cookies.set(name, value, options);
         for (const [key, value] of Object.entries(headers ?? {})) response.headers.set(key, value);
       },

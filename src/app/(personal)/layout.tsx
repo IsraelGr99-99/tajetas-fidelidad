@@ -60,6 +60,14 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
           <BranchSwitcher branches={membership.branches} activeId={activeBranch?.id ?? null} />
         </header>
 
+        {membership.mfa_pending ? (
+          <p className="bg-tabaco px-4 py-2 text-center text-sm text-crema">
+            Para administrar el negocio confirma tu identidad.{" "}
+            <Link href="/cuenta/verificacion" className="font-semibold text-mostaza underline underline-offset-4">
+              Escribir código de verificación
+            </Link>
+          </p>
+        ) : null}
         {membership.is_demo ? (
           <p className="bg-mostaza/80 px-4 py-1.5 text-center text-xs font-semibold text-tabaco">
             Entorno de demostración · productos, precios y datos marcados DEMO son de ejemplo

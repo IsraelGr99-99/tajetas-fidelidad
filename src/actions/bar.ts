@@ -139,7 +139,7 @@ export async function recordEarnAction(input: z.input<typeof earnInput>): Promis
 
   let referenceHash: string;
   try {
-    referenceHash = hashPurchaseReference(ctx.session.membership.business_id, parsed.data.folio, pepper);
+    referenceHash = hashPurchaseReference(ctx.session.membership.business_id, ctx.branchId, parsed.data.folio, pepper);
   } catch {
     return { ok: false, error: "El folio solo puede tener letras, números y los signos # / _ .", code: "invalid_request" };
   }

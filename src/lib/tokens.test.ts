@@ -23,18 +23,20 @@ describe("token QR", () => {
 describe("referencia de compra", () => {
   const pepper = "p".repeat(48);
   const business = "00000000-0000-4000-8000-000000000001";
+  const branch = "00000000-0000-4000-8000-0000000000b1";
   test("normaliza el folio", () => {
     expect(normalizeTicketFolio(" a-12 34 ")).toBe("A1234");
   });
-  test("mismo folio y empresa => mismo hash; otra empresa => otro hash", () => {
-    const a = hashPurchaseReference(business, "a-1234", pepper);
+  test("mismo folio, empresa y sucursal => mismo hash; otra empresa o sucursal => otro hash", () => {
+    const a = hashPurchaseReference(business, branch, "a-1234", pepper);
     expect(a).toMatch(/^[a-f0-9]{64}$/);
-    expect(hashPurchaseReference(business, "A1234", pepper)).toBe(a);
-    expect(hashPurchaseReference("00000000-0000-4000-8000-000000000002", "A1234", pepper)).not.toBe(a);
+    expect(hashPurchaseReference(business, branch, "A1234", pepper)).toBe(a);
+    expect(hashPurchaseReference("00000000-0000-4000-8000-000000000002", branch, "A1234", pepper)).not.toBe(a);
+    expect(hashPurchaseReference(business, "00000000-0000-4000-8000-0000000000b2", "A1234", pepper)).not.toBe(a);
   });
   test("exige pepper fuerte y folio válido", () => {
-    expect(() => hashPurchaseReference(business, "A1", "corto")).toThrow();
-    expect(() => hashPurchaseReference(business, "", pepper)).toThrow(RangeError);
-    expect(() => hashPurchaseReference(business, "<script>", pepper)).toThrow(RangeError);
+    expect(() => hashPurchaseReference(business, branch, "A1", "corto")).toThrow();
+    expect(() => hashPurchaseReference(business, branch, "", pepper)).toThrow(RangeError);
+    expect(() => hashPurchaseReference(business, branch, "<script>", pepper)).toThrow(RangeError);
   });
 });

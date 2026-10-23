@@ -61,6 +61,8 @@ export const membershipSchema = z.object({
   business_slug: z.string(),
   business_name: z.string(),
   is_demo: z.boolean(),
+  /** Owner/admin con verificación en dos pasos activada pero sin completarla en esta sesión. */
+  mfa_pending: z.boolean().default(false),
   branches: z.array(branchSchema),
 });
 

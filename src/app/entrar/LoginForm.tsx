@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { OTP_MAX_LENGTH, emailSchema, otpSchema } from "@/domain/customer/contact";
 import { requestStaffCodeAction } from "@/actions/staff-login";
+import { MfaChallenge, needsSecondFactor } from "@/components/staff/Mfa";
+import { Captcha, CAPTCHA_SITE_KEY } from "@/components/ui/Captcha";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Mode = "password" | "code";
@@ -12,6 +14,7 @@ type Status =
   | { kind: "submitting" }
   | { kind: "code_sent"; email: string }
   | { kind: "error"; message: string; email?: string }
+  | { kind: "mfa" }
   | { kind: "success" };
 
 const fieldClass =
@@ -29,11 +32,20 @@ export function LoginForm({ next }: { next: string }) {
   const [mode, setMode] = useState<Mode>("password");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const errorId = useId();
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const needCaptcha = Boolean(CAPTCHA_SITE_KEY);
 
-  function done() {
+  function finish() {
     setStatus({ kind: "success" });
     router.replace(next);
     router.refresh();
+  }
+
+  /** Tras el primer factor: si la cuenta tiene verificación en dos pasos, pedir el código. */
+  async function done() {
+    if (await needsSecondFactor().catch(() => false)) return setStatus({ kind: "mfa" });
+    finish();
   }
 
   async function onPassword(event: FormEvent<HTMLFormElement>) {
@@ -44,11 +56,13 @@ export function LoginForm({ next }: { next: string }) {
     if (!email || !password) return setStatus({ kind: "error", message: "Escribe tu correo y tu contraseña." });
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return setStatus({ kind: "error", message: "El acceso no está configurado en este entorno." });
+    if (needCaptcha && !captcha) return setStatus({ kind: "error", message: "Completa la verificación de seguridad." });
     setStatus({ kind: "submitting" });
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken: captcha ?? undefined } });
+      setCaptchaReset((n) => n + 1);
       if (error) return setStatus({ kind: "error", message: messageFor(error.code, error.status) });
-      done();
+      await done();
     } catch {
       setStatus({ kind: "error", message: "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo." });
     }
@@ -58,10 +72,12 @@ export function LoginForm({ next }: { next: string }) {
     event.preventDefault();
     const parsed = emailSchema.safeParse(String(new FormData(event.currentTarget).get("email") ?? ""));
     if (!parsed.success) return setStatus({ kind: "error", message: parsed.error.issues[0]?.message ?? "Correo inválido." });
+    if (needCaptcha && !captcha) return setStatus({ kind: "error", message: "Completa la verificación de seguridad." });
     setStatus({ kind: "submitting" });
     try {
       // El servidor decide si el correo está autorizado; aquí nunca se sabe la respuesta.
-      const r = await requestStaffCodeAction(parsed.data);
+      const r = await requestStaffCodeAction(parsed.data, captcha);
+      setCaptchaReset((n) => n + 1);
       if (!r.ok) return setStatus({ kind: "error", message: r.message });
       setStatus({ kind: "code_sent", email: parsed.data });
     } catch {
@@ -79,7 +95,7 @@ export function LoginForm({ next }: { next: string }) {
     try {
       const { error } = await supabase.auth.verifyOtp({ email, token: parsed.data, type: "email" });
       if (error) return setStatus({ kind: "error", message: "El código no es correcto o ya caducó.", email });
-      done();
+      await done();
     } catch {
       setStatus({ kind: "error", message: "No hay conexión con el servidor.", email });
     }
@@ -98,6 +114,8 @@ export function LoginForm({ next }: { next: string }) {
       {status.kind === "success" ? <p className="text-sm text-exito">Sesión iniciada. Abriendo la consola…</p> : null}
     </div>
   );
+
+  if (status.kind === "mfa") return <MfaChallenge onDone={finish} />;
 
   return (
     <div className="space-y-5">
@@ -139,6 +157,7 @@ export function LoginForm({ next }: { next: string }) {
             </label>
             <input id="password" name="password" type="password" autoComplete="current-password" required disabled={busy} className={fieldClass} />
           </div>
+          <Captcha onToken={setCaptcha} resetKey={captchaReset} />
           {feedback}
           <button type="submit" disabled={busy} className="btn btn-oscuro w-full disabled:cursor-wait disabled:opacity-70">
             {status.kind === "submitting" ? "Verificando…" : status.kind === "success" ? "Entrando…" : "Iniciar sesión"}
@@ -180,6 +199,7 @@ export function LoginForm({ next }: { next: string }) {
             </label>
             <input id="code-email" name="email" type="email" inputMode="email" autoComplete="email" required disabled={busy} className={fieldClass} />
           </div>
+          <Captcha onToken={setCaptcha} resetKey={captchaReset} />
           {feedback}
           <button type="submit" disabled={busy} className="btn btn-oscuro w-full disabled:cursor-wait disabled:opacity-70">
             {busy ? "Enviando…" : "Enviarme el código"}

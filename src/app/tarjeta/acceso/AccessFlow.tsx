@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { type ContactChannel, OTP_MAX_LENGTH, emailSchema, mxPhoneSchema, otpSchema } from "@/domain/customer/contact";
+import { Captcha, CAPTCHA_SITE_KEY } from "@/components/ui/Captcha";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Step = { name: "contact" } | { name: "code"; channel: ContactChannel; destination: string; display: string };
@@ -24,6 +25,8 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
   const [cooldown, setCooldown] = useState(0);
   const feedbackId = useId();
   const codeRef = useRef<HTMLInputElement>(null);
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -38,10 +41,13 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
   async function sendCode(target: ContactChannel, destination: string) {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) throw new Error("not_configured");
+    // Con CAPTCHA activo en Supabase Auth, cada envío necesita un token nuevo (un solo uso).
+    const captchaToken = captcha ?? undefined;
     const { error } =
       target === "email"
-        ? await supabase.auth.signInWithOtp({ email: destination, options: { shouldCreateUser: true } })
-        : await supabase.auth.signInWithOtp({ phone: destination, options: { shouldCreateUser: true, channel: "sms" } });
+        ? await supabase.auth.signInWithOtp({ email: destination, options: { shouldCreateUser: true, captchaToken } })
+        : await supabase.auth.signInWithOtp({ phone: destination, options: { shouldCreateUser: true, channel: "sms", captchaToken } });
+    setCaptchaReset((n) => n + 1);
     return error;
   }
 
@@ -52,6 +58,10 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
     const parsed = channel === "email" ? emailSchema.safeParse(raw) : mxPhoneSchema.safeParse(raw);
     if (!parsed.success) {
       setFeedback({ kind: "error", text: parsed.error.issues[0]?.message ?? "Revisa el dato." });
+      return;
+    }
+    if (CAPTCHA_SITE_KEY && !captcha) {
+      setFeedback({ kind: "error", text: "Completa la verificación de seguridad." });
       return;
     }
     setBusy(true);
@@ -102,6 +112,10 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
 
   async function onResend() {
     if (step.name !== "code" || cooldown > 0) return;
+    if (CAPTCHA_SITE_KEY && !captcha) {
+      setFeedback({ kind: "error", text: "Completa la verificación de seguridad para reenviar." });
+      return;
+    }
     setFeedback(null);
     setBusy(true);
     try {
@@ -158,6 +172,7 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
             className="mt-2 block min-h-14 w-full rounded-xl border border-tabaco/25 bg-papel px-4 text-center font-mono text-2xl tracking-[0.3em] text-tinta outline-none focus:border-tabaco focus-visible:outline-3 focus-visible:outline-mostaza disabled:opacity-60"
           />
         </div>
+        <Captcha onToken={setCaptcha} resetKey={captchaReset} />
         {feedbackBox}
         <button type="submit" disabled={busy} className="btn btn-oscuro w-full disabled:cursor-wait disabled:opacity-70">
           {busy ? "Verificando…" : "Verificar código"}
@@ -247,6 +262,7 @@ export function AccessFlow({ phoneEnabled }: { phoneEnabled: boolean }) {
         />
         <p className="mt-2 text-sm text-tabaco/75">Te enviaremos un código de verificación. Solo guardamos este dato.</p>
       </div>
+      <Captcha onToken={setCaptcha} resetKey={captchaReset} />
       {feedbackBox}
       <button type="submit" disabled={busy} className="btn btn-oscuro w-full disabled:cursor-wait disabled:opacity-70">
         {busy ? "Enviando…" : "Enviarme el código"}

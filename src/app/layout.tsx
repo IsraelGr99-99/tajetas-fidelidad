@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import { Courier_Prime, Figtree, Fraunces } from "next/font/google";
 import "./globals.css";
 
@@ -27,7 +28,9 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // La CSP usa un nonce por petición: todas las páginas se renderizan bajo demanda.
+  await connection();
   return (
     <html lang="es-MX" data-scroll-behavior="smooth" className={`${fraunces.variable} ${figtree.variable} ${courier.variable}`}>
       <body className="min-h-dvh antialiased">
