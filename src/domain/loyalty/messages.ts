@@ -29,6 +29,14 @@ export const RPC_ERROR_MESSAGES: Record<string, string> = {
   contact_already_enrolled: "Ese correo o teléfono ya tiene una tarjeta. Inicia sesión con él.",
   business_not_found: "No encontramos la cafetería.",
   not_enrolled: "Aún no tienes tarjeta.",
+  duplicate_name: "Ya existe un registro con ese nombre.",
+  last_active_branch: "Debe quedar al menos una sucursal activa.",
+  branch_required: "Asigna al menos una sucursal.",
+  staff_exists: "Esa persona ya forma parte del personal.",
+  invitation_exists: "Ya hay una invitación pendiente para ese correo.",
+  invitation_closed: "Esa invitación ya fue aceptada o revocada.",
+  cannot_modify_self: "No puedes cambiar tu propio rol o estado. Pídeselo a otra persona con permisos.",
+  last_owner: "Debe quedar al menos un propietario activo.",
 };
 
 export function rpcErrorMessage(code: unknown): string {
