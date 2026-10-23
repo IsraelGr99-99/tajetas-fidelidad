@@ -8,8 +8,15 @@ Sistema de fidelidad digital de [iautomexa](https://iautomexa.com) para el pilot
 - ✅ **Etapa 2** (aplicada en Supabase): esquema multiempresa, ledger append-only, campañas versionadas, RLS y funciones transaccionales para acreditar, canjear, revertir y ajustar.
 - ✅ **Etapa 3**: acceso del personal en `/personal` (login, logout, roles y sucursal).
 - ✅ **Etapa 4**: registro de clientes con código por correo, tarjeta con historial y QR temporal en `/tarjeta`.
-- ✅ **Etapa 5**: visitas y canjes en barra, movimientos y reversos (`/personal/movimientos`), administración (`/personal/admin`) y baja de cuenta del cliente.
-- ⏳ Siguiente: sello NFC (etapa 6), Wallet (etapa 7), auditoría y despliegue (etapa 8). Ver [docs/hoja-de-ruta.md](docs/hoja-de-ruta.md).
+- ✅ **Etapa 5**: barra unificada (`/barra`), movimientos y reversos (`/movimientos`), negocio (`/negocio`: panel, ventas y gastos, catálogo con Excel, programa, equipo, clientes) y tarjeta del cliente en vivo (`/tarjeta`).
+- ⏳ Siguiente: sello NFC (etapa 6), Wallet (etapa 7), auditoría y despliegue (etapa 8).
+
+### Rutas principales
+| Quién | Ruta |
+|---|---|
+| Cliente | `/tarjeta` (registro y acceso en `/tarjeta/acceso`) |
+| Personal | `/entrar` → `/barra` · `/movimientos` · `/cuenta` |
+| Administración | `/negocio` (panel) · `/negocio/finanzas` · `/negocio/catalogo` · `/negocio/programa` · `/negocio/equipo` · `/negocio/clientes` |
 
 Todavía no hay NFC ni Wallet; la UI lo indica con claridad.
 

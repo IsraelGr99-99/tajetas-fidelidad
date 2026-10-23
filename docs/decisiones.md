@@ -31,6 +31,22 @@ Ventana fija en `private.rate_limit_hits`, sin Redis ni servicios externos. Sufi
 ## 2026-10-22 · ADR-009 Verificación de contacto gratuita para el demo
 Correo: Supabase Auth con OTP numérico y SMTP propio de capa gratuita (Resend o Brevo). El SMTP integrado de Supabase no sirve para clientes reales (solo envía a miembros del equipo y con límite muy bajo). Teléfono: no existe SMS gratuito real; para el demo se usan números de prueba (`auth.sms.test_otp`) o el crédito de prueba de Twilio (solo números verificados). En la UI el canal teléfono se muestra como “no disponible” mientras no haya proveedor configurado.
 
+## 2026-10-25 · ADR-015 Rediseño de navegación y flujo de barra
+- Rutas cortas: `/barra`, `/movimientos`, `/negocio/*`, `/cuenta`, `/entrar`. Las rutas `/personal/*` redirigen de forma temporal (307) a las nuevas.
+- Menú fijo según el rol: lateral en computadora, inferior en celular. La sucursal se cambia desde el encabezado.
+- `/barra` es una sola pantalla y el QR decide el flujo (visita o canje). Al escanear, `staff_claim_card` consume el QR del cliente y **aparta** la tarjeta 5 min para ese barista y sucursal: un código interno de un uso, que no sirve a otro barista ni en otra sucursal. Así se escanea primero sin que el QR de 2 min caduque mientras se captura el ticket.
+- Productos más vendidos como botones (`staff_catalog`, últimos 30 días). La confirmación queda fija en pantalla antes de sumar.
+- Cliente: el QR aparece solo; `my_card_status` se consulta cada 3 s mientras la pantalla está visible para mostrar “Código escaneado” y “¡Sello registrado!” sin recargar.
+- Seguridad (ADR-011 corregido): el código por correo del personal ya no se envía a cualquiera. `request_staff_login_code` (solo `service_role`) verifica que el correo sea de personal activo o esté invitado, limita intentos por correo y dispositivo y responde igual en ambos casos. Limitación: la API pública de Supabase Auth sigue permitiendo altas (las necesita el registro de clientes); esas cuentas no obtienen acceso a la consola. Para endurecerlo, agregar CAPTCHA (Turnstile) en la etapa 8.
+
+## 2026-10-26 · ADR-016 Finanzas, importaciones y datos DEMO
+- Dos fuentes separadas y rotuladas: **ventas POS** (reporte importado por sucursal) y **ventas con tarjeta** (compras registradas en barra). El panel no las suma: muestra el total POS y qué porcentaje pasó por la tarjeta.
+- Ganancia bruta = ventas POS − costo de lo vendido (`products.cost_cents`, empatado por nombre). El panel muestra qué parte de las ventas tiene costo conocido. Utilidad neta = ganancia bruta − gastos.
+- El costo es interno: se revocó la lectura de `products.cost_cents` para el rol `authenticated` (privilegio por columna) y solo administración lo lee vía `admin_catalog`.
+- Importación de Excel/CSV en el navegador con `read-excel-file` (nueva dependencia; solo lee `.xlsx`, sin macros ni fórmulas) y un lector CSV propio. Solo viajan los renglones interpretados; el servidor revalida con zod y la base todo o nada. El catálogo se actualiza por nombre; un reporte idéntico (sucursal, periodo, renglones y total) se rechaza como duplicado.
+- Datos DEMO: `generate_demo_finance` crea 60 días de ventas y gastos con el catálogo real y una sucursal ficticia inactiva “Angelópolis (DEMO)”, todo con `is_demo`. El panel los rotula y permite ocultarlos; `clear_demo_finance` los borra sin tocar datos reales.
+- Gráficas sin librería: una serie por gráfica, sin doble eje, valores en tinta de texto, tooltip con cursor o teclado y tabla alternativa.
+
 ## 2026-10-24 · ADR-014 Gerencia y administración
 - Alta de personal por **invitación**: owner/admin registra correo, nombre, rol y sucursales. La persona entra con “código por correo”, y `claim_staff_invitations` crea su membresía solo si el correo está verificado. No se comparten contraseñas ni se usa la llave secreta para dar de alta.
 - Jerarquía: owner gestiona todo; admin solo gerentes y baristas; nadie cambia su propio rol o estado; siempre queda al menos un owner activo; no se puede desactivar la última sucursal activa.

@@ -60,6 +60,15 @@ Todas devuelven `jsonb`: `{ "ok": true, ... }` o `{ "ok": false, "code": "<códi
 | `invite_staff` / `revoke_staff_invitation` / `update_staff_member` / `list_staff` | admin, owner (con jerarquía) | — | — |
 | `admin_find_customers(business, query)` | admin, owner | correo, teléfono o serial exactos | hasta 10 tarjetas con contacto enmascarado |
 | `delete_my_customer_data(slug)` | cliente | — | anonimiza y borra códigos QR |
+| `request_staff_login_code(email, client_hash)` | **solo servidor** (`service_role`) | — | `eligible` (la UI no lo revela) |
+| `staff_claim_card(branch, qr_hash, hold_hash)` / `staff_release_hold(hold_hash)` | personal de la sucursal | — | datos mínimos y apartado de 5 min |
+| `my_card_status(card, token_hash?)` | dueño de la tarjeta | — | versión, saldos, estado del QR, último movimiento |
+| `staff_catalog(business)` | personal | — | catálogo por popularidad (sin costos) |
+| `admin_catalog` / `bulk_upsert_products` / `set_product_cost` | admin, owner | hasta 1000 renglones | catálogo con costo |
+| `import_sales` / `delete_sales_import` | admin, owner | hasta 10 000 renglones | importación por sucursal |
+| `add_expenses` / `delete_expense` | admin, owner | hasta 2000 renglones | — |
+| `generate_demo_finance` / `clear_demo_finance` | admin, owner | — | datos DEMO rotulados |
+| `finance_dashboard(business, from, to, include_demo)` / `finance_records` | admin, owner | rango ≤ 366 días | totales, por día, productos, sucursales, categorías, gastos |
 
 ### Códigos de rechazo
 
