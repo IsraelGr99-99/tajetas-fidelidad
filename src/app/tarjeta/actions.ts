@@ -7,6 +7,7 @@ import { PRIVACY_VERSION, displayNameSchema } from "@/domain/customer/contact";
 import { rpcErrorMessage } from "@/domain/loyalty/messages";
 import { PILOT_BUSINESS_SLUG } from "@/lib/business";
 import { generateScanToken } from "@/lib/scan-token";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type FormState = { error: string | null };
@@ -78,4 +79,32 @@ export async function customerSignOutAction() {
   const supabase = await createSupabaseServerClient();
   if (supabase) await supabase.auth.signOut({ scope: "local" });
   redirect("/tarjeta/acceso?salida=1");
+}
+
+/**
+ * Elimina los datos personales del cliente (LFPDPPP, derecho de cancelación).
+ * 1) La base anonimiza su registro (el historial contable queda sin PII).
+ * 2) Si la cuenta no es de personal, se borra también el usuario de Supabase Auth.
+ */
+export async function deleteMyDataAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (String(formData.get("confirm") ?? "").trim().toUpperCase() !== "ELIMINAR") {
+    return { error: "Escribe ELIMINAR para confirmar." };
+  }
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { error: "El servicio no está configurado en este entorno." };
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub;
+  if (!userId) redirect("/tarjeta/acceso");
+
+  const { data, error } = await supabase.rpc("delete_my_customer_data", { p_business_slug: PILOT_BUSINESS_SLUG });
+  if (error) return { error: "No pudimos eliminar tus datos. Inténtalo de nuevo en un momento." };
+  if (!data?.ok) return { error: rpcErrorMessage(data?.code) };
+
+  if (!data.is_staff) {
+    const admin = createSupabaseAdminClient();
+    // Si falla, los datos de la tarjeta ya están anonimizados; la cuenta de acceso queda vacía.
+    if (admin) await admin.auth.admin.deleteUser(userId).catch(() => undefined);
+  }
+  await supabase.auth.signOut({ scope: "global" }).catch(() => undefined);
+  redirect("/tarjeta/acceso?eliminada=1");
 }

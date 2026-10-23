@@ -10,8 +10,8 @@ import { ProfileForm } from "./ProfileForm";
 
 export const metadata: Metadata = { title: "Tu tarjeta" };
 
-export default async function CustomerAccessPage({ searchParams }: { searchParams: Promise<{ salida?: string }> }) {
-  const { salida } = await searchParams;
+export default async function CustomerAccessPage({ searchParams }: { searchParams: Promise<{ salida?: string; eliminada?: string }> }) {
+  const { salida, eliminada } = await searchParams;
   const session = await getCustomerSession();
   if (session.status === "enrolled") redirect("/tarjeta");
 
@@ -35,6 +35,11 @@ export default async function CustomerAccessPage({ searchParams }: { searchParam
               : "Sin contraseñas: te mandamos un código cada vez que entres desde un dispositivo nuevo."}
           </p>
 
+          {eliminada ? (
+            <p role="status" className="mt-5 rounded-xl border border-exito/30 bg-exito/5 px-4 py-3 text-sm text-exito">
+              Eliminamos tus datos personales. Gracias por haber sido parte de la bitácora.
+            </p>
+          ) : null}
           {salida ? (
             <p role="status" className="mt-5 rounded-xl border border-exito/30 bg-exito/5 px-4 py-3 text-sm text-exito">
               Cerraste sesión. Tu tarjeta y tus sellos siguen guardados.

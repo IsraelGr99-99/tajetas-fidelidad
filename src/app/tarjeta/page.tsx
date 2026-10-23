@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Wordmark } from "@/components/brand/Logo";
 import { CardQr } from "@/components/customer/CardQr";
+import { DeleteAccount } from "@/components/customer/DeleteAccount";
 import { StampCard } from "@/components/loyalty/StampCard";
 import { describeHistoryEntry } from "@/domain/customer/card";
 import { describeRewardCap } from "@/domain/loyalty/campaign";
@@ -121,6 +122,8 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
             </p>
           </section>
         ) : null}
+
+        <DeleteAccount />
       </main>
     </div>
   );
