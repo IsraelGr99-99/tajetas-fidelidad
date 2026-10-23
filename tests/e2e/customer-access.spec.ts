@@ -33,5 +33,6 @@ test("el aviso de privacidad está publicado y marcado como borrador", async ({ 
 test("desde la landing se llega al registro", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Quiero mi tarjeta" }).click();
-  await expect(page).toHaveURL(/\/tarjeta\/acceso$/);
+  // La página de acceso consulta la sesión en Supabase: dar margen a la red.
+  await expect(page).toHaveURL(/\/tarjeta\/acceso$/, { timeout: 15_000 });
 });

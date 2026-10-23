@@ -38,3 +38,14 @@ test("sin sesión, la página de sin acceso manda al login", async ({ page }) =>
   await page.goto("/personal/sin-acceso");
   await expect(page).toHaveURL(/\/personal\/ingresar/);
 });
+
+test.describe("operaciones de barra requieren sesión", () => {
+  for (const path of ["/personal/visita", "/personal/canje"]) {
+    test(`${path} redirige al login`, async ({ page }) => {
+      await page.goto(path);
+      const url = new URL(page.url());
+      expect(url.pathname).toBe("/personal/ingresar");
+      expect(url.searchParams.get("siguiente")).toBe(path);
+    });
+  }
+});
