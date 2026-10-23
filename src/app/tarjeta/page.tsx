@@ -5,7 +5,7 @@ import { Wordmark } from "@/components/brand/Logo";
 import { CardQr } from "@/components/customer/CardQr";
 import { DeleteAccount } from "@/components/customer/DeleteAccount";
 import { WalletSection } from "@/components/customer/WalletSection";
-import { StampCard } from "@/components/loyalty/StampCard";
+import { PassportCard } from "@/components/loyalty/PassportCard";
 import { describeHistoryEntry } from "@/domain/customer/card";
 import { describeRewardCap } from "@/domain/loyalty/campaign";
 import { formatDateTime, formatMxn } from "@/lib/format";
@@ -51,10 +51,16 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
           </h1>
         </section>
 
-        <CardQr cardId={card.id} rewardsAvailable={card.rewards_balance} />
+        <CardQr
+          cardId={card.id}
+          rewardsAvailable={card.rewards_balance}
+          stampsBalance={card.stamps_balance}
+          stampsRequired={campaign?.stamps_required ?? 9}
+          rewardDescription={campaign?.reward_description ?? "tu recompensa"}
+        />
 
         {campaign ? (
-          <StampCard
+          <PassportCard
             stampsBalance={card.stamps_balance}
             stampsRequired={campaign.stamps_required}
             rewardsAvailable={card.rewards_balance}

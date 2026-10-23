@@ -3,13 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type CardStatus, type QrResult, cardStatusAction, issueQrAction } from "@/app/tarjeta/actions";
+import { PassportCard } from "@/components/loyalty/PassportCard";
 
 type Purpose = "identify" | "redeem";
 type View =
   | { state: "loading"; purpose: Purpose }
   | { state: "ready"; purpose: Purpose; svg: string; expiresAt: number; ref: string }
   | { state: "scanned"; purpose: Purpose }
-  | { state: "celebrate"; message: string; detail: string }
+  | { state: "celebrate"; message: string; detail: string; before: number; after: number; rewards: number; reward: boolean }
   | { state: "paused"; purpose: Purpose }
   | { state: "confirm_redeem" }
   | { state: "error"; message: string };
@@ -23,12 +24,26 @@ const POLL_MS = 3000;
  * pantalla está visible y detecta cuando el barista lo escanea y registra el
  * sello o el canje, para mostrar el resultado sin recargar.
  */
-export function CardQr({ cardId, rewardsAvailable }: { cardId: string; rewardsAvailable: number }) {
+export function CardQr({
+  cardId,
+  rewardsAvailable,
+  stampsBalance,
+  stampsRequired,
+  rewardDescription,
+}: {
+  cardId: string;
+  rewardsAvailable: number;
+  stampsBalance: number;
+  stampsRequired: number;
+  rewardDescription: string;
+}) {
   const router = useRouter();
   const [view, setView] = useState<View>({ state: "loading", purpose: "identify" });
   const refreshes = useRef(0);
   // Versión de la tarjeta vista por primera vez; un cambio posterior significa un movimiento nuevo.
   const version = useRef<number | null>(null);
+  const lastStamps = useRef(stampsBalance);
+  const lastRewards = useRef(rewardsAvailable);
   const [seconds, setSeconds] = useState(0);
 
   const request = useCallback(
@@ -92,8 +107,11 @@ export function CardQr({ cardId, rewardsAvailable }: { cardId: string; rewardsAv
       }
       busy = false;
       if (!s.ok) return;
-      if (version.current === null) version.current = s.version;
-      else if (s.version !== version.current) {
+      if (version.current === null) {
+        version.current = s.version;
+        lastStamps.current = s.stampsBalance;
+        lastRewards.current = s.rewardsBalance;
+      } else if (s.version !== version.current) {
         version.current = s.version;
         clearInterval(id);
         const e = s.lastEvent;
@@ -101,11 +119,19 @@ export function CardQr({ cardId, rewardsAvailable }: { cardId: string; rewardsAv
           e?.eventType === "reward_issued" ? "¡Completaste tu tarjeta!" : e?.eventType === "redeem" ? "¡Disfruta tu recompensa!" : "¡Sello registrado!";
         const detail =
           e?.eventType === "redeem"
-            ? `Te quedan ${s.rewardsBalance} recompensa(s).`
+            ? s.rewardsBalance === 0
+              ? "Ya no tienes recompensas pendientes."
+              : `Te quedan ${plural(s.rewardsBalance, "recompensa", "recompensas")}.`
             : s.rewardsBalance > 0
-              ? `Tienes ${s.rewardsBalance} recompensa(s) lista(s) para canjear.`
-              : `Llevas ${s.stampsBalance} sello(s).`;
-        setView({ state: "celebrate", message, detail });
+              ? `Tienes ${plural(s.rewardsBalance, "recompensa lista", "recompensas listas")} para canjear.`
+              : `Llevas ${plural(s.stampsBalance, "sello", "sellos")} de ${stampsRequired}.`;
+        const reward = s.rewardsBalance > lastRewards.current;
+        // Si completó la tarjeta, el sello que la cerró se dibuja antes de pasar a la recompensa.
+        const before = reward ? Math.min(lastStamps.current, stampsRequired) : lastStamps.current;
+        const after = reward ? stampsRequired : s.stampsBalance;
+        setView({ state: "celebrate", message, detail, before, after, rewards: s.rewardsBalance, reward });
+        lastStamps.current = s.stampsBalance;
+        lastRewards.current = s.rewardsBalance;
         router.refresh();
         return;
       }
@@ -115,12 +141,18 @@ export function CardQr({ cardId, rewardsAvailable }: { cardId: string; rewardsAv
     const id = setInterval(() => void tick(), current.state === "ready" ? 1000 : POLL_MS);
     void tick();
     return () => clearInterval(id);
-  }, [view, cardId, request, router]);
+  }, [view, cardId, request, router, stampsRequired]);
 
   const isRedeem = (view.state === "ready" || view.state === "loading" || view.state === "scanned") && view.purpose === "redeem";
 
   return (
-    <section aria-labelledby="qr-titulo" className={`rounded-[2rem] p-6 text-crema sm:p-8 ${isRedeem ? "bg-arcilla-texto" : "bg-tabaco"}`}>
+    <section
+      aria-labelledby="qr-titulo"
+      className={`relative rounded-[2rem] p-6 text-crema transition-colors duration-500 sm:p-8 ${isRedeem ? "bg-arcilla-texto" : "bg-tabaco"}`}
+    >
+      {/* Muescas de pase de abordar */}
+      <span aria-hidden="true" className="absolute -left-3 top-24 h-6 w-6 rounded-full bg-crema" />
+      <span aria-hidden="true" className="absolute -right-3 top-24 h-6 w-6 rounded-full bg-crema" />
       <div className="flex items-center justify-between gap-3">
         <h2 id="qr-titulo" className="text-2xl">
           {isRedeem ? "Código para canjear" : "Muestra este código al pagar"}
@@ -172,10 +204,20 @@ export function CardQr({ cardId, rewardsAvailable }: { cardId: string; rewardsAv
       ) : null}
 
       {view.state === "celebrate" ? (
-        <div role="status" className="mt-5 rounded-3xl bg-mostaza p-6 text-center text-tabaco">
-          <p className="font-display text-3xl">{view.message}</p>
-          <p className="mt-2">{view.detail}</p>
-          <button type="button" onClick={() => request("identify")} className="btn btn-oscuro mt-5 w-full">
+        <div role="status" className="mt-5 space-y-4">
+          <div className="text-center">
+            <p className="font-display text-3xl text-mostaza">{view.message}</p>
+            <p className="mt-1 text-crema/85">{view.detail}</p>
+          </div>
+          <PassportCard
+            stampsBalance={view.after}
+            stampsRequired={stampsRequired}
+            rewardsAvailable={view.rewards}
+            rewardDescription={rewardDescription}
+            highlightFrom={view.after > view.before ? view.before : view.after}
+            highlightReward={view.reward}
+          />
+          <button type="button" onClick={() => request("identify")} className="btn btn-primario w-full">
             Listo
           </button>
         </div>
@@ -219,4 +261,8 @@ export function CardQr({ cardId, rewardsAvailable }: { cardId: string; rewardsAv
       ) : null}
     </section>
   );
+}
+
+function plural(n: number, one: string, many: string) {
+  return `${n} ${n === 1 ? one : many}`;
 }

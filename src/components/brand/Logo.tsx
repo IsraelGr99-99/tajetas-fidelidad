@@ -44,7 +44,7 @@ export function Wordmark({ className }: { className?: string }) {
     <span className={`inline-flex items-center gap-3 ${className ?? ""}`}>
       <LogoMark className="h-10 w-10 shrink-0" />
       <span className="flex flex-col leading-none">
-        <span className="font-display text-lg font-semibold tracking-[0.12em]">CAFÉ NÓMADA</span>
+        <span className="whitespace-nowrap font-display text-lg font-semibold tracking-[0.12em]">CAFÉ NÓMADA</span>
         <span className="bitacora mt-1 hidden text-[0.6rem] opacity-75 sm:block">Café de origen · alma de viajero</span>
       </span>
     </span>

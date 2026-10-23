@@ -208,10 +208,27 @@ export function BarFlow({
     const redeem = phase.name === "done_redeem" ? phase.result : null;
     return (
       <div className="mx-auto max-w-md space-y-4" role="status">
-        <div className="rounded-3xl bg-exito p-6 text-center text-crema">
-          <p className="text-5xl" aria-hidden="true">
-            ✓
-          </p>
+        <div className="relative overflow-hidden rounded-3xl bg-exito p-6 text-center text-crema">
+          {/* Sello que cae: confirma de un vistazo que la operación quedó registrada */}
+          <span aria-hidden="true" className="relative mx-auto grid h-24 w-24 place-items-center" style={{ ["--giro" as string]: "-9deg" }}>
+            <span className="absolute inset-0 rounded-full bg-crema/30" style={{ animation: "tinta 700ms ease-out 380ms both" }} />
+            <span
+              className="grid h-full w-full place-items-center rounded-full border-[3px] border-crema text-crema"
+              style={{ boxShadow: "inset 0 0 0 4px rgb(47 107 79), inset 0 0 0 6px rgb(245 235 230 / 0.9)", animation: "sello-cae 620ms cubic-bezier(.2,.9,.3,1.25) both" }}
+            >
+              {earn ? (
+                <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="8" />
+                  <path d="m15 9-2 5-4 1 2-5 4-1Z" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z" />
+                  <path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16M8 3c0 1.5 1 1.5 1 3M12 3c0 1.5 1 1.5 1 3" />
+                </svg>
+              )}
+            </span>
+          </span>
           <p className="mt-2 font-display text-3xl">
             {earn ? (earn.replayed ? "Ya estaba registrada" : "Sello registrado") : redeem?.replayed ? "Canje ya registrado" : "Canje registrado"}
           </p>

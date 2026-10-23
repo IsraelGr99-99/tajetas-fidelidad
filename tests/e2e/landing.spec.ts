@@ -4,8 +4,8 @@ test("la landing presenta el programa con CTA hacia iautomexa", async ({ page })
   await page.goto("/");
   await expect(page).toHaveTitle(/Café Nómada/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Historias que se cuentan taza a taza");
-  await expect(page.getByRole("link", { name: "Conoce iautomexa" })).toHaveAttribute("href", "https://iautomexa.com");
-  await expect(page.getByRole("link", { name: "Conoce la tecnología detrás" })).toHaveAttribute("href", "https://iautomexa.com");
+  // En escritorio también está en el encabezado; en celular, en el pie (siempre visible).
+  await expect(page.getByRole("link", { name: "Hecho con iautomexa" })).toHaveAttribute("href", "https://iautomexa.com");
   // La tarjeta de la portada está marcada como ejemplo (no simula datos reales).
   await expect(page.getByRole("figure", { name: /Tarjeta de fidelidad de ejemplo/ })).toBeVisible();
   // El registro lleva al acceso con código.
