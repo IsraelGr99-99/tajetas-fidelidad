@@ -24,7 +24,7 @@ export default async function NoAccessPage() {
       </p>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         {session.status === "staff" ? (
-          <Link href="/personal" className="btn btn-oscuro">
+          <Link href="/barra" className="btn btn-oscuro">
             Volver a la consola
           </Link>
         ) : null}

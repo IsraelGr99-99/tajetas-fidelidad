@@ -1,4 +1,4 @@
-import { signOutAction } from "@/app/personal/actions";
+import { signOutAction } from "@/actions/staff-session";
 
 export function SignOutButton({ className }: { className?: string }) {
   return (

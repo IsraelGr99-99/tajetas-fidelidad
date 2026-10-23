@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
-import { type ActionState, reverseEventAction } from "@/app/personal/gestion";
+import { type ActionState, reverseEventAction } from "@/actions/management";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { errorTextClass, inputClass, labelClass, secondaryButtonClass } from "@/components/ui/form";
 

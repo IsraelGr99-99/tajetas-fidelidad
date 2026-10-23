@@ -24,3 +24,21 @@ export function parseScanPayload(raw: string): { hash: string } | null {
   const token = text.slice(SCAN_PAYLOAD_PREFIX.length);
   return TOKEN_PATTERN.test(token) ? { hash: hashScanToken(token) } : null;
 }
+
+/**
+ * Apartado de tarjeta: código interno que el servidor entrega al barista al escanear.
+ * Nunca se muestra como QR; solo viaja entre el navegador del barista y el servidor.
+ */
+export const HOLD_PREFIX = "CNH.";
+
+export function generateHoldToken(): { token: string; hash: string } {
+  const raw = randomBytes(32).toString("base64url");
+  return { token: HOLD_PREFIX + raw, hash: hashScanToken(raw) };
+}
+
+export function parseHoldToken(value: string): { hash: string } | null {
+  const text = String(value ?? "").trim();
+  if (!text.startsWith(HOLD_PREFIX)) return null;
+  const raw = text.slice(HOLD_PREFIX.length);
+  return TOKEN_PATTERN.test(raw) ? { hash: hashScanToken(raw) } : null;
+}

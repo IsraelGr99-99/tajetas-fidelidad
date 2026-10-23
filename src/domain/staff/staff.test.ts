@@ -54,19 +54,21 @@ describe("sucursal activa", () => {
 
 describe("redirección segura después del login", () => {
   test.each([
-    ["/personal/sucursal", "/personal/sucursal"],
-    ["/personal?x=1", "/personal?x=1"],
-    ["/personal", "/personal"],
+    ["/barra", "/barra"],
+    ["/negocio/catalogo", "/negocio/catalogo"],
+    ["/movimientos?todas=1", "/movimientos?todas=1"],
+    ["/cuenta", "/cuenta"],
   ])("acepta %s", (input, expected) => expect(safeNextPath(input)).toBe(expected));
 
   test.each([
-    "https://malicioso.example/personal",
+    "https://malicioso.example/barra",
     "//malicioso.example",
-    String.raw`/personal\..\x`,
-    "/personalizado",
+    String.raw`/barra\..\x`,
+    "/barraca",
     "/",
-    "/personal/ingresar",
-    "/personal/\u0000",
+    "/entrar",
+    "/tarjeta",
+    "/barra/\u0000",
     null,
     undefined,
   ])("rechaza %s", (input) => expect(safeNextPath(input)).toBe(CONSOLE_HOME));

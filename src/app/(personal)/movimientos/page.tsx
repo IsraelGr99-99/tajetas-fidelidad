@@ -51,7 +51,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
           </p>
         </div>
         {isAdmin ? (
-          <Link href={allBranches ? "/personal/movimientos" : "/personal/movimientos?todas=1"} className="text-sm font-semibold underline underline-offset-4">
+          <Link href={allBranches ? "/movimientos" : "/movimientos?todas=1"} className="text-sm font-semibold underline underline-offset-4">
             {allBranches ? `Ver solo ${activeBranch.name}` : "Ver todas las sucursales"}
           </Link>
         ) : null}
@@ -110,7 +110,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
 
       {events.length === LEDGER_PAGE_SIZE && last ? (
         <Link
-          href={`/personal/movimientos?antes=${encodeURIComponent(last.occurred_at)}${allBranches ? "&todas=1" : ""}`}
+          href={`/movimientos?antes=${encodeURIComponent(last.occurred_at)}${allBranches ? "&todas=1" : ""}`}
           className="btn w-full border border-tabaco/25 text-tabaco"
         >
           Ver movimientos anteriores

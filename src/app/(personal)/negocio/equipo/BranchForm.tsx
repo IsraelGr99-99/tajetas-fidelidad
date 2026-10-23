@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { type ActionState, upsertBranchAction } from "@/app/personal/gestion";
+import { type ActionState, upsertBranchAction } from "@/actions/management";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { errorTextClass, inputClass, labelClass } from "@/components/ui/form";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, type FormEvent } from "react";
-import { type ActionState, type CustomerRow, adjustStampsAction, findCustomersAction } from "@/app/personal/gestion";
+import { type ActionState, type CustomerRow, adjustStampsAction, findCustomersAction } from "@/actions/management";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { errorTextClass, hintClass, inputClass, labelClass } from "@/components/ui/form";
 import { formatDateTime } from "@/lib/format";

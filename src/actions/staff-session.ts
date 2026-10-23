@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { CONSOLE_HOME, LOGIN_PATH } from "@/domain/staff/routes";
+import { LOGIN_PATH, safeNextPath } from "@/domain/staff/routes";
 import { BRANCH_COOKIE, getStaffSession } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -26,15 +26,16 @@ export async function selectBranchAction(formData: FormData) {
   const session = await getStaffSession();
   if (session.status !== "staff") redirect(LOGIN_PATH);
   if (!parsed.success || !session.membership.branches.some((b) => b.id === parsed.data.branchId)) {
-    redirect(`${CONSOLE_HOME}/sucursal?error=sucursal`);
+    redirect("/cuenta?error=sucursal");
   }
 
   (await cookies()).set(BRANCH_COOKIE, parsed.data.branchId, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    path: "/personal",
+    path: "/",
     maxAge: 60 * 60 * 12, // un turno
   });
-  redirect(CONSOLE_HOME);
+  // Vuelve a la pantalla desde donde se cambió (solo rutas internas de la consola).
+  redirect(safeNextPath(String(formData.get("returnTo") ?? "")));
 }

@@ -48,6 +48,8 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
           </h1>
         </section>
 
+        <CardQr cardId={card.id} rewardsAvailable={card.rewards_balance} />
+
         {campaign ? (
           <StampCard
             stampsBalance={card.stamps_balance}
@@ -58,8 +60,6 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
         ) : (
           <p className="rounded-2xl bg-papel p-5 text-tabaco">El programa de fidelidad está en pausa. Tus sellos siguen guardados.</p>
         )}
-
-        <CardQr cardId={card.id} rewardsAvailable={card.rewards_balance} />
 
         <section aria-labelledby="wallet-titulo" className="rounded-[2rem] border border-tabaco/10 bg-papel p-6">
           <h2 id="wallet-titulo" className="text-2xl text-tabaco">

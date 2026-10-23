@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import { OTP_MAX_LENGTH, emailSchema, otpSchema } from "@/domain/customer/contact";
-import { requestStaffCodeAction } from "@/lib/staff/login-actions";
+import { requestStaffCodeAction } from "@/actions/staff-login";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Mode = "password" | "code";

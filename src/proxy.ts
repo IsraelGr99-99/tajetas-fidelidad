@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
-import { LOGIN_PATH, safeNextPath } from "@/domain/staff/routes";
+import { LOGIN_PATH, NO_ACCESS_PATH, isConsolePath, safeNextPath } from "@/domain/staff/routes";
 
 /**
  * Refresca la sesión y saca a los visitantes sin sesión de la consola del personal
@@ -21,9 +21,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const isConsole = pathname === "/personal" || pathname.startsWith("/personal/");
-  const isPublicConsolePage = pathname === LOGIN_PATH;
-  if (isConsole && !isPublicConsolePage && !userId) {
+  if ((isConsolePath(pathname) || pathname === NO_ACCESS_PATH) && !userId) {
     const url = request.nextUrl.clone();
     url.pathname = LOGIN_PATH;
     url.search = "";
@@ -34,5 +32,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|brand/|.*\.(?:svg|png|jpg|jpeg|webp|ico|woff2?)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|brand/|.*\\.(?:svg|png|jpg|jpeg|webp|ico|woff2?)$).*)"],
 };

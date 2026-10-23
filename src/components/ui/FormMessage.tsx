@@ -1,4 +1,4 @@
-import type { ActionState } from "@/app/personal/gestion";
+import type { ActionState } from "@/actions/management";
 
 /** Mensaje de resultado de un formulario, anunciado a lectores de pantalla. */
 export function FormMessage({ state }: { state: ActionState }) {

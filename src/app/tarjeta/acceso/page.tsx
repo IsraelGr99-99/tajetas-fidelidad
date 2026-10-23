@@ -68,7 +68,7 @@ export default async function CustomerAccessPage({ searchParams }: { searchParam
 
         <p className="mt-8 text-center text-sm text-tabaco/75">
           ¿Trabajas en Café Nómada?{" "}
-          <Link href="/personal/ingresar" className="font-semibold underline underline-offset-4">
+          <Link href="/entrar" className="font-semibold underline underline-offset-4">
             Acceso del personal
           </Link>
         </p>

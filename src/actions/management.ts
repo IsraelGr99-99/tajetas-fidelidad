@@ -74,7 +74,7 @@ export async function reverseEventAction(_prev: ActionState, formData: FormData)
       p_purchase_status: parsed.data.purchaseStatus,
     }),
     "Movimiento revertido. Quedó registrado con tu nombre y el motivo.",
-    ["/personal/movimientos"],
+    ["/movimientos"],
   );
 }
 
@@ -111,7 +111,7 @@ export async function upsertProductAction(_prev: ActionState, formData: FormData
       p_active: d.active,
     }),
     d.productId ? "Producto actualizado." : "Producto agregado.",
-    ["/personal/admin/catalogo", "/personal/visita"],
+    ["/negocio/catalogo", "/barra"],
   );
 }
 
@@ -151,7 +151,7 @@ export async function upsertBranchAction(_prev: ActionState, formData: FormData)
       p_active: d.active,
     }),
     d.branchId ? "Sucursal actualizada." : "Sucursal creada.",
-    ["/personal/admin/sucursales", "/personal/sucursal"],
+    ["/negocio/equipo", "/cuenta"],
   );
 }
 
@@ -195,7 +195,7 @@ export async function publishCampaignAction(_prev: ActionState, formData: FormDa
   return run(
     ctx.supabase.rpc("publish_campaign_version", { p_campaign_id: f.campaignId, p_rules: rules.data, p_reason: f.reason }),
     "Nueva versión publicada. Las tarjetas conservan sus sellos; las recompensas ya emitidas mantienen su tope.",
-    ["/personal/admin/campana", "/tarjeta"],
+    ["/negocio/programa", "/tarjeta"],
   );
 }
 
@@ -227,8 +227,8 @@ export async function inviteStaffAction(_prev: ActionState, formData: FormData):
       p_role: d.role,
       p_branch_ids: d.branchIds,
     }),
-    `Invitación creada. Pide a ${d.displayName} que entre en /personal/ingresar con “código por correo” usando ${d.email}.`,
-    ["/personal/admin/personal"],
+    `Invitación creada. Pide a ${d.displayName} que entre en /entrar con “código por correo” usando ${d.email}.`,
+    ["/negocio/equipo"],
   );
 }
 
@@ -237,7 +237,7 @@ export async function revokeInvitationAction(_prev: ActionState, formData: FormD
   if (!id.success) return { ok: false, message: "Solicitud inválida." };
   const ctx = await context("manage_staff");
   if ("error" in ctx) return { ok: false, message: ctx.error ?? null };
-  return run(ctx.supabase.rpc("revoke_staff_invitation", { p_invitation_id: id.data }), "Invitación revocada.", ["/personal/admin/personal"]);
+  return run(ctx.supabase.rpc("revoke_staff_invitation", { p_invitation_id: id.data }), "Invitación revocada.", ["/negocio/equipo"]);
 }
 
 const updateStaffSchema = z.object({
@@ -261,7 +261,7 @@ export async function updateStaffAction(_prev: ActionState, formData: FormData):
       p_branch_ids: d.branchIds,
     }),
     "Cambios guardados.",
-    ["/personal/admin/personal"],
+    ["/negocio/equipo"],
   );
 }
 
@@ -289,7 +289,7 @@ export async function adjustStampsAction(_prev: ActionState, formData: FormData)
   return run(
     ctx.supabase.rpc("adjust_stamps", { p_card_id: d.cardId, p_delta: d.delta, p_reason: d.reason, p_idempotency_key: d.idempotencyKey }),
     `Ajuste aplicado (${d.delta > 0 ? "+" : ""}${d.delta} sellos).`,
-    ["/personal/admin/clientes", "/personal/movimientos"],
+    ["/negocio/clientes", "/movimientos"],
   );
 }
 

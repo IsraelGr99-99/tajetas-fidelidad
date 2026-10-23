@@ -1,54 +1,84 @@
 import type { Metadata } from "next";
-import { selectBranchAction } from "@/app/personal/actions";
+import { selectBranchAction } from "@/actions/staff-session";
+import { Notice } from "@/components/staff/OperationParts";
+import { SignOutButton } from "@/components/staff/SignOutButton";
+import { ROLE_LABELS, capabilitiesOf } from "@/domain/staff/permissions";
 import { requireStaff } from "@/lib/staff/session";
 
-export const metadata: Metadata = { title: "Elegir sucursal" };
+export const metadata: Metadata = { title: "Cuenta" };
 
-export default async function BranchPickerPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { membership, activeBranch } = await requireStaff();
+const CAPABILITY_TEXT: Record<string, string> = {
+  earn_with_qr: "Registrar visitas",
+  redeem: "Canjear recompensas",
+  earn_without_qr: "Registrar sin QR (búsqueda)",
+  reverse: "Revertir movimientos",
+  adjust_stamps: "Ajustar sellos",
+  manage_campaigns: "Catálogo y programa",
+  manage_staff: "Equipo y sucursales",
+  view_customers_pii: "Consultar clientes",
+  view_branch_ledger: "Ver movimientos",
+  view_audit_log: "Auditoría",
+};
+
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { membership, activeBranch, email } = await requireStaff();
   const { error } = await searchParams;
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <p className="bitacora text-arcilla-texto">Antes de empezar</p>
-      <h1 className="mt-2 text-4xl text-tabaco">¿En qué sucursal estás hoy?</h1>
-      <p className="mt-3 leading-7 text-tabaco/75">Las visitas y canjes que registres quedarán ligados a esta sucursal.</p>
-
-      {error ? (
-        <p role="alert" className="mt-6 rounded-xl border border-alerta/30 bg-alerta/5 px-4 py-3 text-sm text-alerta">
-          No tienes acceso a esa sucursal. Elige una de la lista.
+    <div className="mx-auto max-w-2xl space-y-6">
+      <section className="rounded-3xl bg-papel p-6">
+        <p className="bitacora text-arcilla-texto">{membership.business_name}</p>
+        <h1 className="mt-2 text-3xl text-tabaco">{membership.display_name}</h1>
+        <p className="mt-1 text-tabaco/75">
+          {ROLE_LABELS[membership.role]}
+          {email ? ` · ${email}` : ""}
         </p>
-      ) : null}
-
-      {membership.branches.length === 0 ? (
-        <div className="mt-8 rounded-3xl border border-dashed border-tabaco/25 bg-papel p-8 text-center">
-          <h2 className="text-2xl text-tabaco">Aún no tienes sucursales asignadas</h2>
-          <p className="mt-3 leading-7 text-tabaco/75">Pide a administración que te asigne al menos una sucursal para poder operar.</p>
-        </div>
-      ) : (
-        <ul className="mt-8 grid gap-3">
-          {membership.branches.map((branch) => {
-            const current = activeBranch?.id === branch.id;
-            return (
-              <li key={branch.id}>
-                <form action={selectBranchAction}>
-                  <input type="hidden" name="branchId" value={branch.id} />
-                  <button
-                    type="submit"
-                    aria-current={current ? "true" : undefined}
-                    className={`flex min-h-16 w-full items-center justify-between gap-4 rounded-2xl border px-5 py-4 text-left transition ${
-                      current ? "border-tabaco bg-tabaco text-crema" : "border-tabaco/15 bg-papel text-tabaco hover:border-tabaco"
-                    }`}
-                  >
-                    <span className="font-display text-xl">{branch.name}</span>
-                    <span className="text-sm font-semibold">{current ? "Sucursal actual" : "Elegir"}</span>
-                  </button>
-                </form>
-              </li>
-            );
-          })}
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {capabilitiesOf(membership.role).map((c) => (
+            <li key={c} className="rounded-full bg-tabaco/5 px-3 py-1 text-xs font-semibold text-tabaco">
+              {CAPABILITY_TEXT[c]}
+            </li>
+          ))}
         </ul>
-      )}
+      </section>
+
+      <section aria-labelledby="sucursales" className="space-y-3">
+        <h2 id="sucursales" className="text-2xl text-tabaco">
+          Sucursal de trabajo
+        </h2>
+        {error ? <Notice tone="error" title="No tienes acceso a esa sucursal. Elige una de la lista." /> : null}
+        {membership.branches.length === 0 ? (
+          <Notice tone="info" title="Aún no tienes sucursales asignadas">
+            Pide a administración que te asigne al menos una para operar.
+          </Notice>
+        ) : (
+          <ul className="grid gap-2">
+            {membership.branches.map((b) => {
+              const current = activeBranch?.id === b.id;
+              return (
+                <li key={b.id}>
+                  <form action={selectBranchAction}>
+                    <input type="hidden" name="branchId" value={b.id} />
+                    <input type="hidden" name="returnTo" value="/barra" />
+                    <button
+                      type="submit"
+                      aria-current={current ? "true" : undefined}
+                      className={`flex min-h-14 w-full items-center justify-between rounded-2xl border px-5 text-left ${
+                        current ? "border-tabaco bg-tabaco text-crema" : "border-tabaco/15 bg-papel text-tabaco hover:border-tabaco"
+                      }`}
+                    >
+                      <span className="font-display text-xl">{b.name}</span>
+                      <span className="text-sm font-semibold">{current ? "Actual" : "Trabajar aquí"}</span>
+                    </button>
+                  </form>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      <SignOutButton className="btn w-full border border-tabaco/25 text-tabaco hover:border-tabaco" />
     </div>
   );
 }

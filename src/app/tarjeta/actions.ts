@@ -40,7 +40,7 @@ export async function enrollAction(_prev: FormState, formData: FormData): Promis
 const qrRequestSchema = z.object({ cardId: z.uuid(), purpose: z.enum(["identify", "redeem"]) });
 
 export type QrResult =
-  | { ok: true; svg: string; expiresAt: string; purpose: "identify" | "redeem" }
+  | { ok: true; svg: string; expiresAt: string; purpose: "identify" | "redeem"; ref: string }
   | { ok: false; error: string; code?: string };
 
 const QR_TTL_SECONDS = 120;
@@ -72,7 +72,40 @@ export async function issueQrAction(input: { cardId: string; purpose: "identify"
     margin: 1,
     color: { dark: "#241914", light: "#FBF7F4" },
   });
-  return { ok: true, svg, expiresAt: String(data.expires_at), purpose: parsed.data.purpose };
+  // `ref` es el hash del token (no el token): sirve para consultar si ya lo escanearon.
+  return { ok: true, svg, expiresAt: String(data.expires_at), purpose: parsed.data.purpose, ref: hash };
+}
+
+const statusInput = z.object({ cardId: z.uuid(), ref: z.string().regex(/^[a-f0-9]{64}$/).nullable() });
+
+export type CardStatus =
+  | {
+      ok: true;
+      version: number;
+      stampsBalance: number;
+      rewardsBalance: number;
+      tokenState: "active" | "scanned" | "expired" | "unknown";
+      lastEvent: { eventType: string; stampsDelta: number; rewardsDelta: number } | null;
+    }
+  | { ok: false };
+
+/** Estado ligero de la tarjeta para actualizar la pantalla del cliente en vivo. */
+export async function cardStatusAction(input: { cardId: string; ref: string | null }): Promise<CardStatus> {
+  const parsed = statusInput.safeParse(input);
+  if (!parsed.success) return { ok: false };
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { ok: false };
+  const { data, error } = await supabase.rpc("my_card_status", { p_card_id: parsed.data.cardId, p_token_hash: parsed.data.ref });
+  if (error || !data?.ok) return { ok: false };
+  const last = data.last_event as { event_type: string; stamps_delta: number; rewards_delta: number } | null;
+  return {
+    ok: true,
+    version: Number(data.version),
+    stampsBalance: Number(data.stamps_balance),
+    rewardsBalance: Number(data.rewards_balance),
+    tokenState: data.token_state,
+    lastEvent: last ? { eventType: last.event_type, stampsDelta: last.stamps_delta, rewardsDelta: last.rewards_delta } : null,
+  };
 }
 
 export async function customerSignOutAction() {

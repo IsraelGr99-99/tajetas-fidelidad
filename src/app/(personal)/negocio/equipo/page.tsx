@@ -6,9 +6,10 @@ import { ROLE_LABELS, STAFF_ROLES, type StaffRole } from "@/domain/staff/permiss
 import { formatDate } from "@/lib/format";
 import { requireCapability } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { BranchesSection } from "./BranchesSection";
 import { InviteForm, RevokeInvitationButton, StaffMemberForm } from "./StaffForms";
 
-export const metadata: Metadata = { title: "Personal" };
+export const metadata: Metadata = { title: "Equipo" };
 
 const listSchema = z.object({
   ok: z.literal(true),
@@ -53,10 +54,10 @@ export default async function StaffAdminPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-4xl text-tabaco">Personal</h1>
+        <h1 className="text-4xl text-tabaco">Equipo</h1>
         <p className="mt-2 max-w-2xl leading-7 text-tabaco/75">
-          Invita por correo: la persona entra en <strong>/personal/ingresar</strong> con “código por correo” y la invitación se acepta sola. Nadie
-          comparte contraseñas.
+          Invita por correo: la persona entra en <strong>/entrar</strong> con “Código por correo” y la invitación se acepta sola. Nadie comparte
+          contraseñas.
         </p>
       </div>
 
@@ -132,6 +133,7 @@ export default async function StaffAdminPage() {
           </ul>
         </section>
       ) : null}
+      <BranchesSection />
     </div>
   );
 }

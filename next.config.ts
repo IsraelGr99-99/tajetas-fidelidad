@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { LEGACY_REDIRECTS } from "./src/domain/staff/routes";
 
 /**
  * Cabeceras de seguridad base. La CSP completa con nonce para scripts se agrega
@@ -17,6 +18,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // Rutas anteriores de la consola: redirección temporal a las nuevas, cortas.
+  async redirects() {
+    return LEGACY_REDIRECTS.map((r) => ({ ...r, permanent: false }));
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

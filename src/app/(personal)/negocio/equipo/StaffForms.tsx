@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { type ActionState, inviteStaffAction, revokeInvitationAction, updateStaffAction } from "@/app/personal/gestion";
+import { type ActionState, inviteStaffAction, revokeInvitationAction, updateStaffAction } from "@/actions/management";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { errorTextClass, hintClass, inputClass, labelClass } from "@/components/ui/form";
 import { ROLE_LABELS, type StaffRole } from "@/domain/staff/permissions";
