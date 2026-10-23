@@ -11,17 +11,14 @@ import { publicSupabaseConfig } from "@/lib/supabase/config";
 export type StaffCodeResult = { ok: true } | { ok: false; message: string };
 
 /**
- * IP del cliente según el proveedor de hosting (cabeceras que el proveedor reescribe y el
- * navegador no puede falsificar), seudonimizada para el límite de intentos.
+ * IP del cliente, seudonimizada para el límite de intentos. Solo se confía en la cabecera
+ * que el hosting reescribe (`TRUSTED_IP_HEADER`; en Vercel, `x-vercel-forwarded-for`).
+ * Cualquier otra cabecera la puede inventar el navegador.
  */
 async function clientHash() {
   const h = await headers();
-  const ip =
-    h.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
-    h.get("cf-connecting-ip") ||
-    h.get("x-real-ip") ||
-    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "desconocido";
+  const trusted = (process.env.TRUSTED_IP_HEADER || "x-vercel-forwarded-for").toLowerCase();
+  const ip = h.get(trusted)?.split(",")[0]?.trim() || "desconocido";
   return createHash("sha256").update(`staff-otp:${ip}`).digest("hex");
 }
 
@@ -47,7 +44,15 @@ export async function requestStaffCodeAction(rawEmail: string, captchaToken?: st
     const email = parsed.data;
     after(async () => {
       const anon = createClient(config.url, config.key, { auth: { persistSession: false, autoRefreshToken: false } });
-      await anon.auth.signInWithOtp({ email, options: { shouldCreateUser: true, captchaToken: captchaToken ?? undefined } }).catch(() => undefined);
+      const { error: sendError } = await anon.auth
+        .signInWithOtp({ email, options: { shouldCreateUser: true, captchaToken: captchaToken ?? undefined } })
+        .catch(() => ({ error: { code: "network", status: 0 } }));
+      // Un fallo de envío queda registrado (sin el correo) para poder diagnosticarlo.
+      if (sendError) {
+        await admin
+          .from("audit_log")
+          .insert({ action: "staff.login_code", outcome: "error", details: { code: sendError.code ?? "unknown", status: sendError.status ?? null } });
+      }
     });
   }
   return { ok: true };

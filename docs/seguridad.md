@@ -28,6 +28,24 @@ Un agente auditor revisó en modo de solo lectura las migraciones, el proxy, las
 
 Pruebas de regresión: `tests/db/audit-fixes.test.ts`.
 
+### Segunda revisión de los parches
+
+El auditor volvió a revisar los commits de corrección:
+
+- **Cerrados:** M2, B1, B2, B3, B4, B6, B7, B8, I3 e I4.
+- **Parciales:**
+  - **M1:** un barista todavía podría sumarse sellos con una segunda cuenta de cliente. Mitigación pendiente: cruzar con el POS y alertar por barista.
+  - **M3:** el CAPTCHA falta activarlo en Supabase.
+  - **M4:** la MFA es opcional. Riesgo: con una contraseña robada de una cuenta sin factor, alguien podría inscribir su propio factor.
+  - **B5:** el panel incluye DEMO por defecto.
+  - **I2:** los clientes ven `change_reason` de la campaña.
+- **Nuevos hallazgos, corregidos:**
+  - **N1 (media):** el proxy no reenviaba a la página las cookies de sesión renovadas. Ahora se copian a los encabezados de la petición.
+  - **N2:** owner/admin con MFA y sesión aal1 no podían operar la barra. Ahora la barra no exige aal2 y la administración sí.
+  - **N3:** los fallos de envío del código al personal se registran en la auditoría, sin el correo.
+  - **N4:** el límite por dispositivo usa solo la cabecera de confianza del hosting (`TRUSTED_IP_HEADER`).
+  - **B2:** los bloqueos se toman en orden de `id` para evitar interbloqueos.
+
 ## Controles vigentes
 
 | Amenaza | Control | Verificación |

@@ -179,3 +179,14 @@ describe("Retención de datos temporales", () => {
     expect((await db.admin("select 1 from public.scan_tokens where token_hash = $1", [fresh])).length).toBe(1);
   });
 });
+
+describe("Re-revisión", () => {
+  test("N2: un owner con MFA y sesión aal1 puede operar la barra, pero no administrar", async () => {
+    const owner = await db.createStaff("owner", { branchAccess: false });
+    await db.admin("insert into auth.mfa_factors (user_id, status) values ($1, 'verified')", [owner.userId]);
+    const c = await db.createCustomer();
+    const token = await db.scanToken(c.userId, c.cardId);
+    expect((await db.rpc(owner.userId, "staff_claim_card", [IDS.branch, token, ticketHash()], "aal1")).ok).toBe(true);
+    expect(await db.rpc(owner.userId, "adjust_stamps", [c.cardId, 1, "Ajuste sin segundo paso", idemKey()], "aal1")).toMatchObject({ code: "not_found" });
+  });
+});

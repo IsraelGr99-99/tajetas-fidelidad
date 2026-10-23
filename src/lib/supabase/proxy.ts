@@ -20,6 +20,9 @@ export async function updateSession(request: NextRequest, requestHeaders: Header
       },
       setAll(cookiesToSet, headers) {
         for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
+        // La página debe recibir la sesión renovada, no la cookie vieja (si no, volvería a
+        // renovar con un refresh token ya rotado).
+        requestHeaders.set("cookie", request.cookies.toString());
         response = next();
         for (const { name, value, options } of cookiesToSet) response.cookies.set(name, value, options);
         for (const [key, value] of Object.entries(headers ?? {})) response.headers.set(key, value);

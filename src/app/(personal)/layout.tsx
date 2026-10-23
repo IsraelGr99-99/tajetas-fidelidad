@@ -62,7 +62,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
 
         {membership.mfa_pending ? (
           <p className="bg-tabaco px-4 py-2 text-center text-sm text-crema">
-            Para administrar el negocio confirma tu identidad.{" "}
+            La barra funciona normal; para administrar el negocio confirma tu identidad.{" "}
             <Link href="/cuenta/verificacion" className="font-semibold text-mostaza underline underline-offset-4">
               Escribir código de verificación
             </Link>
