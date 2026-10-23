@@ -39,6 +39,15 @@ Correo: Supabase Auth con OTP numérico y SMTP propio de capa gratuita (Resend o
 - Cliente: el QR aparece solo; `my_card_status` se consulta cada 3 s mientras la pantalla está visible para mostrar “Código escaneado” y “¡Sello registrado!” sin recargar.
 - Seguridad (ADR-011 corregido): el código por correo del personal ya no se envía a cualquiera. `request_staff_login_code` (solo `service_role`) verifica que el correo sea de personal activo o esté invitado, limita intentos por correo y dispositivo y responde igual en ambos casos. Limitación: la API pública de Supabase Auth sigue permitiendo altas (las necesita el registro de clientes); esas cuentas no obtienen acceso a la consola. Para endurecerlo, agregar CAPTCHA (Turnstile) en la etapa 8.
 
+## 2026-10-27 · ADR-017 Google Wallet (Apple Wallet pospuesto a producción)
+- Adaptador propio (`src/lib/wallet/google.ts`): token OAuth con la cuenta de servicio firmado con `node:crypto` (RS256), API REST de Wallet Objects y enlace "Agregar a Google Wallet" firmado. No se agregó la librería de Google.
+- Una `LoyaltyClass` por negocio (`<issuer>.<slug>-fidelidad`) y un `LoyaltyObject` por tarjeta (`<issuer>.tarjeta-<public_serial>`). Datos enviados a Google: número corto de tarjeta, nombre opcional, sellos y recompensas. Nunca correo ni teléfono.
+- **Sin código escaneable en el pase**: un código fijo permitiría repetirlo. El pase enlaza a `/tarjeta`, donde vive el QR de un solo uso. Mejora futura: `rotatingBarcode` con TOTP validado en el servidor.
+- Sincronización: después de cada sello, canje, reverso o ajuste (`after()`, sin hacer esperar a la barra). Si falla, queda el error en `wallet_passes` y se reintenta al abrir `/tarjeta` o con `syncStalePasses`.
+- La UI no afirma que el pase se guardó; Google lo confirma en su pantalla. En modo `demo` solo funciona con cuentas de prueba del emisor.
+- Logotipo público en Supabase Storage (bucket `marca`, solo imágenes de marca).
+- Apple Wallet: queda como "próximamente" hasta tener una cuenta de Apple Developer para producción.
+
 ## 2026-10-26 · ADR-016 Finanzas, importaciones y datos DEMO
 - Dos fuentes separadas y rotuladas: **ventas POS** (reporte importado por sucursal) y **ventas con tarjeta** (compras registradas en barra). El panel no las suma: muestra el total POS y qué porcentaje pasó por la tarjeta.
 - Ganancia bruta = ventas POS − costo de lo vendido (`products.cost_cents`, empatado por nombre). El panel muestra qué parte de las ventas tiene costo conocido. Utilidad neta = ganancia bruta − gastos.

@@ -9,7 +9,7 @@
 | 5 | Flujos de empleado y cliente | ✅ hecho | Visita y canje con QR; bitácora y reversos con motivo; administración con resumen real, catálogo, campaña versionada, personal por invitación, sucursales, búsqueda de clientes y ajustes; baja de cuenta del cliente. **Falta**: e2e con sesión real (requiere cuentas de prueba) |
 | 5b | Rediseño y finanzas | ✅ hecho | Navegación con rutas cortas y barra unificada con apartado; tarjeta en vivo; importación Excel/CSV de catálogo, ventas POS y gastos; costos; panel de ventas, ganancias, gastos y sucursales; datos DEMO rotulados; código del personal solo a correos autorizados |
 | 6 | QR y NFC | ⏳ | Ruta `/s/<public_id>`; QR con rotación automática; alta de sellos NFC en admin |
-| 7 | Apple Wallet y Google Wallet | ⏳ | Adaptadores con estado “no configurado”; con credenciales: pase firmado, web service de Apple, objeto de Google actualizado al cambiar el ledger |
+| 7 | Apple Wallet y Google Wallet | 🟡 Google ✅ · Apple ⏳ | Adaptadores con estado “no configurado”; con credenciales: pase firmado, web service de Apple, objeto de Google actualizado al cambiar el ledger |
 | 8 | Auditoría, hardening y despliegue | ⏳ | Auditoría independiente sin hallazgos altos abiertos; pruebas de concurrencia en Supabase; CSP con nonce; plan de despliegue aprobado |
 
 ## Antes del piloto

@@ -49,8 +49,16 @@ La API key de Resend es un secreto. Solo vive en Supabase y en el gestor de secr
 ## 2. Apple Wallet (etapa 7)
 Requiere Apple Developer Program. Crear un **Pass Type ID** (`pass.com.iautomexa.fidelidad`), generar su certificado, descargar el certificado WWDR G4 y una llave APNs (.p8). Guardar en el gestor de secretos del hosting como base64 (`APPLE_*` en `.env.example`). La llave privada nunca va a Git.
 
-## 3. Google Wallet (etapa 7)
+## 3. Google Wallet (etapa 7) — integrado
 En Google Pay & Wallet Console crear el issuer, habilitar Google Wallet API en Google Cloud, crear una cuenta de servicio con permiso mínimo de emisor y guardar su JSON en base64 (`GOOGLE_WALLET_SERVICE_ACCOUNT_JSON_BASE64`). Mientras Google no apruebe la emisión pública, `GOOGLE_WALLET_MODE=demo` (solo cuentas de prueba).
+
+**Probar en modo demo:** Google Pay & Wallet Console → Google Wallet API → *Manage* → **Test accounts**: agrega las cuentas de Google con las que se probará (las de quien guarde el pase). Otra cuenta verá un error de Google al guardar.
+
+**Para emisión pública:** en la misma consola, solicita acceso de publicación (*Request publishing access*), completa el perfil del negocio y cambia `GOOGLE_WALLET_MODE=public`. La clase ya se crea en `UNDER_REVIEW` y Google la aprueba.
+
+**Logotipo:** `GOOGLE_WALLET_LOGO_URL` debe ser una URL HTTPS pública. Hoy apunta al bucket público `marca` de Supabase Storage. Si cambia el logotipo oficial, sube el PNG nuevo (mínimo 660×660, cuadrado) con el mismo nombre.
+
+**Enlace del pase:** el pase lleva a `NEXT_PUBLIC_APP_URL/tarjeta`. En local es `localhost`, así que el enlace solo funciona desde esta computadora; en el despliegue será `https://fidelidad-demo.iautomexa.com/tarjeta`.
 
 ## 4. Dominio y despliegue (no publicar sin autorización)
 - Hosting sugerido: Vercel (soporte nativo de Next.js). Alternativas: cualquier Node 20+.
