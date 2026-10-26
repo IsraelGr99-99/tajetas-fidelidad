@@ -68,7 +68,7 @@ Correo: Supabase Auth con OTP numérico y SMTP propio de capa gratuita (Resend o
 - Alta de personal por **invitación**: owner/admin registra correo, nombre, rol y sucursales. La persona entra con “código por correo”, y `claim_staff_invitations` crea su membresía solo si el correo está verificado. No se comparten contraseñas ni se usa la llave secreta para dar de alta.
 - Jerarquía: owner gestiona todo; admin solo gerentes y baristas; nadie cambia su propio rol o estado; siempre queda al menos un owner activo; no se puede desactivar la última sucursal activa.
 - Bitácora (`list_ledger`): el gerente ve solo su sucursal; admin ve todas. El contacto del cliente sale enmascarado y se muestra el actor de cada movimiento.
-- Clientes: no hay listado general. La búsqueda es exacta por correo, teléfono o serial; va por POST (no queda en la URL) y se audita el tipo de búsqueda, nunca el dato.
+- Clientes: owner/admin ven un padrón paginado de tarjetas activas de su negocio (nombre o referencia de tarjeta, alta y saldos), sin correo ni teléfono en el listado. La base aplica RLS a clientes y tarjetas. Para consultar contacto enmascarado y ajustar sellos, la búsqueda sigue siendo exacta por correo, teléfono o serial; va por POST (no queda en la URL) y se audita el tipo de búsqueda, nunca el dato.
 - Baja de cuenta: `delete_my_customer_data` anonimiza al cliente y borra sus QR; después la app borra el usuario de Auth con la llave secreta (`src/lib/supabase/admin.ts`, único uso), excepto si esa cuenta también es de personal.
 - El resumen de administración se calcula en vivo desde la bitácora; no hay métricas inventadas.
 

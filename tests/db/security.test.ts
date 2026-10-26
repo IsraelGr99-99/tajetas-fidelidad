@@ -79,6 +79,23 @@ describe("escrituras directas bloqueadas", () => {
 });
 
 describe("aislamiento entre clientes y roles (IDOR/BOLA)", () => {
+  test("el padrón cuenta solo tarjetas activas del negocio y no es visible para baristas ni otros negocios", async () => {
+    const owner = await db.createStaff("owner", { branchAccess: false });
+    const outsider = await db.createStaff("owner", { businessId: otherBusiness, branchAccess: false });
+    const barista = await db.createStaff("barista");
+    const active = await db.createCustomer();
+    const deleted = await db.createCustomer();
+    await db.rpc(deleted.userId, "delete_my_customer_data", ["cafe-nomada"]);
+    const query = `select c.id from public.loyalty_cards c
+      join public.customers cu on cu.id = c.customer_id
+      where c.business_id = $1 and cu.status = 'active'`;
+    const own = await db.as<{ id: string }>(owner.userId, query, [IDS.business]);
+    expect(own.some((row) => row.id === active.cardId)).toBe(true);
+    expect(own.some((row) => row.id === deleted.cardId)).toBe(false);
+    expect(await db.as(outsider.userId, query, [IDS.business])).toEqual([]);
+    expect(await db.as(barista.userId, query, [IDS.business])).toEqual([]);
+  });
+
   test("un cliente solo ve su propio registro y tarjeta", async () => {
     const a = await db.createCustomer();
     const b = await db.createCustomer();

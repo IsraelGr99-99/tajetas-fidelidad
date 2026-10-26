@@ -3,7 +3,8 @@ import Link from "next/link";
 import { DailyBars, RankBars } from "@/components/charts/Charts";
 import { Notice } from "@/components/staff/OperationParts";
 import { rpcErrorMessage } from "@/domain/loyalty/messages";
-import { formatMxn, lastDaysRange } from "@/lib/format";
+import { activeCustomerLabel } from "@/domain/loyalty/customer-display";
+import { formatDateTime, formatMxn, lastDaysRange } from "@/lib/format";
 import { requireCapability } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -46,8 +47,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const { from, to } = lastDaysRange(days);
 
   const supabase = await createSupabaseServerClient();
-  const res = await supabase?.rpc("finance_dashboard", { p_business_id: membership.business_id, p_from: from, p_to: to, p_include_demo: includeDemo });
+  const [res, activeCards] = await Promise.all([
+    supabase?.rpc("finance_dashboard", { p_business_id: membership.business_id, p_from: from, p_to: to, p_include_demo: includeDemo }),
+    supabase?.from("loyalty_cards")
+      .select("id, public_serial, created_at, customers!inner(display_name, status)", { count: "exact" })
+      .eq("business_id", membership.business_id)
+      .eq("customers.status", "active")
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
   const d = (res?.data?.ok ? res.data : null) as Dashboard | null;
+  const activeCardRows = activeCards?.error ? null : activeCards?.data ?? null;
   const href = (r: number, demo: boolean) => `/negocio?rango=${r}${demo ? "" : "&demo=0"}`;
 
   return (
@@ -88,6 +98,34 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950"><strong>Cómo leer este panel:</strong> los indicadores “POS” vienen de reportes externos importados. Las ventas registradas en la caja de Loyalty aparecen en “Ventas y empleados”. No se suman automáticamente aquí ni deben interpretarse como la misma fuente.</p>
 
       {!d ? <Notice tone="error" title={rpcErrorMessage(res?.data?.code)} /> : null}
+
+      <section aria-labelledby="clientes-activos" className="workspace-card p-5 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="workspace-kicker">Fidelidad · total histórico</p>
+            <h2 id="clientes-activos" className="mt-1 text-2xl font-semibold text-slate-950">Clientes con tarjeta activa</h2>
+            <p className="mt-1 text-sm text-slate-600">Solo clientes vigentes de {membership.business_name}; no depende del periodo de ventas.</p>
+          </div>
+          <Link href="/negocio/clientes" className="btn border border-tabaco/20 px-4 text-tabaco">Ver todos →</Link>
+        </div>
+        {activeCardRows === null ? (
+          <p role="alert" className="mt-4 text-sm text-red-700">No se pudo consultar el padrón de fidelidad. Intenta actualizar la página.</p>
+        ) : (
+          <div className="mt-4 grid gap-5 sm:grid-cols-[9rem_1fr]">
+            <p className="font-display text-5xl tabular-nums text-slate-950" aria-label={`${activeCards?.count ?? 0} clientes con tarjeta activa`}>{activeCards?.count ?? 0}</p>
+            {activeCardRows.length ? (
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {activeCardRows.map((card) => (
+                  <li key={card.id} className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                    <span className="block font-semibold text-slate-950">{activeCustomerLabel(card.customers, card.public_serial)}</span>
+                    <span>Alta {formatDateTime(card.created_at)}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-sm text-slate-600">Aún no hay clientes con tarjeta activa.</p>}
+          </div>
+        )}
+      </section>
 
       {d && d.has_demo && includeDemo ? (
         <p className="rounded-2xl bg-mostaza/30 px-4 py-3 text-sm text-tabaco">

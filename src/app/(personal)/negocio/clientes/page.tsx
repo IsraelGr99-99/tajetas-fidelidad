@@ -1,21 +1,70 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { activeCustomerLabel } from "@/domain/loyalty/customer-display";
+import { formatDateTime } from "@/lib/format";
 import { requireCapability } from "@/lib/staff/session";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CustomerSearch } from "./CustomerSearch";
 
 export const metadata: Metadata = { title: "Clientes" };
 
-export default async function CustomersPage() {
-  await requireCapability("view_customers_pii");
+const PAGE_SIZE = 20;
+
+export default async function CustomersPage({ searchParams }: { searchParams: Promise<{ pagina?: string }> }) {
+  const { membership } = await requireCapability("view_customers_pii");
+  const rawPage = (await searchParams).pagina;
+  const page = typeof rawPage === "string" && /^[1-9]\d{0,3}$/.test(rawPage) ? Number(rawPage) : 1;
+  const supabase = await createSupabaseServerClient();
+  const { data: cards, count, error } = supabase
+    ? await supabase.from("loyalty_cards")
+      .select("id, public_serial, created_at, last_earn_at, stamps_balance, rewards_balance, customers!inner(display_name, status)", { count: "exact" })
+      .eq("business_id", membership.business_id)
+      .eq("customers.status", "active")
+      .order("created_at", { ascending: false })
+      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
+    : { data: null, count: null, error: new Error("Supabase no configurado") };
+  const total = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (!error && page > totalPages) redirect(`/negocio/clientes?pagina=${totalPages}`);
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-4xl text-tabaco">Clientes</h1>
         <p className="mt-2 max-w-2xl leading-7 text-tabaco/75">
-          Por privacidad no hay listado general: busca con el dato exacto que te dé el cliente. El contacto se muestra enmascarado y cada búsqueda
-          queda registrada (sin el dato buscado).
+          Consulta las tarjetas activas de este negocio. El listado muestra solo nombre o referencia de tarjeta; para ver un contacto enmascarado y ajustar sellos, busca el dato exacto que te dé el cliente. Cada búsqueda queda registrada sin guardar el dato buscado.
         </p>
       </div>
-      <CustomerSearch />
+      <section aria-labelledby="padron-title" className="workspace-card p-5">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <p className="workspace-kicker">Programa de fidelidad</p>
+            <h2 id="padron-title" className="mt-1 text-xl font-semibold text-tabaco">Clientes con tarjeta activa</h2>
+          </div>
+          {!error && <p className="text-2xl font-semibold tabular-nums text-tabaco">{total}</p>}
+        </div>
+        {error ? <p role="alert" className="mt-4 text-sm text-red-700">No se pudo cargar el listado. Actualiza la página para reintentar.</p>
+          : cards?.length ? <>
+            <ul className="mt-4 divide-y divide-tabaco/10">
+              {cards.map((card) => <li key={card.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+                <div>
+                  <p className="font-semibold text-tabaco">{activeCustomerLabel(card.customers, card.public_serial)}</p>
+                  <p className="text-tabaco/70">Alta {formatDateTime(card.created_at)}{card.last_earn_at ? ` · último sello ${formatDateTime(card.last_earn_at)}` : ""}</p>
+                </div>
+                <p className="text-tabaco/75">{card.stamps_balance} sellos · {card.rewards_balance} recompensas</p>
+              </li>)}
+            </ul>
+            <nav aria-label="Páginas de clientes" className="mt-4 flex items-center justify-between gap-3 border-t border-tabaco/10 pt-4 text-sm">
+              {page > 1 ? <Link href={`/negocio/clientes?pagina=${page - 1}`} className="font-semibold text-blue-700">← Anterior</Link> : <span />}
+              <span>Página {page} de {totalPages}</span>
+              {page < totalPages ? <Link href={`/negocio/clientes?pagina=${page + 1}`} className="font-semibold text-blue-700">Siguiente →</Link> : <span />}
+            </nav>
+          </> : <p className="mt-4 text-sm text-tabaco/70">Aún no hay tarjetas activas en este negocio.</p>}
+      </section>
+      <section aria-labelledby="buscar-cliente" className="space-y-4">
+        <h2 id="buscar-cliente" className="text-xl font-semibold text-tabaco">Buscar un cliente concreto</h2>
+        <CustomerSearch />
+      </section>
     </div>
   );
 }
