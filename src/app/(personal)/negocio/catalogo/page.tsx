@@ -28,8 +28,7 @@ export default async function CatalogPage() {
       <div>
         <h1 className="text-4xl text-tabaco">Catálogo</h1>
         <p className="mt-2 max-w-2xl leading-7 text-tabaco/75">
-          Productos y servicios con precio y costo. El precio define el tope de las recompensas; el costo, la ganancia del panel. El barista no ve
-          los costos.
+          Registra lo que vendes, sus tamaños y precios. Después configura la receta de cada variante para que la caja descuente insumos.
         </p>
       </div>
       {error ? <Notice tone="error" title="No se pudo cargar el catálogo." /> : null}
@@ -45,19 +44,26 @@ export default async function CatalogPage() {
         </Notice>
       ) : null}
 
-      <PricingCalculator />
+      <nav aria-label="Acciones del catálogo" className="flex flex-wrap gap-2 text-sm font-semibold">
+        <a href="#lista-productos" className="workspace-action-secondary">Ver productos</a>
+        <a href="#nuevo-producto" className="workspace-action">+ Nuevo producto</a>
+        <a href="#categorias" className="workspace-action-secondary">Categorías</a>
+        <a href="#importar-catalogo" className="workspace-action-secondary">Importar Excel</a>
+      </nav>
 
-      <ProductImport existingNames={products.map((p) => p.name)} />
-      <CategoryManager categories={categories} />
+      <CatalogList products={products} categories={categories} />
 
-      <details className="rounded-3xl bg-papel p-6">
-        <summary className="cursor-pointer text-lg font-semibold text-tabaco">+ Agregar un producto a mano</summary>
+      <section id="nuevo-producto" className="workspace-card scroll-mt-24 p-5 sm:p-6">
+        <h2 className="text-xl font-semibold text-tabaco">Agregar producto o variante</h2>
         <div className="mt-4">
           <ProductForm product={null} categories={categories} />
         </div>
-      </details>
-
-      <CatalogList products={products} categories={categories} />
+      </section>
+      <section id="categorias" className="scroll-mt-24"><CategoryManager categories={categories} /></section>
+      <details id="importar-catalogo" className="workspace-card scroll-mt-24 p-5 sm:p-6"><summary className="cursor-pointer text-lg font-semibold text-slate-950">Importar catálogo desde Excel</summary>
+        <div className="mt-5"><ProductImport existingNames={products.map((p) => p.name)} /></div></details>
+      <PricingCalculator />
+      <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950"><strong>Siguiente paso:</strong> cuando el producto esté listo, <a href="/negocio/inventario?vista=recetas" className="font-bold underline">define su receta</a> para habilitarlo en caja.</p>
     </div>
   );
 }

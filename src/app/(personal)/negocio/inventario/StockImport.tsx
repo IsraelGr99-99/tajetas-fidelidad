@@ -36,8 +36,8 @@ function parseStock(matrix: Cell[][]): { rows: Row[]; errors: string[] } {
   return { rows, errors };
 }
 
-export function StockImport({ branches }: { branches: Branch[] }) {
-  const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
+export function StockImport({ branches, initialBranchId, onImported }: { branches: Branch[]; initialBranchId: string; onImported: (branchId: string) => void }) {
+  const [branchId, setBranchId] = useState(initialBranchId);
   const [preview, setPreview] = useState<{ rows: Row[]; errors: string[] } | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -49,7 +49,7 @@ export function StockImport({ branches }: { branches: Branch[] }) {
   async function confirm() {
     if (!preview?.rows.length || preview.errors.length) return;
     setBusy(true);
-    try { const result = await importStockCountAction(branchId, preview.rows); setMessage(result.message); if (result.ok) setPreview(null); }
+    try { const result = await importStockCountAction(branchId, preview.rows); setMessage(result.message); if (result.ok) { setPreview(null); onImported(branchId); } }
     catch { setMessage("No se pudo contactar al servidor."); }
     finally { setBusy(false); }
   }

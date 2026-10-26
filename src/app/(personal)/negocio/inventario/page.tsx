@@ -20,8 +20,11 @@ const catalogSchema = z.object({
   })),
 });
 
-export default async function InventoryPage() {
-  const { membership } = await requireCapability("manage_staff");
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ vista?: string }> }) {
+  const params = await searchParams;
+  const initialView = params.vista === "recetas" ? "recipes" : ["gestionar", "ajustar", "importar"].includes(params.vista ?? "") ? "manage" : "stock";
+  const initialManageMode = params.vista === "ajustar" ? "adjust" : params.vista === "importar" ? "import" : "create";
+  const { membership, activeBranch } = await requireCapability("manage_staff");
   const supabase = await createSupabaseServerClient();
   if (!supabase) return <p>Inventario no configurado: conecta Supabase.</p>;
   const [{ data, error }, catalogResult] = await Promise.all([
@@ -32,5 +35,5 @@ export default async function InventoryPage() {
   const parsed = dataSchema.safeParse(data);
   if (!parsed.success) return <p>No se pudo leer el inventario.</p>;
   const catalog = catalogSchema.safeParse(catalogResult.data);
-  return <InventoryManager businessId={membership.business_id} branches={membership.branches} data={parsed.data} catalog={catalog.success ? catalog.data.products : null} />;
+  return <InventoryManager key={params.vista ?? "stock"} businessId={membership.business_id} branches={membership.branches} initialBranchId={activeBranch?.id ?? null} initialView={initialView} initialManageMode={initialManageMode} data={parsed.data} catalog={catalog.success ? catalog.data.products : null} />;
 }

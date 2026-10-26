@@ -77,7 +77,7 @@ test("las páginas principales cargan sin violaciones de CSP", async ({ page }) 
   }
   // La app hidrata: un botón interactivo responde (si los scripts se bloquearan, no lo haría).
   await page.goto("/entrar");
-  await page.getByRole("tab", { name: "Código por correo" }).click();
+  await page.getByRole("button", { name: "Código por correo" }).click();
   await expect(page.getByLabel("Correo con el que te invitaron")).toBeVisible();
   expect(violations).toEqual([]);
 });

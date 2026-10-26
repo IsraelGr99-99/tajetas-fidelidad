@@ -9,6 +9,7 @@ export const metadata: Metadata = { title: "Inicio del espacio de trabajo" };
 type Product = { id: string; active: boolean };
 type Inventory = {
   ok: true;
+  items: { id: string }[];
   products: { id: string }[];
   recipes: { product_id: string; item_id: string }[];
   balances: { branch_id: string; item_id: string; quantity: number }[];
@@ -25,20 +26,26 @@ export default async function WorkspaceHome() {
   const catalog = catalogResult?.data?.ok && Array.isArray(catalogResult.data.products)
     ? (catalogResult.data.products as Product[]).filter((p) => p.active) : null;
   const inventory = inventoryResult?.data?.ok ? (inventoryResult.data as Inventory) : null;
-  const hasRecipes = inventory && inventory.products.length > 0 &&
-    inventory.products.every((p) => inventory.recipes.some((r) => r.product_id === p.id));
-  const hasStock = inventory && activeBranch && inventory.recipes.length > 0 &&
-    inventory.recipes.every((r) => inventory.balances.some((b) => b.branch_id === activeBranch.id && b.item_id === r.item_id && Number(b.quantity) > 0));
+  const activeProductIds = new Set(catalog?.map((product) => product.id) ?? []);
+  const hasRecipes = Boolean(inventory && activeProductIds.size > 0 &&
+    [...activeProductIds].every((id) => inventory.recipes.some((recipe) => recipe.product_id === id)));
+  const activeRecipes = inventory?.recipes.filter((recipe) => activeProductIds.has(recipe.product_id)) ?? [];
+  const hasStock = Boolean(inventory && activeBranch && activeRecipes.length > 0 &&
+    activeRecipes.every((recipe) => inventory.balances.some((balance) => balance.branch_id === activeBranch.id && balance.item_id === recipe.item_id && Number(balance.quantity) > 0)));
   const next = !activeBranch
     ? { href: "/cuenta", label: "Elegir sucursal", detail: "Selecciona dónde vas a trabajar antes de registrar movimientos." }
-    : admin && catalog?.length === 0
+    : admin && catalog === null
+      ? { href: "/negocio/catalogo", label: "Revisar catálogo", detail: "No se pudieron consultar los productos. Revisa la conexión antes de operar." }
+      : admin && catalog?.length === 0
       ? { href: "/negocio/catalogo", label: "Preparar catálogo", detail: "Primero registra los productos y sus precios." }
       : admin && !inventory
-        ? { href: "/negocio/inventario", label: "Habilitar inventario", detail: "Este entorno aún no tiene disponible el módulo de inventario; pide aplicar la migración." }
+        ? { href: "/negocio/inventario", label: "Revisar inventario", detail: "No se pudo consultar el inventario. Revisa la conexión antes de operar." }
+        : admin && inventory?.items.length === 0
+          ? { href: "/negocio/inventario?vista=gestionar", label: "Crear primer insumo", detail: "Registra los ingredientes o artículos que usarás en tus productos." }
         : admin && !hasRecipes
-          ? { href: "/negocio/inventario", label: "Completar recetas", detail: "Cada producto necesita los insumos que se descontarán al vender." }
+          ? { href: "/negocio/inventario?vista=recetas", label: "Completar recetas", detail: "Cada producto activo necesita los insumos que se descontarán al vender." }
           : admin && !hasStock
-            ? { href: "/negocio/inventario", label: "Cargar existencias", detail: "Registra el conteo de esta sucursal para poder vender." }
+            ? { href: "/negocio/inventario?vista=ajustar", label: "Cargar existencias", detail: "Registra el conteo de esta sucursal para poder vender." }
             : { href: "/caja", label: "Abrir caja", detail: "Registra una venta cobrada y continúa con fidelidad si el cliente participa." };
 
   return <div className="space-y-7">
@@ -62,10 +69,11 @@ export default async function WorkspaceHome() {
 
     {admin && <section aria-labelledby="preparacion-titulo" className="space-y-4"><div><p className="workspace-kicker">Administración</p><h2 id="preparacion-titulo" className="mt-1 text-2xl text-[#14233b]">Preparación del negocio</h2>
       <p className="mt-1 text-sm text-slate-600">Lo indispensable para vender con inventario. Los estados salen de los datos del servidor.</p></div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SetupCard title="Catálogo y precios" href="/negocio/catalogo" detail={catalog === null ? "No disponible en este entorno" : `${catalog.length} producto${catalog.length === 1 ? "" : "s"} activo${catalog.length === 1 ? "" : "s"}`} ready={Boolean(catalog?.length)} icon="products" />
-        <SetupCard title="Recetas" href="/negocio/inventario" detail={inventory ? `${new Set(inventory.recipes.map((r) => r.product_id)).size} de ${inventory.products.length} productos con receta` : "Módulo no disponible"} ready={Boolean(hasRecipes)} icon="inventory" />
-        <SetupCard title="Existencias" href="/negocio/inventario" detail={activeBranch ? hasStock ? `Stock cargado en ${activeBranch.name}` : `Revisa el stock de ${activeBranch.name}` : "Elige una sucursal"} ready={Boolean(hasStock)} icon="inventory" />
+        <SetupCard title="Insumos" href="/negocio/inventario?vista=gestionar" detail={inventory ? `${inventory.items.length} insumos registrados` : "Módulo no disponible"} ready={Boolean(inventory?.items.length)} icon="inventory" />
+        <SetupCard title="Recetas" href="/negocio/inventario?vista=recetas" detail={inventory ? `${inventory.recipes.filter((recipe) => activeProductIds.has(recipe.product_id)).reduce((ids, recipe) => ids.add(recipe.product_id), new Set<string>()).size} de ${activeProductIds.size} productos activos con receta` : "Módulo no disponible"} ready={hasRecipes} icon="inventory" />
+        <SetupCard title="Existencias" href="/negocio/inventario?vista=ajustar" detail={activeBranch ? hasStock ? `Stock cargado en ${activeBranch.name}` : `Revisa el stock de ${activeBranch.name}` : "Elige una sucursal"} ready={hasStock} icon="inventory" />
       </div></section>}
   </div>;
 }

@@ -19,7 +19,7 @@ type Status =
   | { kind: "success" };
 
 const fieldClass =
-  "mt-2 block min-h-12 w-full rounded-xl border border-tabaco/25 bg-papel px-4 text-base text-tinta shadow-inner outline-none transition focus:border-tabaco focus-visible:outline-3 focus-visible:outline-mostaza disabled:opacity-60";
+  "mt-2 block min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus-visible:outline-2 focus-visible:outline-blue-500 disabled:bg-slate-50 disabled:opacity-60";
 
 /**
  * Inicio de sesión del personal, en el navegador para que los límites por IP de
@@ -134,7 +134,7 @@ export function LoginForm({ next }: { next: string }) {
 
   return (
     <div className="space-y-5">
-      <div role="tablist" aria-label="Forma de entrar" className="grid grid-cols-2 gap-2 rounded-2xl bg-tabaco/5 p-1">
+      <div role="group" aria-label="Forma de entrar" className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
         {(
           [
             ["password", "Contraseña"],
@@ -144,14 +144,13 @@ export function LoginForm({ next }: { next: string }) {
           <button
             key={value}
             type="button"
-            role="tab"
-            aria-selected={mode === value}
+            aria-pressed={mode === value}
             disabled={busy}
             onClick={() => {
               setMode(value);
               setStatus({ kind: "idle" });
             }}
-            className={`min-h-11 rounded-xl text-sm font-semibold transition ${mode === value ? "bg-papel text-tabaco shadow" : "text-tabaco/75"}`}
+            className={`min-h-11 rounded-lg px-2 text-sm font-semibold transition ${mode === value ? "bg-white text-blue-800 shadow-sm" : "text-slate-600 hover:text-slate-950"}`}
           >
             {label}
           </button>
@@ -174,7 +173,7 @@ export function LoginForm({ next }: { next: string }) {
           </div>
           <Captcha onToken={setCaptcha} resetKey={captchaReset} />
           {feedback}
-          <button type="submit" disabled={busy} className="btn btn-oscuro w-full disabled:cursor-wait disabled:opacity-70">
+          <button type="submit" disabled={busy} className="workspace-action w-full disabled:cursor-wait disabled:opacity-70">
             {status.kind === "submitting" ? "Verificando…" : status.kind === "success" ? "Entrando…" : "Iniciar sesión"}
           </button>
         </form>
@@ -199,7 +198,7 @@ export function LoginForm({ next }: { next: string }) {
             />
           </div>
           {feedback}
-          <button type="submit" disabled={busy} className="btn btn-oscuro w-full disabled:cursor-wait disabled:opacity-70">
+          <button type="submit" disabled={busy} className="workspace-action w-full disabled:cursor-wait disabled:opacity-70">
             {busy ? "Verificando…" : "Entrar"}
           </button>
           <button type="button" onClick={() => setStatus({ kind: "idle" })} disabled={busy} className="w-full text-sm text-tabaco/80 underline underline-offset-4">
@@ -216,7 +215,7 @@ export function LoginForm({ next }: { next: string }) {
           </div>
           <Captcha onToken={setCaptcha} resetKey={captchaReset} />
           {feedback}
-          <button type="submit" disabled={busy} className="btn btn-oscuro w-full disabled:cursor-wait disabled:opacity-70">
+          <button type="submit" disabled={busy} className="workspace-action w-full disabled:cursor-wait disabled:opacity-70">
             {busy ? "Enviando…" : "Enviarme el código"}
           </button>
         </form>

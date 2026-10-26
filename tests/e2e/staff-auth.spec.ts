@@ -9,12 +9,12 @@ test("la consola exige sesión y conserva el destino", async ({ page }) => {
   const url = new URL(page.url());
   expect(url.pathname).toBe("/entrar");
   expect(url.searchParams.get("siguiente")).toBe("/negocio/catalogo");
-  await expect(page.getByRole("heading", { name: "Inicia tu turno" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Accede a tu espacio de trabajo" })).toBeVisible();
 });
 
 test("un destino externo en ?siguiente se ignora", async ({ page }) => {
   await page.goto("/entrar?siguiente=https://malicioso.example");
-  await expect(page.getByRole("heading", { name: "Inicia tu turno" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Accede a tu espacio de trabajo" })).toBeVisible();
 });
 
 test("validación local: campos vacíos", async ({ page }) => {
@@ -22,6 +22,16 @@ test("validación local: campos vacíos", async ({ page }) => {
   await page.getByRole("button", { name: "Iniciar sesión" }).click();
   // Next agrega su propio anunciador de rutas con role="alert"; se busca dentro del formulario.
   await expect(page.locator("form").getByRole("alert")).toHaveText("Escribe tu correo y tu contraseña.");
+});
+
+test("el acceso identifica Loyalty, distingue personal de clientes y cabe en móvil", async ({ page }) => {
+  await page.goto("/entrar");
+  await expect(page.getByRole("heading", { name: "Accede a tu espacio de trabajo" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Contraseña" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Código por correo" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /tarjeta de cliente/i })).toBeVisible();
+  const fits = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
+  expect(fits).toBe(true);
 });
 
 test("credenciales inválidas muestran un mensaje genérico", async ({ page }) => {
@@ -43,7 +53,7 @@ test("código por correo: misma respuesta para correos no autorizados (no revela
   // Para probar este flujo en CI, usar las llaves de prueba de Cloudflare (docs/despliegue.md).
   test.skip(Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY), "CAPTCHA real activo");
   await page.goto("/entrar");
-  await page.getByRole("tab", { name: "Código por correo" }).click();
+  await page.getByRole("button", { name: "Código por correo" }).click();
   // Correo distinto por corrida: el servidor limita a 5 solicitudes por correo y hora.
   await page.getByLabel("Correo con el que te invitaron").fill(`nadie-${Date.now()}-${Math.floor(Math.random() * 1e6)}@ejemplo.test`);
   await page.getByRole("button", { name: "Enviarme el código" }).click();

@@ -20,7 +20,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
       { label: "Control del negocio", items: [
         { href: "/negocio", label: "Resumen", icon: "chart" as const },
         { href: "/negocio/ventas", label: "Ventas de caja", icon: "cart" as const },
-        { href: "/negocio/inventario", label: "Inventario y recetas", icon: "inventory" as const },
+        { href: "/negocio/inventario", label: "Inventario e insumos", icon: "inventory" as const },
         { href: "/negocio/catalogo", label: "Catálogo y precios", icon: "products" as const },
         { href: "/negocio/finanzas", label: "Reportes y gastos", icon: "expenses" as const },
       ] },

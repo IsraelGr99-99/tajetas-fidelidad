@@ -80,25 +80,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <h1 className="mt-1 text-3xl text-slate-950 sm:text-4xl">Resumen del negocio</h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-600">Revisa el desempeño y sigue cada operación desde su módulo correspondiente.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <nav aria-label="Periodo" className="flex gap-1 rounded-full bg-tabaco/5 p-1">
-            {RANGES.map((r) => (
-              <Link
-                key={r}
-                href={href(r, includeDemo)}
-                aria-current={r === days ? "page" : undefined}
-                className={`rounded-full px-3 py-1.5 text-sm font-semibold ${r === days ? "bg-papel text-tabaco shadow" : "text-tabaco/75"}`}
-              >
-                {r} días
-              </Link>
-            ))}
-          </nav>
-          {d?.has_demo ? (
-            <Link href={href(days, !includeDemo)} className="rounded-full border border-tabaco/20 px-3 py-1.5 text-sm font-semibold text-tabaco">
-              {includeDemo ? "Ocultar DEMO" : "Mostrar DEMO"}
-            </Link>
-          ) : null}
-        </div>
       </div>
 
       <nav aria-label="Acciones de administración" className="grid gap-3 sm:grid-cols-3">
@@ -106,8 +87,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <Link href="/negocio/inventario" className="workspace-card group p-4 hover:border-blue-300"><span className="workspace-kicker">Inventario</span><strong className="mt-2 block text-slate-950 group-hover:text-blue-700">Existencias y alertas →</strong><span className="mt-1 block text-xs text-slate-600">Revisa mínimos, insumos y recetas.</span></Link>
         <Link href="/negocio/finanzas" className="workspace-card group p-4 hover:border-blue-300"><span className="workspace-kicker">Reportes</span><strong className="mt-2 block text-slate-950 group-hover:text-blue-700">Importaciones y gastos →</strong><span className="mt-1 block text-xs text-slate-600">Carga reportes del POS externo y gastos.</span></Link>
       </nav>
-
-      <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950"><strong>Cómo leer este panel:</strong> los indicadores “POS” vienen de reportes externos importados. Las ventas registradas en la caja de Loyalty aparecen en “Ventas y empleados”. No se suman automáticamente aquí ni deben interpretarse como la misma fuente.</p>
 
       {!d ? <Notice tone="error" title={rpcErrorMessage(res?.data?.code)} /> : null}
 
@@ -155,6 +134,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </>}
       </section>
 
+      <details open={Boolean(params.rango || params.demo)} className="workspace-card p-5 sm:p-6"><summary className="cursor-pointer text-xl font-bold text-slate-950">Análisis histórico e importaciones <span className="ml-2 text-sm font-medium text-slate-500">(opcional)</span></summary>
+        <div className="mt-5 space-y-6">
+        <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950"><strong>Fuentes distintas:</strong> este análisis usa reportes externos importados y registros de fidelidad. Las ventas de la caja de Loyalty se muestran arriba y en “Ventas y empleados”; no se suman aquí para evitar duplicarlas.</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <nav aria-label="Periodo del análisis importado" className="flex gap-1 rounded-full bg-slate-100 p-1">
+            {RANGES.map((r) => <Link key={r} href={href(r, includeDemo)} aria-current={r === days ? "page" : undefined} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${r === days ? "bg-white text-slate-950 shadow" : "text-slate-600"}`}>{r} días</Link>)}
+          </nav>
+          {d?.has_demo && <Link href={href(days, !includeDemo)} className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700">{includeDemo ? "Ocultar DEMO" : "Mostrar DEMO"}</Link>}
+        </div>
       {d && d.has_demo && includeDemo ? (
         <p className="rounded-2xl bg-mostaza/30 px-4 py-3 text-sm text-tabaco">
           <strong>Incluye datos DEMO</strong> (ventas, gastos y la sucursal “Angelópolis (DEMO)” son ficticios). Bórralos en{" "}
@@ -286,6 +274,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </section>
         </>
       ) : null}
+        </div>
+      </details>
     </div>
   );
 }

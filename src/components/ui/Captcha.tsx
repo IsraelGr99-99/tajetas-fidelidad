@@ -94,7 +94,8 @@ export function Captcha({ onToken, resetKey = 0 }: { onToken: (token: string | n
 
   if (!CAPTCHA_SITE_KEY) return null;
   return (
-    <div>
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <p className="mb-2 text-sm font-semibold text-slate-700">Verificación de seguridad</p>
       <div ref={box} className="min-h-16" aria-label="Verificación de seguridad" />
       {error ? (
         <p role="alert" className="mt-2 text-sm text-alerta">

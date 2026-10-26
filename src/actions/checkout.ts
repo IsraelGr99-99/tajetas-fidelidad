@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getStaffSession } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export type CheckoutResult = { ok: boolean; message: string; saleId?: string; totalCents?: number; uncertain?: boolean };
+export type CheckoutResult = { ok: boolean; message: string; saleId?: string; itemId?: string; totalCents?: number; uncertain?: boolean };
 const unavailable = { ok: false, message: "La caja no está configurada o no tienes acceso." };
 const failed = { ok: false, message: "No se pudo completar la operación. Intenta de nuevo." };
 
@@ -64,7 +64,7 @@ export async function upsertStockItemAction(input: unknown): Promise<CheckoutRes
   });
   if (error || !data?.ok) return failed;
   revalidatePath("/negocio/inventario");
-  return { ok: true, message: "Insumo guardado." };
+  return { ok: true, message: "Insumo guardado. Ahora registra su existencia en la sucursal.", itemId: data.item_id };
 }
 
 const maxThreeDecimals = (n: number) => Math.abs(Math.round(n * 1000) - n * 1000) < 1e-7;
