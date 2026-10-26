@@ -27,7 +27,7 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
   return (
     <div className="min-h-dvh bg-crema">
       <header className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-5 py-5 text-tabaco">
-        <Link href="/" aria-label="Café Nómada, ir al inicio" className="rounded-full">
+        <Link href="/c/cafe-nomada" aria-label="Café Nómada, ir al inicio" className="rounded-full">
           <Wordmark />
         </Link>
         <form action={customerSignOutAction}>

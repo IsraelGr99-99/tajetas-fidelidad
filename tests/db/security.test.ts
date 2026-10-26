@@ -21,7 +21,7 @@ afterAll(async () => {
 });
 
 describe("acceso anónimo", () => {
-  test.each(["customers", "loyalty_cards", "ledger_events", "staff_members", "scan_tokens", "audit_log", "purchases"])(
+  test.each(["customers", "loyalty_cards", "ledger_events", "staff_members", "scan_tokens", "audit_log", "purchases", "stock_items", "stock_balances", "product_recipes", "pos_sales", "pos_sale_lines", "stock_movements"])(
     "anon no puede leer %s",
     async (table) => {
       await expect(db.as(null, `select * from public.${table}`)).rejects.toThrow(/permission denied/);
@@ -51,6 +51,16 @@ describe("escrituras directas bloqueadas", () => {
     ).rejects.toThrow(/permission denied/);
     await expect(db.as(c.userId, "insert into public.scan_tokens (business_id, card_id, purpose, token_hash, expires_at) values ($1,$2,'identify',$3, now() + interval '1 minute')", [IDS.business, c.cardId, ticketHash()])).rejects.toThrow(/permission denied/);
     await expect(db.as(c.userId, "select private.rate_limit_allow('x', 1, 60)")).rejects.toThrow(/permission denied/);
+  });
+
+  test("un usuario autenticado no puede alterar inventario ni ventas directamente", async () => {
+    const staff = await db.createStaff("barista");
+    for (const table of ["stock_items", "stock_balances", "product_recipes", "pos_sales", "pos_sale_lines", "stock_movements"]) {
+      await expect(db.as(staff.userId, `insert into public.${table} default values`)).rejects.toThrow(/permission denied/);
+      await expect(db.as(staff.userId, `update public.${table} set business_id = $1`, [IDS.business])).rejects.toThrow(/permission denied/);
+      await expect(db.as(staff.userId, `delete from public.${table}`)).rejects.toThrow(/permission denied/);
+    }
+    expect(await db.as(staff.userId, "select * from public.stock_balances")).toEqual([]);
   });
 
   test("el ledger es append-only incluso para el superusuario", async () => {

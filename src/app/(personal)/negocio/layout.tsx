@@ -5,6 +5,8 @@ const TABS = [
   { href: "/negocio", label: "Panel", exact: true },
   { href: "/negocio/finanzas", label: "Ventas y gastos" },
   { href: "/negocio/catalogo", label: "Catálogo" },
+  { href: "/negocio/inventario", label: "Inventario" },
+  { href: "/negocio/ventas", label: "Ventas de caja" },
   { href: "/negocio/programa", label: "Programa" },
   { href: "/negocio/equipo", label: "Equipo" },
   { href: "/negocio/clientes", label: "Clientes" },

@@ -26,6 +26,7 @@ test("validación local: campos vacíos", async ({ page }) => {
 
 test("credenciales inválidas muestran un mensaje genérico", async ({ page }) => {
   test.skip(!process.env.NEXT_PUBLIC_SUPABASE_URL, "Requiere Supabase configurado");
+  test.skip(Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY), "CAPTCHA real activo; usar llaves de prueba para CI");
   await page.goto("/entrar");
   await page.getByLabel("Correo").fill("no-existe@ejemplo.test");
   await page.getByLabel("Contraseña").fill("ContrasenaIncorrecta123");
@@ -55,7 +56,7 @@ test("sin sesión, la página de sin acceso manda al login", async ({ page }) =>
 });
 
 test.describe("las secciones de la consola requieren sesión", () => {
-  for (const path of ["/barra", "/movimientos", "/negocio", "/negocio/finanzas", "/negocio/clientes", "/cuenta"]) {
+  for (const path of ["/barra", "/caja", "/movimientos", "/negocio", "/negocio/finanzas", "/negocio/clientes", "/cuenta"]) {
     test(`${path} redirige al login`, async ({ page }) => {
       await page.goto(path);
       const url = new URL(page.url());

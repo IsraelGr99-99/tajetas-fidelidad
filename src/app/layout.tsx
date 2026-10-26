@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
-import { Courier_Prime, Figtree, Fraunces } from "next/font/google";
+import { headers } from "next/headers";
+import { Courier_Prime, Figtree, Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -11,6 +12,8 @@ const fraunces = Fraunces({
 });
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree", display: "swap" });
 const courier = Courier_Prime({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-courier", display: "swap" });
+// Tipografía de iautomexa: solo la usa la página de venta de iautomexa Loyalty.
+const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
@@ -31,8 +34,9 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // La CSP usa un nonce por petición: todas las páginas se renderizan bajo demanda.
   await connection();
+  const locale = (await headers()).get("x-site-locale") === "en" ? "en" : "es-MX";
   return (
-    <html lang="es-MX" data-scroll-behavior="smooth" className={`${fraunces.variable} ${figtree.variable} ${courier.variable}`}>
+    <html lang={locale} data-scroll-behavior="smooth" className={`${fraunces.variable} ${figtree.variable} ${courier.variable} ${jakarta.variable}`}>
       <body className="min-h-dvh antialiased">
         <a
           href="#contenido"

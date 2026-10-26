@@ -16,6 +16,7 @@ Sistema de fidelidad digital de [iautomexa](https://iautomexa.com) para el pilot
 ### Rutas principales
 | Quién | Ruta |
 |---|---|
+| Público | `/` (página de venta de iautomexa Loyalty) · `/c/cafe-nomada` (página del piloto Café Nómada) |
 | Cliente | `/tarjeta` (registro y acceso en `/tarjeta/acceso`) |
 | Personal | `/entrar` → `/barra` · `/movimientos` · `/cuenta` |
 | Administración | `/negocio` (panel) · `/negocio/finanzas` · `/negocio/catalogo` · `/negocio/programa` · `/negocio/equipo` · `/negocio/clientes` |

@@ -15,6 +15,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   const role = membership.role;
 
   const items: NavItem[] = [
+    { href: "/caja", label: "Caja", icon: "store" as const },
     ...(can(role, "earn_with_qr") || can(role, "redeem") ? [{ href: "/barra", label: "Barra", icon: "scan" as const }] : []),
     ...(can(role, "view_branch_ledger") ? [{ href: "/movimientos", label: "Movimientos", icon: "list" as const }] : []),
     ...(can(role, "manage_staff") ? [{ href: "/negocio", label: "Negocio", icon: "store" as const }] : []),

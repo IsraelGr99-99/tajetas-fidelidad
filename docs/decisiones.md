@@ -98,3 +98,21 @@ Correo: Supabase Auth con OTP numérico y SMTP propio de capa gratuita (Resend o
 
 ## 2026-10-22 · ADR-010 Identidad visual
 Fraunces (serif de remates suaves, eje SOFT) para títulos, Figtree para texto y Courier Prime con moderación para etiquetas tipo bitácora. Las fuentes se sirven desde el propio dominio vía `next/font`. Paleta de marca con variante `arcilla-texto` (#8A4935) para cumplir contraste AA. El logotipo es un placeholder vectorial reemplazable (`src/components/brand/Logo.tsx`, `public/brand/logo.svg`).
+
+## 2026-10-23 · ADR-019 Portada de iautomexa Loyalty
+- `/` deja de ser la página de clientes de Café Nómada y pasa a vender el producto (iautomexa Loyalty) a otros negocios. La página del piloto se mueve a `/c/cafe-nomada`. Los enlaces de regreso de `/tarjeta`, `/privacidad` y `/entrar` apuntan ahí.
+- Identidad de la portada tomada de iautomexa.com: Plus Jakarta Sans (vía `next/font`, sin dependencia nueva), noche `#04070f`, eléctrico `#2e5cff` y cian `#22d3ee`, con contraste AA documentado en `globals.css`. Los estilos viven bajo `.lx`. Las pantallas del cliente y del personal conservan la identidad de Café Nómada (ADR-010).
+- La portada solo anuncia funciones que existen. Apple Wallet, puntos, niveles, cupones y avisos van como “Próximamente”. El teléfono y el panel son ilustraciones rotuladas como ejemplo o DEMO. No hay cifras ni testimonios inventados.
+
+## 2026-10-25 · ADR-020 Landing bilingüe y superficie clara
+- La portada de Loyalty usa una superficie clara con color azul, cian, coral y amarillo para hacer más evidente la propuesta de valor y separar la marca de la experiencia Café Nómada.
+- Español (`/`) e inglés (`/en`) comparten el componente `LoyaltyLanding`; solo cambia el diccionario de contenido. Cada ruta declara `canonical` y `hreflang` alternos.
+- La primera capa de interacción usa `IntersectionObserver`, CSS, SVG y `prefers-reduced-motion`. GSAP/ScrollTrigger no se añadió porque la instalación quedó bloqueada por el registro de npm y no se debe declarar una dependencia no verificada.
+- Las métricas de la maqueta siguen rotuladas como DEMO; no representan datos de producción.
+
+## 2026-10-25 · ADR-021 Caja e inventario inicial del piloto
+- Inventario separado por sucursal: `stock_items`, `stock_balances`, `product_recipes` y `stock_movements`. Cada venta de caja ejecuta `record_pos_sale` en una sola transacción; precios y disponibilidad se leen de PostgreSQL y se descuenta la receta completa. RLS solo permite lectura administrativa; no hay políticas de escritura. Los movimientos, ventas y renglones son append-only. La migración tiene timestamp posterior a la última migración existente; se creó manualmente porque el CLI local de Supabase no está disponible, y **aún debe aplicarse en el entorno remoto**.
+- Excel/CSV de inventario representa un conteo **absoluto**, no una suma. `import_stock_count` valida hasta 500 filas y registra como movimiento solo la diferencia; repetir el conteo sin cambios no duplica stock. El navegador muestra vista previa y el servidor vuelve a validar.
+- La caja registra cobros confirmados manualmente (efectivo, terminal o transferencia externa). **No procesa pagos** ni integra devoluciones/cortes de caja. Las ventas de caja se reportan por separado de archivos POS importados y de compras de fidelidad para evitar dobles sumas. La acreditación de sellos sigue siendo un flujo independiente; falta conciliar el folio de caja con la visita.
+- `buildEscPosTicket` crea bytes ESC/POS ASCII básicos para papel 58/80 mm. No hay transporte USB/red/Bluetooth, perfil de modelo, acentos/codepage ni prueba física. La UI muestra el estado pendiente y no afirma imprimir.
+- La calculadora de catálogo estima precio desde costo de ingredientes, merma, mano de obra, empaque, indirectos, margen e impuesto configurable; no cambia precios ni sustituye asesoría fiscal. No se añadieron dependencias.

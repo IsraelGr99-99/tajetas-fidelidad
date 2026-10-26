@@ -28,6 +28,25 @@
   --font-mono: var(--font-courier), ui-monospace, "Courier New", monospace;
 
   --radius-ticket: 1.75rem;
+
+  /*
+   * iautomexa Loyalty (página de venta en /). Paleta de iautomexa.com.
+   * Contraste verificado (WCAG AA):
+   *  - luz sobre noche ≈ 18.5:1        - niebla sobre noche ≈ 9.6:1; sobre noche-800 ≈ 9.0:1
+   *  - cian sobre noche ≈ 11.2:1; noche sobre cian ≈ 11.2:1
+   *  - blanco sobre eléctrico #2e5cff ≈ 5.1:1 (botón primario)
+   */
+  --color-noche: #04070f;
+  --color-noche-800: #0c1120;
+  --color-noche-700: #12294f;
+  --color-marino: #0b1c3d;
+  --color-electrico: #2e5cff;
+  --color-electrico-300: #a9bdff;
+  --color-cian: #22d3ee;
+  --color-luz: #f2f5fa;
+  --color-niebla: #a7b3cc;
+
+  --font-tech: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ---------------------------------------------------------------
@@ -132,4 +151,192 @@
   .btn-oscuro:hover { background: var(--color-arcilla); }
   .btn-contorno { border: 1px solid rgb(245 235 230 / 0.35); color: var(--color-crema); }
   .btn-contorno:hover { border-color: var(--color-mostaza); color: var(--color-mostaza); }
+}
+
+/* ---------------------------------------------------------------
+ * iautomexa Loyalty: superficie oscura, cuadrícula técnica y bordes
+ * de luz. Todo decorativo; el texto siempre va sobre fondo sólido.
+ * --------------------------------------------------------------- */
+@keyframes flota {
+  0%, 100% { transform: translateY(0) rotate(var(--giro, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--giro, 0deg)); }
+}
+@keyframes barrido {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+@keyframes pulso {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+@layer components {
+  .lx {
+    background: var(--color-noche);
+    color: var(--color-luz);
+    font-family: var(--font-tech);
+  }
+  .lx :is(h1, h2, h3) {
+    font-family: var(--font-tech);
+    font-variation-settings: normal;
+    letter-spacing: -0.03em;
+  }
+  .lx :focus-visible { outline-color: var(--color-cian); }
+  .lx summary:focus-visible { outline-offset: 5px; }
+  .lx-cuadricula {
+    background-image:
+      linear-gradient(rgb(169 189 255 / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(169 189 255 / 0.06) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+  }
+  .lx-texto-luz {
+    background: linear-gradient(100deg, var(--color-luz) 20%, var(--color-electrico-300) 55%, var(--color-cian) 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Borde degradado de 1px con fondo sólido (el contenido conserva su contraste). */
+  .lx-panel {
+    border: 1px solid transparent;
+    border-radius: 1.5rem;
+    background:
+      linear-gradient(var(--color-noche-800), var(--color-noche-800)) padding-box,
+      linear-gradient(140deg, rgb(169 189 255 / 0.35), rgb(255 255 255 / 0.06) 40%, rgb(34 211 238 / 0.3)) border-box;
+  }
+  .lx-etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgb(34 211 238 / 0.3);
+    border-radius: 999px;
+    background: rgb(34 211 238 / 0.08);
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-cian);
+  }
+  .lx-dato {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .btn-electrico {
+    background: var(--color-electrico);
+    color: #fff;
+    box-shadow: 0 10px 30px -10px rgb(46 92 255 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.25);
+  }
+  .btn-electrico:hover { background: #4a72ff; }
+  .btn-cristal {
+    border: 1px solid rgb(255 255 255 / 0.16);
+    background: rgb(255 255 255 / 0.04);
+    color: var(--color-luz);
+  }
+  .btn-cristal:hover { border-color: var(--color-cian); color: var(--color-cian); }
+}
+
+/* ---------------------------------------------------------------
+ * Loyalty marketing landing: superficie clara, energía cromática y
+ * microinteracciones. El contenido conserva contraste sólido; los
+ * gradientes solo son decorativos.
+ * --------------------------------------------------------------- */
+@keyframes loy-float { 0%, 100% { transform: translate3d(0, 0, 0) rotate(-2deg); } 50% { transform: translate3d(0, -12px, 0) rotate(2deg); } }
+@keyframes loy-pulse { 0%, 100% { transform: scale(.92); opacity: .75; } 50% { transform: scale(1.12); opacity: 1; } }
+@keyframes loy-sheen { from { transform: translateX(-120%); } to { transform: translateX(160%); } }
+
+@layer components {
+  .loy { --loy-ink: #13213b; --loy-muted: #5c6b84; --loy-blue: #3158f5; --loy-cyan: #0ab9c9; --loy-coral: #ff785f; --loy-yellow: #ffc94a; --loy-line: #e6ebf3; font-family: var(--font-sans); }
+  .loy-container { width: min(1120px, calc(100% - 40px)); margin-inline: auto; }
+  .loy-header { position: sticky; top: 0; z-index: 50; border-bottom: 1px solid rgb(19 33 59 / .08); background: rgb(255 255 255 / .86); backdrop-filter: blur(18px); }
+  .loy-header .loy-container { min-height: 76px; }
+  .loy-brand { display: inline-flex; align-items: center; gap: .65rem; color: var(--loy-ink); font-size: 1.04rem; font-weight: 800; letter-spacing: -.03em; }
+  .loy-brand b { color: var(--loy-blue); }
+  .loy-brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 12px; background: linear-gradient(135deg, var(--loy-blue), var(--loy-cyan)); color: white; box-shadow: 0 10px 25px rgb(49 88 245 / .25); }
+  .loy-nav-link { color: var(--loy-muted); transition: color 160ms ease; }
+  .loy-nav-link:hover { color: var(--loy-blue); }
+  .loy .loy-header .border { border-color: var(--loy-line); }
+  .loy .loy-header .rounded-full { border-color: var(--loy-line); color: var(--loy-muted); }
+  .loy .loy-header .rounded-full:hover { border-color: var(--loy-blue); color: var(--loy-blue); }
+  .loy-hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #fff 0%, #f7f9ff 55%, #eef7ff 100%); }
+  .loy-hero::after { position: absolute; right: -10%; bottom: -25%; width: 45%; height: 70%; border-radius: 50%; background: rgb(255 201 74 / .22); filter: blur(80px); content: ""; }
+  .loy-orb { position: absolute; border-radius: 999px; filter: blur(2px); pointer-events: none; }
+  .loy-orb-one { top: 4%; right: 7%; width: 18px; height: 18px; background: var(--loy-coral); box-shadow: 0 0 0 12px rgb(255 120 95 / .12); animation: loy-pulse 3s ease-in-out infinite; }
+  .loy-orb-two { top: 28%; left: 6%; width: 12px; height: 12px; background: var(--loy-cyan); box-shadow: 0 0 0 10px rgb(10 185 201 / .12); animation: loy-pulse 4s ease-in-out .8s infinite; }
+  .loy-eyebrow, .loy-kicker { color: var(--loy-blue); font-size: .78rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+  .loy-eyebrow { display: inline-flex; align-items: center; gap: .55rem; border: 1px solid rgb(49 88 245 / .16); border-radius: 999px; background: rgb(49 88 245 / .06); padding: .55rem .85rem; letter-spacing: .05em; text-transform: none; }
+  .loy-eyebrow span { width: 7px; height: 7px; border-radius: 50%; background: var(--loy-coral); box-shadow: 0 0 0 5px rgb(255 120 95 / .16); }
+  .loy-hero h1, .loy-section-heading h2, .loy-final h2 { max-width: 780px; color: var(--loy-ink); font-family: var(--font-display); font-size: clamp(2.8rem, 7vw, 5.8rem); font-weight: 650; letter-spacing: -.055em; line-height: .98; text-wrap: balance; }
+  .loy-hero h1 { margin-top: 1.35rem; }
+  .loy-hero h1::after { display: block; width: 150px; height: 12px; margin-top: .45rem; border-radius: 50%; background: var(--loy-yellow); content: ""; opacity: .85; transform: rotate(-2deg); }
+  .loy-hero-copy { max-width: 620px; margin-top: 1.5rem; color: var(--loy-muted); font-size: 1.18rem; line-height: 1.75; }
+  .loy-button { display: inline-flex; min-height: 52px; align-items: center; justify-content: center; gap: .55rem; border-radius: 999px; padding: .8rem 1.35rem; font-weight: 800; transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease; }
+  .loy-button:hover { transform: translateY(-3px); }
+  .loy-button-primary { background: var(--loy-blue); color: white; box-shadow: 0 16px 30px rgb(49 88 245 / .24); }
+  .loy-button-primary:hover { background: #2447d9; box-shadow: 0 20px 34px rgb(49 88 245 / .3); }
+  .loy-button-dark { background: var(--loy-ink); color: white; }
+  .loy-button-quiet { border: 1px solid var(--loy-line); background: white; color: var(--loy-ink); }
+  .loy-button-quiet:hover { border-color: var(--loy-blue); color: var(--loy-blue); }
+  .loy-button-light { background: white; color: var(--loy-ink); }
+  .loy-proof { display: flex; flex-wrap: wrap; gap: .8rem 1.25rem; margin-top: 1.8rem; color: var(--loy-muted); font-size: .82rem; }
+  .loy-proof li { display: inline-flex; align-items: center; gap: .35rem; }
+  .loy-proof span { color: var(--loy-cyan); font-weight: 900; }
+  .loy-visual { position: relative; min-height: 470px; display: grid; place-items: center; }
+  .loy-visual-glow { position: absolute; width: 80%; height: 70%; border-radius: 50%; background: linear-gradient(135deg, rgb(49 88 245 / .24), rgb(10 185 201 / .2), rgb(255 120 95 / .16)); filter: blur(36px); transform: rotate(-8deg); }
+  .loy-card { position: relative; z-index: 1; width: min(100%, 360px); min-height: 390px; overflow: hidden; border: 1px solid rgb(255 255 255 / .45); border-radius: 34px; background: linear-gradient(145deg, #15265e 0%, #3158f5 48%, #14b5c7 100%); padding: 28px; color: white; box-shadow: 0 35px 60px -26px rgb(49 88 245 / .55); transform: rotate(-5deg); transition: transform 300ms ease; }
+  .loy-card:hover { transform: rotate(-1deg) translateY(-8px); }
+  .loy-card::after { position: absolute; inset: 0; width: 35%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / .22), transparent); content: ""; transform: translateX(-120%) skewX(-18deg); animation: loy-sheen 5s ease-in-out infinite; }
+  .loy-card-logo { font-size: 1.1rem; font-weight: 800; }
+  .loy-card-tag { border: 1px solid rgb(255 255 255 / .3); border-radius: 999px; padding: .35rem .6rem; font-size: .7rem; }
+  .loy-card-number { display: block; margin-top: .25rem; font-family: var(--font-mono); font-size: 4.4rem; letter-spacing: -.08em; }
+  .loy-card-line { display: flex; gap: .55rem; margin-top: 1.4rem; }
+  .loy-card-line span { width: 35px; height: 35px; border-radius: 50%; background: rgb(255 255 255 / .95); box-shadow: 0 0 0 5px rgb(255 255 255 / .12); }
+  .loy-card-line span:nth-child(n+5) { background: transparent; border: 1px solid rgb(255 255 255 / .5); box-shadow: none; }
+  .loy-float { position: absolute; z-index: 2; display: flex; align-items: center; gap: .65rem; border: 1px solid rgb(255 255 255 / .8); border-radius: 18px; background: rgb(255 255 255 / .92); padding: .75rem .9rem; color: var(--loy-ink); box-shadow: 0 20px 35px -20px rgb(19 33 59 / .45); font-size: .75rem; animation: loy-float 5s ease-in-out infinite; }
+  .loy-float svg { color: var(--loy-coral); }
+  .loy-float span { display: grid; gap: .15rem; }
+  .loy-float b { color: var(--loy-blue); font-size: .95rem; }
+  .loy-float-a { top: 18%; left: 0; }
+  .loy-float-b { right: 0; bottom: 13%; animation-delay: -2s; }
+  .loy-section { padding: 7rem 0; }
+  .loy-section-tint { background: #f5f7fc; }
+  .loy-section-heading h2, .loy-final h2 { margin-top: .65rem; font-size: clamp(2.35rem, 5vw, 4.3rem); }
+  .loy-section-heading > p:last-child { max-width: 650px; margin-top: 1.25rem; color: var(--loy-muted); font-size: 1.08rem; line-height: 1.75; }
+  .loy-steps { display: grid; gap: 1rem; margin-top: 3.5rem; counter-reset: steps; }
+  .loy-steps li { display: grid; grid-template-columns: 54px 1fr; gap: 1rem; border-top: 1px solid var(--loy-line); padding: 1.4rem 0; }
+  .loy-step-number { color: var(--loy-coral); font-family: var(--font-mono); font-weight: 700; }
+  .loy-step-icon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 12px; background: #e9edff; color: var(--loy-blue); }
+  .loy-steps h3 { margin-top: .9rem; color: var(--loy-ink); font-size: 1.35rem; font-weight: 800; }
+  .loy-steps p, .loy-benefit p { max-width: 560px; margin-top: .5rem; color: var(--loy-muted); line-height: 1.7; }
+  .loy-benefit-grid { display: grid; gap: 1rem; margin-top: 3.5rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .loy-benefit { border: 1px solid white; border-radius: 24px; background: white; padding: 1.6rem; box-shadow: 0 22px 50px -40px rgb(19 33 59 / .55); transition: transform 220ms ease, box-shadow 220ms ease; }
+  .loy-benefit:hover { transform: translateY(-8px); box-shadow: 0 28px 55px -35px rgb(19 33 59 / .4); }
+  .loy-benefit-icon { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 15px; font-size: 1.3rem; font-weight: 900; }
+  .loy-benefit-icon-1 { background: #fff0ed; color: var(--loy-coral); }
+  .loy-benefit-icon-2 { background: #e6fbfc; color: var(--loy-cyan); }
+  .loy-benefit-icon-3 { background: #fff6d9; color: #b87800; }
+  .loy-benefit h3 { margin-top: 1.7rem; color: var(--loy-ink); font-size: 1.25rem; font-weight: 800; }
+  .loy-audiences { border-top: 1px solid var(--loy-line); }
+  .loy-audience { display: grid; grid-template-columns: 55px 1fr auto; align-items: center; gap: 1rem; border-bottom: 1px solid var(--loy-line); padding: 1.5rem 0; color: var(--loy-ink); transition: padding 180ms ease, color 180ms ease; }
+  .loy-audience:hover { padding-inline: .75rem; color: var(--loy-blue); }
+  .loy-audience span { color: var(--loy-coral); font-family: var(--font-mono); font-size: .8rem; }
+  .loy-audience strong { font-family: var(--font-display); font-size: clamp(1.35rem, 3vw, 2.2rem); font-weight: 600; }
+  .loy-audience > span:last-child { color: var(--loy-blue); font-size: 1.5rem; }
+  .loy-text-link { display: inline-flex; gap: .45rem; margin-top: 2rem; color: var(--loy-blue); font-weight: 800; }
+  .loy-faq { margin-top: 3rem; }
+  .loy-faq details { border-bottom: 1px solid var(--loy-line); padding: 1.25rem 0; }
+  .loy-faq summary { display: flex; cursor: pointer; list-style: none; align-items: center; justify-content: space-between; gap: 1rem; color: var(--loy-ink); font-weight: 800; }
+  .loy-faq summary::-webkit-details-marker { display: none; }
+  .loy-faq summary span { color: var(--loy-blue); font-size: 1.5rem; transition: transform 180ms ease; }
+  .loy-faq details[open] summary span { transform: rotate(45deg); }
+  .loy-faq p { max-width: 720px; margin-top: .75rem; color: var(--loy-muted); line-height: 1.7; }
+  .loy-final { padding-top: 1rem; padding-bottom: 6rem; }
+  .loy-final-inner { display: flex; align-items: end; justify-content: space-between; gap: 2rem; border-radius: 30px; background: linear-gradient(125deg, #17255e, #3158f5 58%, #11b9c4); padding: clamp(2rem, 6vw, 5rem); color: white; }
+  .loy-final .loy-kicker { color: #aeeff3; }
+  .loy-final h2 { max-width: 650px; color: white; }
+  .loy-final-inner > div > p:last-child { max-width: 540px; margin-top: 1rem; color: rgb(255 255 255 / .8); font-size: 1.05rem; line-height: 1.7; }
+  .loy-footer { border-top: 1px solid var(--loy-line); color: var(--loy-muted); font-size: .86rem; }
+  .loy-footer a:hover { color: var(--loy-blue); }
+  .loy-reveal { opacity: 0; transform: translateY(24px); transition: opacity 700ms ease, transform 700ms cubic-bezier(.2,.8,.2,1); }
+  .loy-reveal.is-visible { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .loy-card, .loy-float, .loy-card::after, .loy-orb-one, .loy-orb-two { animation: none; } .loy-reveal { opacity: 1; transform: none; transition: none; } }
+  @media (max-width: 768px) { .loy-container { width: min(100% - 32px, 600px); } .loy-section { padding: 5rem 0; } .loy-hero h1 { font-size: clamp(2.65rem, 13vw, 4.3rem); } .loy-visual { min-height: 410px; } .loy-float-a { left: -8px; } .loy-float-b { right: -8px; } .loy-benefit-grid { grid-template-columns: 1fr; } .loy-final-inner { align-items: start; flex-direction: column; } }
 }

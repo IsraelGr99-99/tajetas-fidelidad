@@ -20,7 +20,7 @@ export default async function CustomerAccessPage({ searchParams }: { searchParam
   return (
     <main id="contenido" className="min-h-dvh bg-crema px-5 py-8 sm:py-14">
       <div className="mx-auto w-full max-w-md">
-        <Link href="/" className="inline-block rounded-full text-tabaco" aria-label="Café Nómada, ir al inicio">
+        <Link href="/c/cafe-nomada" className="inline-block rounded-full text-tabaco" aria-label="Café Nómada, ir al inicio">
           <Wordmark />
         </Link>
 

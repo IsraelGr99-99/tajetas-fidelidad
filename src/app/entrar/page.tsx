@@ -56,7 +56,7 @@ export default async function StaffLoginPage({ searchParams }: { searchParams: P
 
           <p className="mt-10 text-sm text-tabaco/75">
             ¿Eres cliente?{" "}
-            <Link href="/" className="font-semibold underline underline-offset-4">
+            <Link href="/c/cafe-nomada" className="font-semibold underline underline-offset-4">
               Ve a la tarjeta de Café Nómada
             </Link>
           </p>

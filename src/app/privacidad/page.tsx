@@ -14,7 +14,7 @@ export default function PrivacyPage() {
   return (
     <div className="min-h-dvh bg-crema text-tabaco">
       <header className="mx-auto max-w-2xl px-5 py-5">
-        <Link href="/" aria-label="Café Nómada, ir al inicio" className="inline-block rounded-full">
+        <Link href="/c/cafe-nomada" aria-label="Café Nómada, ir al inicio" className="inline-block rounded-full">
           <Wordmark />
         </Link>
       </header>

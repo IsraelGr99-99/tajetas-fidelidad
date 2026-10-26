@@ -30,8 +30,8 @@ test("el aviso de privacidad está publicado y marcado como borrador", async ({ 
   await expect(page.getByRole("note")).toContainText("pendiente de revisión legal");
 });
 
-test("desde la landing se llega al registro", async ({ page }) => {
-  await page.goto("/");
+test("desde la página de Café Nómada se llega al registro", async ({ page }) => {
+  await page.goto("/c/cafe-nomada");
   await page.getByRole("link", { name: "Quiero mi tarjeta" }).click();
   // La página de acceso consulta la sesión en Supabase: dar margen a la red.
   await expect(page).toHaveURL(/\/tarjeta\/acceso$/, { timeout: 15_000 });

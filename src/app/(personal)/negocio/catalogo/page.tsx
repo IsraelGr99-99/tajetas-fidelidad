@@ -5,6 +5,7 @@ import { formatMxn } from "@/lib/format";
 import { requireCapability } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ProductForm } from "./ProductForm";
+import { PricingCalculator } from "./PricingCalculator";
 
 export const metadata: Metadata = { title: "Catálogo" };
 
@@ -39,6 +40,8 @@ export default async function CatalogPage() {
           Sin costo, el panel no puede calcular su ganancia. Agrégalo aquí o en tu archivo de importación.
         </Notice>
       ) : null}
+
+      <PricingCalculator />
 
       <ProductImport existingNames={products.map((p) => p.name)} />
 

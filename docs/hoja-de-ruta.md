@@ -8,11 +8,15 @@
 | 4 | Registro de clientes y QR | ✅ hecho | Acceso con OTP por correo (teléfono listo tras activar SMS), alta con aviso de privacidad, tarjeta con sellos e historial, QR temporal de identificación y de canje, HMAC de ticket, mensajes por código de error. **Falta**: prueba manual de envío real de correo |
 | 5 | Flujos de empleado y cliente | ✅ hecho | Visita y canje con QR; bitácora y reversos con motivo; administración con resumen real, catálogo, campaña versionada, personal por invitación, sucursales, búsqueda de clientes y ajustes; baja de cuenta del cliente. **Falta**: e2e con sesión real (requiere cuentas de prueba) |
 | 5b | Rediseño y finanzas | ✅ hecho | Navegación con rutas cortas y barra unificada con apartado; tarjeta en vivo; importación Excel/CSV de catálogo, ventas POS y gastos; costos; panel de ventas, ganancias, gastos y sucursales; datos DEMO rotulados; código del personal solo a correos autorizados |
+| 5c | Caja e inventario | 🟡 base local | Venta transaccional con receta, existencias por sucursal, alertas de mínimo, conteo Excel/CSV, reporte por empleado y calculadora de precios. Pendiente aplicar migración en Supabase, enlazar caja con fidelidad, devoluciones/cortes, conciliación de pagos y prueba de impresora real. |
 | 6 | QR y NFC | ⏳ | Ruta `/s/<public_id>`; QR con rotación automática; alta de sellos NFC en admin |
 | 7 | Apple Wallet y Google Wallet | 🟡 Google ✅ · Apple ⏳ | Adaptadores con estado “no configurado”; con credenciales: pase firmado, web service de Apple, objeto de Google actualizado al cambiar el ledger |
 | 8 | Auditoría, hardening y despliegue | 🟡 auditoría y correcciones ✅ · despliegue ⏳ | Auditoría independiente sin hallazgos altos abiertos; pruebas de concurrencia en Supabase; CSP con nonce; plan de despliegue aprobado |
 
 ## Antes del piloto
+- [ ] Aplicar y verificar la migración `20261028130000_inventory_checkout.sql` en Supabase; cargar recetas y conteos reales por sucursal.
+- [ ] Definir modelo y conexión de impresora ESC/POS, implementar transporte y probar tickets/corte en sucursal.
+- [ ] Definir proceso de devoluciones, cancelaciones, corte de caja y conciliación caja ↔ fidelidad ↔ POS externo.
 - [ ] Precios y catálogo reales de Café Nómada (el seed usa precios de ejemplo).
 - [ ] Logotipo oficial.
 - [ ] SMTP con dominio verificado.

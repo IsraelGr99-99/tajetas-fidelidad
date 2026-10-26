@@ -15,6 +15,7 @@ export async function proxy(request: NextRequest) {
   const csp = buildCsp(nonce, { dev: process.env.NODE_ENV === "development", supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("x-site-locale", request.nextUrl.pathname === "/en" ? "en" : "es-MX");
   requestHeaders.set("Content-Security-Policy", csp);
 
   const { response, userId } = await updateSession(request, requestHeaders);

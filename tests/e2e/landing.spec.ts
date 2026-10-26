@@ -1,7 +1,28 @@
 import { expect, test } from "@playwright/test";
 
-test("la landing presenta el programa con CTA hacia iautomexa", async ({ page }) => {
+test("la portada presenta Loyalty como tecnología de iautomexa y enlaza al piloto", async ({ page }) => {
   await page.goto("/");
+  await expect(page).toHaveTitle(/iautomexa Loyalty/);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Haz que cada visita cuente");
+  await expect(page.getByRole("link", { name: "Una tecnología de iautomexa", exact: true })).toHaveAttribute("href", "https://iautomexa.com/");
+  await expect(page.getByRole("link", { name: "Agenda una demo" }).first()).toHaveAttribute("href", "https://iautomexa.com/contacto/");
+  await expect(page.getByRole("figure", { name: /Ejemplo de tarjeta digital de lealtad/ })).toContainText("Vista ilustrativa");
+  await expect(page.getByRole("link", { name: /Conoce el piloto Café Nómada/ })).toHaveAttribute("href", "/c/cafe-nomada");
+  await page.getByRole("button", { name: /Restaurantes/ }).click();
+  await expect(page.getByText("Cada mesa cuenta")).toBeVisible();
+});
+
+test("la versión en inglés cambia contenido e idioma del documento", async ({ page }) => {
+  await page.goto("/en");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Make every visit count");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("link", { name: /Technology by iautomexa/ }).first()).toHaveAttribute("href", "https://iautomexa.com/");
+  await page.getByRole("link", { name: "Ver en español" }).click();
+  await expect(page).toHaveURL("/");
+});
+
+test("la página de Café Nómada presenta el programa con CTA hacia iautomexa", async ({ page }) => {
+  await page.goto("/c/cafe-nomada");
   await expect(page).toHaveTitle(/Café Nómada/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Historias que se cuentan taza a taza");
   // En escritorio también está en el encabezado; en celular, en el pie (siempre visible).
@@ -50,9 +71,9 @@ test("las páginas principales cargan sin violaciones de CSP", async ({ page }) 
   page.on("console", (m) => {
     if (/Content Security Policy|Refused to (load|execute|apply)/i.test(m.text())) violations.push(m.text());
   });
-  for (const path of ["/", "/tarjeta/acceso", "/entrar", "/privacidad"]) {
+  for (const path of ["/", "/c/cafe-nomada", "/tarjeta/acceso", "/entrar", "/privacidad"]) {
     await page.goto(path);
-    await page.waitForLoadState("networkidle");
+    await expect(page.locator("#contenido")).toBeVisible();
   }
   // La app hidrata: un botón interactivo responde (si los scripts se bloquearan, no lo haría).
   await page.goto("/entrar");

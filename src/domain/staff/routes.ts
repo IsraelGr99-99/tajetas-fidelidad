@@ -5,7 +5,7 @@ export const BRANCH_PICKER_PATH = "/cuenta";
 export const NO_ACCESS_PATH = "/sin-acceso";
 
 /** Secciones que requieren sesión de personal (las protege `proxy.ts`). */
-export const CONSOLE_PREFIXES = ["/barra", "/movimientos", "/negocio", "/cuenta"] as const;
+export const CONSOLE_PREFIXES = ["/barra", "/caja", "/movimientos", "/negocio", "/cuenta"] as const;
 
 export function isConsolePath(pathname: string): boolean {
   return CONSOLE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
