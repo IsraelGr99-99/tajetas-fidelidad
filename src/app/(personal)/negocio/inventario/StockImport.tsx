@@ -32,7 +32,7 @@ function parseStock(matrix: Cell[][]): { rows: Row[]; errors: string[] } {
     rows.push({ name, unit: unit as Row["unit"], quantity, minimum });
   }
   if (rows.length > 500) errors.push("Máximo 500 filas por archivo.");
-  if (new Set(rows.map((r) => r.name)).size !== rows.length) errors.push("Hay insumos duplicados en el archivo.");
+  if (new Set(rows.map((r) => r.name.replace(/\s+/g, " ").trim().toLocaleLowerCase("es-MX"))).size !== rows.length) errors.push("Hay insumos duplicados en el archivo.");
   return { rows, errors };
 }
 

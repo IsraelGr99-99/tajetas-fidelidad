@@ -94,20 +94,21 @@ function split(matrix: Cell[][]) {
 // ---------------------------------------------------------------------
 // Catálogo
 // ---------------------------------------------------------------------
-export type ProductRow = { name: string; category: string; priceCents: number; costCents: number | null; eligible: boolean; active: boolean };
+export type ProductRow = { name: string; variantLabel: string | null; category: string; priceCents: number; costCents: number | null; eligible: boolean; active: boolean };
 
 export const PRODUCT_TEMPLATE = [
-  ["Nombre", "Categoría", "Precio", "Costo", "Suma sello", "Activo"],
-  ["Americano", "Bebidas", "50.00", "12.00", "Sí", "Sí"],
-  ["Capuchino", "Bebidas", "65.00", "16.50", "Sí", "Sí"],
-  ["Concha artesanal", "Panadería", "35.00", "11.00", "No", "Sí"],
-  ["Taller de cata", "Servicios", "350.00", "", "No", "Sí"],
+  ["Nombre", "Tamaño o medida", "Categoría", "Precio", "Costo", "Suma sello", "Activo"],
+  ["Americano", "Chico", "Bebidas", "50.00", "12.00", "Sí", "Sí"],
+  ["Capuchino", "Grande", "Bebidas", "65.00", "16.50", "Sí", "Sí"],
+  ["Concha artesanal", "", "Panadería", "35.00", "11.00", "No", "Sí"],
+  ["Taller de cata", "", "Servicios", "350.00", "", "No", "Sí"],
 ];
 
 export function parseProducts(matrix: Cell[][]): ParseResult<ProductRow> {
   const { header, body } = split(matrix);
   const col = locate(header, {
     name: ["nombre", "producto", "servicio", "articulo", "descripcion"],
+    variant: ["tamano o medida", "tamano", "medida", "variante", "presentacion"],
     category: ["categoria", "tipo", "familia", "departamento"],
     price: ["precio", "precio venta", "precio de venta", "pvp"],
     cost: ["costo", "costo unitario", "coste"],
@@ -121,7 +122,9 @@ export function parseProducts(matrix: Cell[][]): ParseResult<ProductRow> {
   const seen = new Set<string>();
   body.slice(0, MAX_ROWS.products).forEach((r, i) => {
     const row = i + 2;
-    const name = text(r[col.name], 80);
+    const name = text(r[col.name], 60);
+    const rawVariant = col.variant >= 0 ? r[col.variant] : null;
+    const variantLabel = String(rawVariant ?? "").trim() ? text(rawVariant, 30) : null;
     const category = col.category >= 0 ? text(r[col.category], 40) : "General";
     const priceCents = parseMoneyToCents(r[col.price]);
     const rawCost = col.cost >= 0 ? r[col.cost] : null;
@@ -131,16 +134,17 @@ export function parseProducts(matrix: Cell[][]): ParseResult<ProductRow> {
 
     const problems = [
       !name || name.length < 2 ? "nombre vacío o inválido" : null,
+      String(rawVariant ?? "").trim() && !variantLabel ? "tamaño o medida inválido" : null,
       !category || category.length < 2 ? "categoría inválida" : null,
       priceCents === null ? "precio inválido" : null,
       costCents === null && String(rawCost ?? "").trim() !== "" ? "costo inválido" : null,
       eligible === null ? "“Suma sello” debe ser Sí o No" : null,
       active === null ? "“Activo” debe ser Sí o No" : null,
-      name && seen.has(name.toLowerCase()) ? "nombre repetido en el archivo" : null,
+      name && seen.has(`${name}${variantLabel ? ` · ${variantLabel}` : ""}`.replace(/\s+/g, " ").trim().toLocaleLowerCase("es-MX")) ? "nombre repetido en el archivo" : null,
     ].filter(Boolean) as string[];
     if (problems.length) return result.errors.push({ row, message: problems.join(", ") });
-    seen.add(name!.toLowerCase());
-    result.rows.push({ row, name: name!, category: category!, priceCents: priceCents!, costCents, eligible: eligible!, active: active! });
+    seen.add(`${name}${variantLabel ? ` · ${variantLabel}` : ""}`.replace(/\s+/g, " ").trim().toLocaleLowerCase("es-MX"));
+    result.rows.push({ row, name: name!, variantLabel, category: category!, priceCents: priceCents!, costCents, eligible: eligible!, active: active! });
   });
   if (body.length > MAX_ROWS.products) result.errors.push({ row: MAX_ROWS.products + 2, message: `Máximo ${MAX_ROWS.products} renglones por archivo.` });
   return result;

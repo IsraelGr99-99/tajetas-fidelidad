@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Wordmark } from "@/components/brand/Logo";
 import { CardQr } from "@/components/customer/CardQr";
+import { BirthdayOfferPreferences } from "@/components/customer/BirthdayOfferPreferences";
 import { DeleteAccount } from "@/components/customer/DeleteAccount";
 import { WalletSection } from "@/components/customer/WalletSection";
 import { PassportCard } from "@/components/loyalty/PassportCard";
@@ -11,6 +12,8 @@ import { describeRewardCap } from "@/domain/loyalty/campaign";
 import { formatDateTime, formatMxn } from "@/lib/format";
 import { getCustomerSession } from "@/lib/customer/session";
 import { walletStatusForCard } from "@/lib/wallet/sync";
+import { PILOT_BUSINESS_SLUG } from "@/lib/business";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { customerSignOutAction } from "./actions";
 
 export const metadata: Metadata = { title: "Mi tarjeta" };
@@ -22,6 +25,9 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
 
   const { card, customer, campaign, history } = session.card;
   const wallet = await walletStatusForCard(card.id);
+  const supabase = await createSupabaseServerClient();
+  const birthdayResult = await supabase?.rpc("get_my_birthday_offer", { p_business_slug: PILOT_BUSINESS_SLUG });
+  const birthday = birthdayResult?.data?.ok ? birthdayResult.data : null;
   const greeting = customer.display_name ? `Hola, ${customer.display_name}` : "Hola, viajero";
 
   return (
@@ -71,6 +77,9 @@ export default async function MyCardPage({ searchParams }: { searchParams: Promi
         )}
 
         <WalletSection {...wallet} />
+
+        {birthday ? <BirthdayOfferPreferences optedIn={Boolean(birthday.opted_in)} month={birthday.month ?? null} day={birthday.day ?? null} />
+          : <p className="rounded-2xl bg-papel p-5 text-sm text-tabaco/75">Las preferencias de cumpleaños no están disponibles en este momento.</p>}
 
         <section aria-labelledby="historial-titulo" className="rounded-[2rem] bg-papel p-6">
           <h2 id="historial-titulo" className="text-2xl text-tabaco">

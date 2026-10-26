@@ -12,14 +12,25 @@ const dataSchema = z.object({
   recipes: z.array(z.object({ product_id: z.uuid(), item_id: z.uuid(), quantity: z.coerce.number() })),
   products: z.array(z.object({ id: z.uuid(), name: z.string() })),
 });
+const catalogSchema = z.object({
+  ok: z.literal(true),
+  products: z.array(z.object({
+    id: z.uuid(), name: z.string(), category: z.string(), price_cents: z.number().int(),
+    cost_cents: z.number().int().nullable(), active: z.boolean(),
+  })),
+});
 
 export default async function InventoryPage() {
   const { membership } = await requireCapability("manage_staff");
   const supabase = await createSupabaseServerClient();
   if (!supabase) return <p>Inventario no configurado: conecta Supabase.</p>;
-  const { data, error } = await supabase.rpc("inventory_overview", { p_business_id: membership.business_id });
+  const [{ data, error }, catalogResult] = await Promise.all([
+    supabase.rpc("inventory_overview", { p_business_id: membership.business_id }),
+    supabase.rpc("admin_catalog", { p_business_id: membership.business_id }),
+  ]);
   if (error) return <p>Inventario no disponible. Aplica la migración de caja e inventario y vuelve a intentar.</p>;
   const parsed = dataSchema.safeParse(data);
   if (!parsed.success) return <p>No se pudo leer el inventario.</p>;
-  return <InventoryManager businessId={membership.business_id} branches={membership.branches} data={parsed.data} />;
+  const catalog = catalogSchema.safeParse(catalogResult.data);
+  return <InventoryManager businessId={membership.business_id} branches={membership.branches} data={parsed.data} catalog={catalog.success ? catalog.data.products : null} />;
 }

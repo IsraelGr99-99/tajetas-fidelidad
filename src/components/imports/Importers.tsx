@@ -10,13 +10,13 @@ type Branch = { id: string; name: string };
 const selectClass = "mt-1.5 block min-h-11 w-full max-w-sm rounded-xl border border-tabaco/25 bg-papel px-3 text-tabaco";
 
 export function ProductImport({ existingNames }: { existingNames: string[] }) {
-  const existing = new Set(existingNames.map((n) => n.toLowerCase()));
+  const existing = new Set(existingNames.map((n) => n.toLocaleLowerCase("es-MX")));
   return (
     <ImportWizard
       title="Importar productos y servicios"
       description={
         <>
-          Sube tu lista en Excel o CSV. Si el nombre ya existe se actualiza (precio, costo, categoría); si no, se agrega. Columnas: Nombre, Categoría,
+          Sube tu lista en Excel o CSV. Cada combinación de nombre y tamaño/medida es una variante con precio y receta propios. Si ya existe se actualiza. Columnas: Nombre, Tamaño o medida (opcional), Categoría,
           Precio, Costo (opcional), Suma sello (Sí/No), Activo (Sí/No).
         </>
       }
@@ -24,17 +24,17 @@ export function ProductImport({ existingNames }: { existingNames: string[] }) {
       template={PRODUCT_TEMPLATE}
       parse={parseProducts}
       columns={[
-        { label: "Nombre", render: (r) => r.name },
+        { label: "Producto", render: (r) => `${r.name}${r.variantLabel ? ` · ${r.variantLabel}` : ""}` },
         { label: "Categoría", render: (r) => r.category },
         { label: "Precio", render: (r) => formatMxn(r.priceCents), align: "right" },
         { label: "Costo", render: (r) => (r.costCents === null ? "—" : formatMxn(r.costCents)), align: "right" },
         { label: "Sello", render: (r) => (r.eligible ? "Sí" : "No") },
-        { label: "Acción", render: (r) => (existing.has(r.name.toLowerCase()) ? "Actualizar" : "Nuevo") },
+        { label: "Acción", render: (r) => (existing.has(`${r.name}${r.variantLabel ? ` · ${r.variantLabel}` : ""}`.toLocaleLowerCase("es-MX")) ? "Actualizar" : "Nuevo") },
       ]}
       confirmLabel={(n) => `Importar ${n} producto${n === 1 ? "" : "s"}`}
       onImport={(rows) =>
         importProductsAction(
-          rows.map((r) => ({ name: r.name, category: r.category, priceCents: r.priceCents, costCents: r.costCents, eligible: r.eligible, active: r.active })),
+          rows.map((r) => ({ name: r.name, variantLabel: r.variantLabel, category: r.category, priceCents: r.priceCents, costCents: r.costCents, eligible: r.eligible, active: r.active })),
         )
       }
     />

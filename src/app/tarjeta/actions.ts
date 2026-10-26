@@ -1,9 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import QRCode from "qrcode";
 import { z } from "zod";
 import { PRIVACY_VERSION, displayNameSchema } from "@/domain/customer/contact";
+import { BIRTHDAY_CONSENT_VERSION, parseBirthday } from "@/domain/customer/birthday";
 import { rpcErrorMessage } from "@/domain/loyalty/messages";
 import { PILOT_BUSINESS_SLUG } from "@/lib/business";
 import { generateScanToken } from "@/lib/scan-token";
@@ -22,14 +24,21 @@ export async function enrollAction(_prev: FormState, formData: FormData): Promis
   const name = displayNameSchema.safeParse(String(formData.get("displayName") ?? ""));
   if (!name.success) return { error: name.error.issues[0]?.message ?? "Revisa tu nombre." };
   if (formData.get("privacy") !== "on") return { error: "Para crear tu tarjeta necesitas aceptar el aviso de privacidad." };
+  const birthdayConsent = formData.get("birthdayOffer") === "on";
+  const birthday = birthdayConsent ? parseBirthday(formData.get("birthMonth"), formData.get("birthDay")) : null;
+  if (birthdayConsent && !birthday) return { error: "Revisa el día y mes de cumpleaños, o deja desactivada la opción promocional." };
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { error: "El servicio no está configurado en este entorno." };
 
-  const { data, error } = await supabase.rpc("enroll_customer", {
+  const { data, error } = await supabase.rpc("enroll_customer_with_birthday", {
     p_business_slug: PILOT_BUSINESS_SLUG,
     p_display_name: name.data,
     p_privacy_version: PRIVACY_VERSION,
+    p_month: birthday?.month ?? null,
+    p_day: birthday?.day ?? null,
+    p_birthday_consent: birthdayConsent,
+    p_birthday_consent_version: BIRTHDAY_CONSENT_VERSION,
   });
   if (error) return { error: "No pudimos crear tu tarjeta. Inténtalo de nuevo en un momento." };
   if (!data?.ok) {
@@ -37,6 +46,25 @@ export async function enrollAction(_prev: FormState, formData: FormData): Promis
     return { error: rpcErrorMessage(data?.code) };
   }
   redirect("/tarjeta?bienvenida=1");
+}
+
+export type BirthdayPreferenceState = { error: string | null; success: string | null };
+export async function updateBirthdayOfferAction(_prev: BirthdayPreferenceState, formData: FormData): Promise<BirthdayPreferenceState> {
+  const consent = formData.get("birthdayOffer") === "on";
+  const birthday = consent ? parseBirthday(formData.get("birthMonth"), formData.get("birthDay")) : null;
+  if (consent && !birthday) return { error: "Revisa el día y mes de cumpleaños.", success: null };
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { error: "El servicio no está configurado.", success: null };
+  const { data, error } = await supabase.rpc("set_my_birthday_offer", {
+    p_business_slug: PILOT_BUSINESS_SLUG,
+    p_month: birthday?.month ?? null,
+    p_day: birthday?.day ?? null,
+    p_consent: consent,
+    p_consent_version: BIRTHDAY_CONSENT_VERSION,
+  });
+  if (error || !data?.ok) return { error: error ? "No se pudo guardar la preferencia." : rpcErrorMessage(data?.code), success: null };
+  revalidatePath("/tarjeta");
+  return { error: null, success: consent ? "Preferencia de cumpleaños guardada. Aún no hay envíos automáticos configurados." : "Consentimiento retirado y fecha eliminada." };
 }
 
 const qrRequestSchema = z.object({ cardId: z.uuid(), purpose: z.enum(["identify", "redeem"]) });

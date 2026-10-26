@@ -43,4 +43,4 @@ export const displayNameSchema = z
   .transform((v) => (v === "" ? null : v));
 
 /** Versión vigente del aviso de privacidad (fecha). Cambiarla obliga a registrar una nueva aceptación. */
-export const PRIVACY_VERSION = "2026-10-23";
+export const PRIVACY_VERSION = "2026-10-26";

@@ -86,7 +86,8 @@ export async function reverseEventAction(_prev: ActionState, formData: FormData)
 // ---------------------------------------------------------------------
 const productSchema = z.object({
   productId: optionalUuid,
-  name: z.string().trim().min(2, "Mínimo 2 caracteres.").max(80),
+  baseName: z.string().trim().min(2, "Mínimo 2 caracteres.").max(60),
+  variantLabel: z.string().trim().max(30).transform((v) => v || null),
   category: z.string().trim().min(2, "Mínimo 2 caracteres.").max(40),
   price: z
     .string()
@@ -108,28 +109,31 @@ export async function upsertProductAction(_prev: ActionState, formData: FormData
   const ctx = await context("manage_campaigns");
   if ("error" in ctx) return { ok: false, message: ctx.error ?? null };
   const d = parsed.data;
-  const saved = await run(
-    ctx.supabase.rpc("upsert_product", {
+  return run(
+    ctx.supabase.rpc("upsert_product_variant", {
       p_business_id: ctx.businessId,
       p_product_id: d.productId,
-      p_name: d.name,
+      p_base_name: d.baseName,
+      p_variant_label: d.variantLabel,
       p_category: d.category,
       p_price_cents: d.price,
+      p_cost_cents: d.cost,
       p_eligible: d.eligible,
       p_active: d.active,
     }),
     d.productId ? "Producto actualizado." : "Producto agregado.",
-    ["/negocio/catalogo", "/barra"],
+    ["/negocio/catalogo", "/negocio/inventario", "/caja", "/barra"],
   );
-  if (!saved.ok) return saved;
-  // El costo es interno (solo administración); se guarda aparte para no exponerlo al personal.
-  const productId =
-    d.productId ??
-    (await ctx.supabase.rpc("admin_catalog", { p_business_id: ctx.businessId })).data?.products?.find(
-      (p: { name: string }) => p.name.toLowerCase() === d.name.toLowerCase(),
-    )?.id;
-  if (productId) await ctx.supabase.rpc("set_product_cost", { p_business_id: ctx.businessId, p_product_id: productId, p_cost_cents: d.cost });
-  return saved;
+}
+
+const categorySchema = z.object({ name: z.string().trim().min(2).max(40) });
+export async function upsertProductCategoryAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = categorySchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return fromZod(parsed.error);
+  const ctx = await context("manage_campaigns");
+  if ("error" in ctx) return { ok: false, message: ctx.error ?? null };
+  return run(ctx.supabase.rpc("upsert_product_category", { p_business_id: ctx.businessId, p_name: parsed.data.name }),
+    "Categoría lista. Ya puedes usarla en los productos.", ["/negocio/catalogo"]);
 }
 
 // ---------------------------------------------------------------------
@@ -328,11 +332,13 @@ export type CustomerRow = z.infer<typeof customerRow>;
 
 export async function findCustomersAction(query: string): Promise<{ ok: true; customers: CustomerRow[] } | { ok: false; message: string }> {
   const q = String(query ?? "").trim().slice(0, 254);
-  if (q.length < 4) return { ok: false, message: "Escribe el correo completo, el teléfono a 10 dígitos o el serial de la tarjeta." };
+  if (q.length < 3) return { ok: false, message: "Escribe al menos 3 caracteres del nombre, el correo completo, el teléfono o el serial." };
   const ctx = await context("view_customers_pii");
   if ("error" in ctx) return { ok: false, message: ctx.error ?? "" };
   const { data, error } = await ctx.supabase.rpc("admin_find_customers", { p_business_id: ctx.businessId, p_query: q });
   if (error) return { ok: false, message: "No se pudo contactar al servidor." };
   if (!data?.ok) return { ok: false, message: rpcErrorMessage(data?.code) };
-  return { ok: true, customers: z.array(customerRow).parse(data.customers) };
+  const parsed = z.array(customerRow).safeParse(data.customers);
+  if (!parsed.success) return { ok: false, message: "No se pudo interpretar la respuesta de clientes. Intenta actualizar la página." };
+  return { ok: true, customers: parsed.data };
 }

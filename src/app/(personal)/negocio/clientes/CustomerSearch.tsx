@@ -24,7 +24,9 @@ export function CustomerSearch() {
       const r = await findCustomersAction(q);
       if (r.ok) {
         setResults(r.customers);
-        if (r.customers.length === 0) setMessage("No hay clientes con ese dato exacto.");
+        if (r.customers.length === 0) setMessage(q.includes("@")
+          ? "No hay una tarjeta activa con ese correo exacto en este negocio. Comprueba que sea el correo verificado al registrarse."
+          : "No hay coincidencias entre las tarjetas activas de este negocio.");
       } else {
         setResults(null);
         setMessage(r.message);
@@ -40,13 +42,13 @@ export function CustomerSearch() {
     <div className="space-y-6">
       <form onSubmit={onSubmit} className="flex flex-col gap-2 sm:flex-row" role="search">
         <label htmlFor="q" className="sr-only">
-          Correo, teléfono o serial de tarjeta
+          Nombre, correo, teléfono o serial de tarjeta
         </label>
         <input
           id="q"
           name="q"
           autoComplete="off"
-          placeholder="Correo completo, teléfono a 10 dígitos o serial"
+          placeholder="Nombre, correo completo, teléfono o serial"
           className={`${inputClass} mt-0`}
         />
         <button type="submit" disabled={busy} className="btn btn-oscuro shrink-0 disabled:opacity-70">

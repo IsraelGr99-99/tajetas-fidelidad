@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { type FormState, enrollAction } from "../actions";
 
 export function ProfileForm({ contactLabel }: { contactLabel: string | null }) {
   const [state, action, pending] = useActionState<FormState, FormData>(enrollAction, { error: null });
+  const [birthdayOffer, setBirthdayOffer] = useState(false);
 
   return (
     <form action={action} className="space-y-5">
@@ -34,9 +35,21 @@ export function ProfileForm({ contactLabel }: { contactLabel: string | null }) {
           <Link href="/privacidad" target="_blank" className="font-semibold underline underline-offset-4">
             aviso de privacidad
           </Link>
-          . Mis datos se usan solo para la tarjeta de fidelidad.
+          . Mis datos necesarios se usan para la tarjeta de fidelidad; la promoción de cumpleaños se acepta por separado.
         </span>
       </label>
+
+      <fieldset className="rounded-2xl border border-tabaco/15 bg-papel p-4 text-sm text-tabaco">
+        <legend className="px-1 font-semibold">Cumpleaños (opcional)</legend>
+        <label className="flex items-start gap-3 leading-6"><input type="checkbox" name="birthdayOffer" checked={birthdayOffer} onChange={(e) => setBirthdayOffer(e.target.checked)} disabled={pending} className="mt-1 h-5 w-5 shrink-0 accent-[#3d2c24]" />
+          <span>Acepto guardar solo mi día y mes de cumpleaños para una futura promoción de Café Nómada. Puedo retirarlo después; no es requisito para tener mi tarjeta.</span>
+        </label>
+        {birthdayOffer && <div className="mt-4 flex flex-wrap gap-3">
+          <label className="grid gap-1">Mes<input type="number" name="birthMonth" min={1} max={12} required disabled={pending} className="min-h-11 w-24 rounded-xl border border-tabaco/25 px-3" /></label>
+          <label className="grid gap-1">Día<input type="number" name="birthDay" min={1} max={31} required disabled={pending} className="min-h-11 w-24 rounded-xl border border-tabaco/25 px-3" /></label>
+        </div>}
+        <p className="mt-2 text-xs text-tabaco/70">No pedimos el año. No se enviarán mensajes ni aplicarán descuentos automáticos mientras el beneficio no esté configurado.</p>
+      </fieldset>
 
       <div aria-live="polite" className="min-h-6">
         {state.error ? (

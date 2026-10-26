@@ -196,14 +196,15 @@ describe("personal", () => {
 });
 
 describe("clientes", () => {
-  test("búsqueda exacta por correo o teléfono, sin auditar el dato", async () => {
+  test("búsqueda por correo, teléfono o nombre sin auditar el dato", async () => {
     await db.createCustomer({ email: "buscada@correo.test" });
     await db.createCustomer({ phone: "522225551234" });
     const byEmail = await db.rpc(admin.userId, "admin_find_customers", [IDS.business, "Buscada@correo.test"]);
     expect((byEmail.customers as unknown[]).length).toBe(1);
     const byPhone = await db.rpc(admin.userId, "admin_find_customers", [IDS.business, "222 555 1234"]);
     expect((byPhone.customers as { contact_masked: string }[])[0].contact_masked).toBe("•••• 1234");
-    expect(await db.rpc(admin.userId, "admin_find_customers", [IDS.business, "bus"])).toMatchObject({ code: "invalid_request" });
+    expect((await db.rpc(admin.userId, "admin_find_customers", [IDS.business, "viajera"])).customers).toBeTruthy();
+    expect(await db.rpc(admin.userId, "admin_find_customers", [IDS.business, "bu"])).toMatchObject({ code: "invalid_request" });
     const audit = await db.admin("select details from public.audit_log where action = 'customer.search'");
     expect(JSON.stringify(audit)).not.toContain("buscada");
     expect(await db.rpc(manager.userId, "admin_find_customers", [IDS.business, "buscada@correo.test"])).toMatchObject({ code: "forbidden" });

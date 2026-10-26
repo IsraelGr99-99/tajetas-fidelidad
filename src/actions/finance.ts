@@ -44,7 +44,8 @@ function done(data: { ok?: boolean; code?: string } | null, message: string, pat
 const productRows = z
   .array(
     z.object({
-      name: z.string().trim().min(2).max(80),
+      name: z.string().trim().min(2).max(60),
+      variantLabel: z.string().trim().min(1).max(30).nullable(),
       category: z.string().trim().min(2).max(40),
       priceCents: z.number().int().min(0).max(1_000_000),
       costCents: z.number().int().min(0).max(1_000_000).nullable(),
@@ -60,10 +61,11 @@ export async function importProductsAction(rows: unknown): Promise<FinanceResult
   if (!parsed.success) return { ok: false, message: "Los datos del archivo no son válidos." };
   const ctx = await adminContext();
   if (!ctx) return denied;
-  const { data, error } = await ctx.supabase.rpc("bulk_upsert_products", {
+  const { data, error } = await ctx.supabase.rpc("bulk_upsert_product_variants", {
     p_business_id: ctx.businessId,
     p_rows: parsed.data.map((r) => ({
       name: r.name,
+      variant_label: r.variantLabel,
       category: r.category,
       price_cents: r.priceCents,
       cost_cents: r.costCents,
@@ -72,7 +74,7 @@ export async function importProductsAction(rows: unknown): Promise<FinanceResult
     })),
   });
   if (error) return network;
-  return done(data, `Listo: ${data?.inserted ?? 0} productos nuevos y ${data?.updated ?? 0} actualizados.`, ["/negocio/catalogo", "/barra"]);
+  return done(data, `Listo: ${data?.inserted ?? 0} productos nuevos y ${data?.updated ?? 0} actualizados.`, ["/negocio/catalogo", "/negocio/inventario", "/barra"]);
 }
 
 // ---------------------------------------------------------------------

@@ -155,6 +155,8 @@ describe("I5: inventario de funciones ejecutables", () => {
       "public.clear_demo_finance", "public.finance_dashboard", "public.finance_records",
       "public.upsert_stock_item", "public.set_product_recipe", "public.adjust_stock", "public.import_stock_count",
       "public.record_pos_sale", "public.inventory_overview", "public.pos_catalog", "public.pos_sales_report",
+      "public.upsert_product_category", "public.upsert_product_variant", "public.bulk_upsert_product_variants",
+      "public.operations_dashboard", "public.set_my_birthday_offer", "public.get_my_birthday_offer", "public.enroll_customer_with_birthday",
       "private.staff_role_in", "private.has_role", "private.can_operate_branch", "private.owns_card",
     ]);
     const rows = await db.admin<{ name: string }>(`

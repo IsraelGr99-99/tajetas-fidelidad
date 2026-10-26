@@ -1,13 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { type ActionState, upsertProductAction } from "@/actions/management";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { errorTextClass, inputClass, labelClass } from "@/components/ui/form";
 
 export type ProductValues = {
   id: string | null;
-  name: string;
+  baseName: string;
+  variantLabel: string | null;
   category: string;
   priceCents: number;
   costCents: number | null;
@@ -17,26 +18,37 @@ export type ProductValues = {
 
 export function ProductForm({ product, categories }: { product: ProductValues | null; categories: string[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(upsertProductAction, { ok: false, message: null });
-  const p = product ?? { id: null, name: "", category: categories[0] ?? "Bebidas", priceCents: 0, costCents: null, eligible: true, active: true };
+  const p = product ?? { id: null, baseName: "", variantLabel: null, category: categories[0] ?? "", priceCents: 0, costCents: null, eligible: true, active: true };
+  const [categoryChoice, setCategoryChoice] = useState(p.category || "__new__");
   const uid = p.id ?? "nuevo";
   const err = state.fieldErrors ?? {};
 
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="productId" value={p.id ?? ""} />
-      <div className="grid gap-4 sm:grid-cols-[2fr_1.2fr_1fr_1fr]">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_1fr]">
         <div>
-          <label htmlFor={`${uid}-name`} className={labelClass}>
-            Nombre
+          <label htmlFor={`${uid}-base-name`} className={labelClass}>
+            Producto base
           </label>
-          <input id={`${uid}-name`} name="name" defaultValue={p.name} required maxLength={80} className={inputClass} />
-          {err.name ? <p className={errorTextClass}>{err.name}</p> : null}
+          <input id={`${uid}-base-name`} name="baseName" defaultValue={p.baseName} required maxLength={60} placeholder="Americano" className={inputClass} />
+          {err.baseName ? <p className={errorTextClass}>{err.baseName}</p> : null}
         </div>
         <div>
-          <label htmlFor={`${uid}-category`} className={labelClass}>
-            Categoría
+          <label htmlFor={`${uid}-variant`} className={labelClass}>
+            Tamaño o medida <span className="font-normal text-tabaco/70">(opcional)</span>
           </label>
-          <input id={`${uid}-category`} name="category" defaultValue={p.category} list="categorias" required maxLength={40} className={inputClass} />
+          <input id={`${uid}-variant`} name="variantLabel" defaultValue={p.variantLabel ?? ""} maxLength={30} placeholder="Chico, grande, 250 g…" className={inputClass} />
+          <p className="mt-1 text-xs text-tabaco/70">Cada tamaño se vende y configura con precio y receta propios.</p>
+          {err.variantLabel ? <p className={errorTextClass}>{err.variantLabel}</p> : null}
+        </div>
+        <div>
+          <label htmlFor={`${uid}-category`} className={labelClass}>Categoría</label>
+          <select id={`${uid}-category`} value={categoryChoice} onChange={(e) => setCategoryChoice(e.target.value)} name={categoryChoice === "__new__" ? undefined : "category"} className={inputClass}>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            <option value="__new__">+ Nueva categoría</option>
+          </select>
+          {categoryChoice === "__new__" && <input name="category" required minLength={2} maxLength={40} placeholder="Nombre de categoría" className={`${inputClass} mt-2`} />}
           {err.category ? <p className={errorTextClass}>{err.category}</p> : null}
         </div>
         <div>

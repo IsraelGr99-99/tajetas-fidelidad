@@ -40,14 +40,16 @@ export default function PrivacyPage() {
               <li>Un solo medio de contacto que tú eliges: correo electrónico o teléfono celular.</li>
               <li>Un nombre corto opcional para saludarte en la barra.</li>
               <li>El historial de tus sellos y recompensas (fecha y sucursal).</li>
+              <li>Solo si lo aceptas por separado: día y mes de cumpleaños para una futura promoción; no pedimos el año.</li>
             </ul>
-            <p className="mt-2">No pedimos datos sensibles, financieros, de domicilio ni de fecha de nacimiento.</p>
+            <p className="mt-2">No pedimos datos financieros ni de domicilio. La preferencia de cumpleaños no es necesaria para usar la tarjeta.</p>
           </section>
           <section>
             <h2 className="text-2xl text-tabaco">Para qué</h2>
             <p className="mt-2">
-              Exclusivamente para operar tu tarjeta de fidelidad: identificarte, registrar tus visitas, entregar tus recompensas, enviarte los
-              códigos de acceso y prevenir fraudes. No vendemos ni compartimos tus datos con terceros para publicidad.
+              Para operar tu tarjeta de fidelidad: identificarte, registrar tus visitas, entregar tus recompensas, enviarte los códigos de acceso y prevenir fraudes.
+              La promoción de cumpleaños es una finalidad opcional y separada: solo se usará si aceptas guardar día y mes. Aún no hay envíos ni descuentos automáticos configurados.
+              No vendemos ni compartimos tus datos con terceros para publicidad.
             </p>
           </section>
           <section>
@@ -61,7 +63,8 @@ export default function PrivacyPage() {
             <h2 className="text-2xl text-tabaco">Tus derechos (ARCO)</h2>
             <p className="mt-2">
               Puedes acceder, rectificar, cancelar u oponerte al uso de tus datos, y revocar tu consentimiento, escribiendo a: correo de contacto
-              por completar. Si eliminas tu tarjeta, borramos tu contacto y nombre; el historial queda sin datos que te identifiquen.
+              por completar. La preferencia de cumpleaños se puede modificar o retirar desde tu tarjeta; al retirarla se borra el día y mes.
+              Si eliminas tu tarjeta, borramos tu contacto, nombre y preferencia de cumpleaños; el historial queda sin datos que te identifiquen.
             </p>
           </section>
           <section>

@@ -52,7 +52,8 @@ export async function recordSaleAction(input: unknown): Promise<CheckoutResult> 
     saleId: data.sale_id, totalCents: data.total_cents };
 }
 
-const itemInput = z.object({ businessId: z.uuid(), name: z.string().trim().min(2).max(100), unit: z.enum(["pieza", "g", "kg", "ml", "l"]) });
+const normalizedUnit = z.string().trim().toLowerCase().pipe(z.enum(["pieza", "g", "kg", "ml", "l"]));
+const itemInput = z.object({ businessId: z.uuid(), name: z.string().trim().min(2).max(100), unit: normalizedUnit });
 export async function upsertStockItemAction(input: unknown): Promise<CheckoutResult> {
   const parsed = itemInput.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Revisa el nombre y la unidad del insumo." };
@@ -100,7 +101,7 @@ export async function adjustStockAction(input: unknown): Promise<CheckoutResult>
 }
 
 const stockRows = z.array(z.object({
-  name: z.string().trim().min(2).max(100), unit: z.enum(["pieza", "g", "kg", "ml", "l"]),
+  name: z.string().trim().min(2).max(100), unit: normalizedUnit,
   quantity: z.number().nonnegative().max(1000000).refine(maxThreeDecimals), minimum: z.number().nonnegative().max(1000000).refine(maxThreeDecimals),
 })).min(1).max(500);
 export async function importStockCountAction(branchId: string, rows: unknown): Promise<CheckoutResult> {

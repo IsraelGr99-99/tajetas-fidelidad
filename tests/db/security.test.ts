@@ -21,7 +21,7 @@ afterAll(async () => {
 });
 
 describe("acceso anónimo", () => {
-  test.each(["customers", "loyalty_cards", "ledger_events", "staff_members", "scan_tokens", "audit_log", "purchases", "stock_items", "stock_balances", "product_recipes", "pos_sales", "pos_sale_lines", "stock_movements"])(
+  test.each(["customers", "loyalty_cards", "ledger_events", "staff_members", "scan_tokens", "audit_log", "purchases", "product_categories", "stock_items", "stock_balances", "product_recipes", "pos_sales", "pos_sale_lines", "stock_movements"])(
     "anon no puede leer %s",
     async (table) => {
       await expect(db.as(null, `select * from public.${table}`)).rejects.toThrow(/permission denied/);

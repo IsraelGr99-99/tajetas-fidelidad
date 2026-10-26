@@ -36,18 +36,28 @@ type Dashboard = {
   expenses_by_category: { category: string; amount_cents: number }[];
   unallocated_expenses_cents: number;
 };
+type OperationsDashboard = {
+  ok: true;
+  week_start: string;
+  weekly_sales_cents: number;
+  weekly_sales_count: number;
+  low_stock_count: number;
+  missing_stock_count: number;
+  products_without_recipe: number;
+  recent_events: { kind: "sale" | "stock"; label: string; created_at: string; amount_cents: number | null; quantity_delta: number | null }[];
+};
 
 const pct = (n: number | null) => (n === null ? "—" : `${Math.round(n * 100)} %`);
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ rango?: string; demo?: string }> }) {
-  const { membership } = await requireCapability("manage_staff");
+  const { membership, activeBranch } = await requireCapability("manage_staff");
   const params = await searchParams;
   const days = RANGES.find((r) => String(r) === params.rango) ?? 30;
   const includeDemo = params.demo !== "0";
   const { from, to } = lastDaysRange(days);
 
   const supabase = await createSupabaseServerClient();
-  const [res, activeCards] = await Promise.all([
+  const [res, activeCards, operationsResult] = await Promise.all([
     supabase?.rpc("finance_dashboard", { p_business_id: membership.business_id, p_from: from, p_to: to, p_include_demo: includeDemo }),
     supabase?.from("loyalty_cards")
       .select("id, public_serial, created_at, customers!inner(display_name, status)", { count: "exact" })
@@ -55,8 +65,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       .eq("customers.status", "active")
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase?.rpc("operations_dashboard", { p_business_id: membership.business_id, p_branch_id: activeBranch?.id ?? null }),
   ]);
   const d = (res?.data?.ok ? res.data : null) as Dashboard | null;
+  const operations = (operationsResult?.data?.ok ? operationsResult.data : null) as OperationsDashboard | null;
   const activeCardRows = activeCards?.error ? null : activeCards?.data ?? null;
   const href = (r: number, demo: boolean) => `/negocio?rango=${r}${demo ? "" : "&demo=0"}`;
 
@@ -125,6 +137,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             ) : <p className="text-sm text-slate-600">Aún no hay clientes con tarjeta activa.</p>}
           </div>
         )}
+      </section>
+
+      <section aria-labelledby="operacion-semana" className="workspace-card p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="workspace-kicker">Operación en tiempo real · {activeBranch?.name ?? "todas las sucursales"}</p><h2 id="operacion-semana" className="mt-1 text-2xl font-semibold text-slate-950">Esta semana y pendientes</h2><p className="mt-1 text-sm text-slate-600">Ventas de esta caja desde el lunes; no incluye reportes importados del POS externo.</p></div><Link href="/negocio/inventario" className="text-sm font-semibold text-blue-700">Abrir inventario →</Link></div>
+        {!operations ? <p role="alert" className="mt-4 text-sm text-red-700">No se pudo cargar el tablero operativo. Revisa la conexión y la migración del tablero.</p> : <>
+          <dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl bg-blue-50 p-4"><dt className="text-sm text-blue-900">Ventas de caja esta semana</dt><dd className="mt-1 text-2xl font-bold tabular-nums text-blue-950">{formatMxn(Number(operations.weekly_sales_cents))}</dd><p className="text-xs text-blue-900">{operations.weekly_sales_count} venta(s)</p></div>
+            <div className="rounded-xl bg-amber-50 p-4"><dt className="text-sm text-amber-900">Insumos en mínimo</dt><dd className="mt-1 text-2xl font-bold tabular-nums text-amber-950">{operations.low_stock_count}</dd></div>
+            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-sm text-slate-700">Insumos sin conteo</dt><dd className="mt-1 text-2xl font-bold tabular-nums text-slate-950">{operations.missing_stock_count}</dd></div>
+            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-sm text-slate-700">Productos sin receta</dt><dd className="mt-1 text-2xl font-bold tabular-nums text-slate-950">{operations.products_without_recipe}</dd></div>
+          </dl>
+          <div className="mt-6 border-t border-slate-200 pt-5"><h3 className="text-lg font-semibold text-slate-950">Registros recientes</h3>
+            {operations.recent_events.length ? <ul className="mt-3 divide-y divide-slate-100">{operations.recent_events.map((event, index) => <li key={`${event.kind}-${event.created_at}-${index}`} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"><span className="font-medium text-slate-800">{event.kind === "sale" ? `Venta · ${event.label}` : `Inventario · ${event.label}`}</span><span className="text-slate-600">{event.kind === "sale" && event.amount_cents !== null ? formatMxn(event.amount_cents) : `${event.quantity_delta && event.quantity_delta > 0 ? "+" : ""}${event.quantity_delta ?? 0}`} · {formatDateTime(event.created_at)}</span></li>)}</ul>
+              : <p className="mt-2 text-sm text-slate-600">Aún no hay ventas ni movimientos de stock.</p>}
+          </div>
+        </>}
       </section>
 
       {d && d.has_demo && includeDemo ? (

@@ -71,6 +71,19 @@ describe("catálogo", () => {
   test("faltan columnas obligatorias", () => {
     expect(parseProducts([["Categoría"], ["Bebidas"]]).missingColumns).toEqual(["Nombre", "Precio"]);
   });
+
+  test("variantes distintas son válidas; repetición con mayúsculas no", () => {
+    const result = parseProducts([
+      ["Nombre", "Tamaño", "Categoría", "Precio"],
+      ["Americano", "Chico", "Bebidas", 45],
+      ["americano", "Grande", "bebidas", 59],
+      ["AMERICANO", "chico", "BEBIDAS", 45],
+    ]);
+    expect(result.rows).toHaveLength(2);
+    expect(result.rows[0].variantLabel).toBe("Chico");
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toContain("repetido");
+  });
 });
 
 describe("ventas y gastos", () => {
