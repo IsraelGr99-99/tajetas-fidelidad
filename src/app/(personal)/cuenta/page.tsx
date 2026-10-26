@@ -60,7 +60,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 <li key={b.id}>
                   <form action={selectBranchAction}>
                     <input type="hidden" name="branchId" value={b.id} />
-                    <input type="hidden" name="returnTo" value="/barra" />
+                    <input type="hidden" name="returnTo" value="/inicio" />
                     <button
                       type="submit"
                       aria-current={current ? "true" : undefined}

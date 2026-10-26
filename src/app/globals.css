@@ -153,6 +153,42 @@
   .btn-contorno:hover { border-color: var(--color-mostaza); color: var(--color-mostaza); }
 }
 
+/* Consola de iautomexa Loyalty: neutral y orientada a trabajo diario.
+   Solo se aplica al personal; la tarjeta pública conserva la marca Café Nómada. */
+@layer components {
+  .console-shell {
+    --color-tabaco: #14233b;
+    --color-tabaco-900: #0d192b;
+    --color-crema: #f4f7fb;
+    --color-papel: #ffffff;
+    --color-mostaza: #bdd2fa;
+    --color-mostaza-200: #e2ebff;
+    --color-arcilla: #3e65ab;
+    --color-arcilla-texto: #315da6;
+    --color-tinta: #14233b;
+    --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+    background: var(--color-crema);
+    color: var(--color-tabaco);
+    font-family: var(--font-display);
+  }
+  .console-shell :is(h1, h2, h3) {
+    font-family: var(--font-display);
+    font-variation-settings: normal;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+  }
+  .console-shell .btn { border-radius: 0.75rem; }
+  .console-shell .bitacora { letter-spacing: 0.055em; text-transform: uppercase; font-size: 0.68rem; }
+  .console-shell :focus-visible { outline-color: #3268cd; }
+  .workspace-card { border: 1px solid #e2e8f2; border-radius: 1rem; background: #fff; box-shadow: 0 1px 3px rgb(20 35 59 / 0.03); }
+  .workspace-kicker { color: #315da6; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+  .workspace-action { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.7rem; background: #285cc0; padding: 0.6rem 1rem; color: #fff; font-size: 0.875rem; font-weight: 700; transition: background 150ms ease; }
+  .workspace-action:hover { background: #194999; }
+  .workspace-action:disabled { cursor: not-allowed; opacity: 0.5; }
+  .workspace-action-secondary { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; gap: 0.5rem; border: 1px solid #cad7ea; border-radius: 0.7rem; padding: 0.6rem 1rem; color: #1d477e; font-size: 0.875rem; font-weight: 700; transition: background 150ms ease; }
+  .workspace-action-secondary:hover { background: #eef4ff; }
+}
+
 /* ---------------------------------------------------------------
  * iautomexa Loyalty: superficie oscura, cuadrícula técnica y bordes
  * de luz. Todo decorativo; el texto siempre va sobre fondo sólido.

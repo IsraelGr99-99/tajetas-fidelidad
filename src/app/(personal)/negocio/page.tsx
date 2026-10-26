@@ -7,7 +7,7 @@ import { formatMxn, lastDaysRange } from "@/lib/format";
 import { requireCapability } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Panel" };
+export const metadata: Metadata = { title: "Resumen del negocio" };
 
 const RANGES = [7, 30, 90] as const;
 
@@ -54,8 +54,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="bitacora text-arcilla-texto">{membership.business_name}</p>
-          <h1 className="mt-1 text-4xl text-tabaco">Panel</h1>
+          <p className="workspace-kicker">Control del negocio · {membership.business_name}</p>
+          <h1 className="mt-1 text-3xl text-slate-950 sm:text-4xl">Resumen del negocio</h1>
+          <p className="mt-2 max-w-2xl text-sm text-slate-600">Revisa el desempeño y sigue cada operación desde su módulo correspondiente.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <nav aria-label="Periodo" className="flex gap-1 rounded-full bg-tabaco/5 p-1">
@@ -77,6 +78,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           ) : null}
         </div>
       </div>
+
+      <nav aria-label="Acciones de administración" className="grid gap-3 sm:grid-cols-3">
+        <Link href="/negocio/ventas" className="workspace-card group p-4 hover:border-blue-300"><span className="workspace-kicker">Caja</span><strong className="mt-2 block text-slate-950 group-hover:text-blue-700">Ventas y empleados →</strong><span className="mt-1 block text-xs text-slate-600">Operaciones registradas en esta caja.</span></Link>
+        <Link href="/negocio/inventario" className="workspace-card group p-4 hover:border-blue-300"><span className="workspace-kicker">Inventario</span><strong className="mt-2 block text-slate-950 group-hover:text-blue-700">Existencias y alertas →</strong><span className="mt-1 block text-xs text-slate-600">Revisa mínimos, insumos y recetas.</span></Link>
+        <Link href="/negocio/finanzas" className="workspace-card group p-4 hover:border-blue-300"><span className="workspace-kicker">Reportes</span><strong className="mt-2 block text-slate-950 group-hover:text-blue-700">Importaciones y gastos →</strong><span className="mt-1 block text-xs text-slate-600">Carga reportes del POS externo y gastos.</span></Link>
+      </nav>
+
+      <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950"><strong>Cómo leer este panel:</strong> los indicadores “POS” vienen de reportes externos importados. Las ventas registradas en la caja de Loyalty aparecen en “Ventas y empleados”. No se suman automáticamente aquí ni deben interpretarse como la misma fuente.</p>
 
       {!d ? <Notice tone="error" title={rpcErrorMessage(res?.data?.code)} /> : null}
 
@@ -103,7 +112,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {d ? (
         <>
           <dl className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-            <Kpi label="Ventas (POS)" value={formatMxn(d.totals.pos_sales_cents)} hint={`Últimos ${days} días`} strong />
+            <Kpi label="Ventas importadas (POS)" value={formatMxn(d.totals.pos_sales_cents)} hint={`Reporte externo · últimos ${days} días`} strong />
             <Kpi
               label="Ganancia bruta"
               value={formatMxn(d.totals.gross_profit_cents)}

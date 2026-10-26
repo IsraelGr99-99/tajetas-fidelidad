@@ -56,7 +56,7 @@ test("sin sesión, la página de sin acceso manda al login", async ({ page }) =>
 });
 
 test.describe("las secciones de la consola requieren sesión", () => {
-  for (const path of ["/barra", "/caja", "/movimientos", "/negocio", "/negocio/finanzas", "/negocio/clientes", "/cuenta"]) {
+  for (const path of ["/inicio", "/barra", "/caja", "/movimientos", "/negocio", "/negocio/finanzas", "/negocio/clientes", "/cuenta"]) {
     test(`${path} redirige al login`, async ({ page }) => {
       await page.goto(path);
       const url = new URL(page.url());

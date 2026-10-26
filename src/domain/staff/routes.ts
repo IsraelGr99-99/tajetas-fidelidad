@@ -1,11 +1,11 @@
 /** Rutas de la consola del personal: cortas y en español. */
-export const CONSOLE_HOME = "/barra";
+export const CONSOLE_HOME = "/inicio";
 export const LOGIN_PATH = "/entrar";
 export const BRANCH_PICKER_PATH = "/cuenta";
 export const NO_ACCESS_PATH = "/sin-acceso";
 
 /** Secciones que requieren sesión de personal (las protege `proxy.ts`). */
-export const CONSOLE_PREFIXES = ["/barra", "/caja", "/movimientos", "/negocio", "/cuenta"] as const;
+export const CONSOLE_PREFIXES = ["/inicio", "/barra", "/caja", "/movimientos", "/negocio", "/cuenta"] as const;
 
 export function isConsolePath(pathname: string): boolean {
   return CONSOLE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -24,7 +24,7 @@ export function safeNextPath(value: string | null | undefined): string {
 
 /** Rutas anteriores (etapas 3–5) que redirigen a las nuevas. */
 export const LEGACY_REDIRECTS: { source: string; destination: string }[] = [
-  { source: "/personal", destination: "/barra" },
+  { source: "/personal", destination: "/inicio" },
   { source: "/personal/ingresar", destination: "/entrar" },
   { source: "/personal/visita", destination: "/barra" },
   { source: "/personal/canje", destination: "/barra" },

@@ -2,80 +2,89 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-export type NavItem = { href: string; label: string; icon: "scan" | "list" | "store" | "user" };
+export type NavIcon = "home" | "cart" | "loyalty" | "activity" | "chart" | "inventory" | "products" | "customers" | "campaign" | "team" | "expenses" | "account" | "menu";
+export type NavItem = { href: string; label: string; icon: NavIcon };
+export type NavGroup = { label: string; items: NavItem[] };
 
-const ICONS: Record<NavItem["icon"], React.ReactNode> = {
-  scan: (
-    <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10" />
-  ),
-  list: <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />,
-  store: <path d="M4 10h16M5 10V20h14V10M3 10l2-6h14l2 6M9 20v-5h6v5" />,
-  user: <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0" />,
+const ICONS: Record<NavIcon, React.ReactNode> = {
+  home: <><path d="M3 10.5 12 3l9 7.5V21H3V10.5Z" /><path d="M9 21v-7h6v7" /></>,
+  cart: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 9h18M8 14h3M8 17h7" /></>,
+  loyalty: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18M8 15h3M16 14h.01" /></>,
+  activity: <><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="7" cy="6" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="17" cy="18" r="1" /></>,
+  chart: <><path d="M4 20V4M4 20h16M8 16l4-5 3 2 4-7" /></>,
+  inventory: <><path d="m3 7 9-4 9 4-9 4-9-4ZM3 7v10l9 4 9-4V7M12 11v10" /></>,
+  products: <><path d="M4 5h16v14H4zM4 10h16M9 10v9" /></>,
+  customers: <><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0M17 5a3 3 0 0 1 0 6M17 14a6 6 0 0 1 4 6" /></>,
+  campaign: <><path d="M4 10h4l10-5v14L8 14H4v-4ZM8 14l2 6h3" /></>,
+  team: <><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="2" /><path d="M2 20a6 6 0 0 1 12 0M15 15a5 5 0 0 1 7 5" /></>,
+  expenses: <><path d="M4 4h16v16H4zM7 9h10M7 13h10M7 17h6" /></>,
+  account: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+  menu: <><path d="M4 6h16M4 12h16M4 18h16" /></>,
 };
 
-function Icon({ name }: { name: NavItem["icon"] }) {
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {ICONS[name]}
-    </svg>
-  );
+export function NavGlyph({ name, className = "h-5 w-5" }: { name: NavIcon; className?: string }) {
+  return <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[name]}</svg>;
 }
 
 function isActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return pathname === href || (href !== "/negocio" && pathname.startsWith(`${href}/`));
 }
 
-/** Navegación lateral (computadora). */
-export function SideNav({ items }: { items: NavItem[] }) {
+export function SideNav({ groups, light = false, onNavigate }: { groups: NavGroup[]; light?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
-  return (
-    <ul className="space-y-1">
-      {items.map((item) => {
-        const active = isActive(pathname, item.href);
-        return (
-          <li key={item.href}>
-            <Link
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={`flex min-h-12 items-center gap-3 rounded-2xl px-4 font-semibold transition ${
-                active ? "bg-crema text-tabaco" : "text-crema/85 hover:bg-crema/10 hover:text-crema"
-              }`}
-            >
-              <Icon name={item.icon} />
-              {item.label}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  );
+  return <div className="space-y-6">{groups.map((group) => <div key={group.label}>
+    <p className={`mb-2 px-3 text-[0.7rem] font-bold uppercase tracking-[0.12em] ${light ? "text-slate-500" : "text-slate-400"}`}>{group.label}</p>
+    <ul className="space-y-0.5">{group.items.map((item) => {
+      const active = isActive(pathname, item.href);
+      return <li key={item.href}><Link href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined}
+        className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-[0.9rem] font-semibold transition-colors ${light
+          ? active ? "bg-blue-50 text-blue-800" : "text-slate-700 hover:bg-slate-100"
+          : active ? "bg-white/13 text-white" : "text-slate-300 hover:bg-white/8 hover:text-white"}`}>
+        <NavGlyph name={item.icon} /><span>{item.label}</span>{active && <span className={`ml-auto h-1.5 w-1.5 rounded-full ${light ? "bg-blue-600" : "bg-sky-300"}`} />}
+      </Link></li>;
+    })}</ul>
+  </div>)}</div>;
 }
 
-/** Barra inferior (celular): siempre al alcance del pulgar. */
-export function BottomNav({ items }: { items: NavItem[] }) {
+/** Tres tareas frecuentes visibles; el resto se abre en un menú completo y legible. */
+export function BottomNav({ groups, quick }: { groups: NavGroup[]; quick: NavItem[] }) {
   const pathname = usePathname();
-  return (
-    <nav aria-label="Principal" className="fixed inset-x-0 bottom-0 z-40 border-t border-tabaco/10 bg-papel/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-      <ul className="mx-auto grid max-w-lg" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
-        {items.map((item) => {
-          const active = isActive(pathname, item.href);
-          return (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className={`flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-semibold ${active ? "text-tabaco" : "text-tabaco/70"}`}
-              >
-                <span className={`grid h-8 w-14 place-items-center rounded-full ${active ? "bg-mostaza/35" : ""}`}>
-                  <Icon name={item.icon} />
-                </span>
-                {item.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+  const [open, setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    panel.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") { setOpen(false); trigger.current?.focus(); }
+      if (event.key !== "Tab" || !panel.current) return;
+      const focusables = Array.from(panel.current.querySelectorAll<HTMLElement>("button, a[href]"));
+      if (!focusables.length) return;
+      if (event.shiftKey && document.activeElement === focusables[0]) { event.preventDefault(); focusables.at(-1)?.focus(); }
+      else if (!event.shiftKey && document.activeElement === focusables.at(-1)) { event.preventDefault(); focusables[0]?.focus(); }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+  const moreActive = !quick.some((item) => isActive(pathname, item.href));
+  return <>
+    <nav aria-label="Acciones principales" className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/98 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(15,35,60,0.06)] lg:hidden">
+      <ul className="mx-auto grid max-w-lg grid-cols-4">{quick.map((item) => <li key={item.href}><Link href={item.href} aria-current={isActive(pathname, item.href) ? "page" : undefined}
+        className={`flex min-h-16 flex-col items-center justify-center gap-1 text-[0.7rem] font-semibold ${isActive(pathname, item.href) ? "text-blue-700" : "text-slate-600"}`}>
+        <NavGlyph name={item.icon} className="h-5 w-5" />{item.label}
+      </Link></li>)}<li><button ref={trigger} type="button" aria-expanded={open} aria-controls="mobile-workspace-menu" onClick={() => setOpen(true)}
+        className={`flex min-h-16 w-full flex-col items-center justify-center gap-1 text-[0.7rem] font-semibold ${open || moreActive ? "text-blue-700" : "text-slate-600"}`}>
+        <NavGlyph name="menu" />Menú
+      </button></li></ul>
     </nav>
-  );
+    {open && <div className="fixed inset-0 z-50 lg:hidden"><button type="button" className="absolute inset-0 bg-slate-950/50" aria-label="Cerrar menú" onClick={() => setOpen(false)} />
+      <div id="mobile-workspace-menu" ref={panel} role="dialog" aria-modal="true" aria-label="Menú del espacio de trabajo"
+        className="absolute inset-y-0 right-0 w-[min(90vw,23rem)] overflow-y-auto bg-white px-5 pb-12 pt-5 shadow-2xl">
+        <div className="mb-7 flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-widest text-blue-700">Loyalty</p><h2 className="text-xl font-bold text-slate-900">Espacio de trabajo</h2></div>
+          <button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700">Cerrar</button></div>
+        <SideNav groups={groups} light onNavigate={() => setOpen(false)} />
+      </div></div>}
+  </>;
 }

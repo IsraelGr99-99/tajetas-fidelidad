@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { type ClaimResult, type EarnResult, type RedeemResult, claimCardAction, recordEarnAction, redeemAction, releaseHoldAction } from "@/actions/bar";
 import { Notice, newIdempotencyKey } from "@/components/staff/OperationParts";
 import { QrScanner } from "@/components/staff/QrScanner";
+import { PENDING_TICKET_KEY, parsePendingTicket } from "@/domain/staff/pending-ticket";
 import { formatMxn } from "@/lib/format";
 import type { CatalogProduct } from "@/lib/staff/catalog";
 
@@ -17,7 +18,6 @@ type Phase =
   | { name: "done_earn"; claim: Claim; result: Extract<EarnResult, { ok: true }>; at: number }
   | { name: "done_redeem"; claim: Claim; result: Extract<RedeemResult, { ok: true }>; at: number };
 
-const QUICK_COUNT = 6;
 const AUTO_NEXT_SECONDS = 8;
 /** Errores definitivos: no tiene sentido reintentar con el mismo apartado. */
 const FINAL = new Set(["duplicate_purchase", "too_soon", "daily_limit", "card_inactive", "card_not_found", "idempotency_conflict", "token_invalid", "no_reward_available"]);
@@ -30,10 +30,12 @@ const FINAL = new Set(["duplicate_purchase", "too_soon", "daily_limit", "card_in
  */
 export function BarFlow({
   catalog,
+  branchId,
   branchName,
   initialClaim,
 }: {
   catalog: CatalogProduct[];
+  branchId: string;
   branchName: string;
   /** Solo para vistas previas y pruebas: arranca con una tarjeta ya apartada (el servidor valida el apartado igual). */
   initialClaim?: Claim;
@@ -47,11 +49,14 @@ export function BarFlow({
   );
   const [folio, setFolio] = useState("");
   const [lines, setLines] = useState<Record<string, Line>>({});
+  const [productQuery, setProductQuery] = useState("");
+  const [prefilled, setPrefilled] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   const resetTicket = () => {
     setFolio("");
     setLines({});
+    setPrefilled(false);
   };
   const next = useCallback(() => {
     resetTicket();
@@ -76,6 +81,16 @@ export function BarFlow({
     if (!r.ok) return setPhase({ name: "scan", error: r.error });
     setNow(Date.now());
     resetTicket();
+    if (r.purpose !== "redeem") {
+      try {
+        const ticket = parsePendingTicket(sessionStorage.getItem(PENDING_TICKET_KEY), branchId);
+        if (ticket) {
+          setFolio(ticket.folio);
+          setLines(Object.fromEntries(ticket.items.filter((item) => catalog.some((product) => product.id === item.product_id)).map((item) => [item.product_id, { quantity: item.quantity, complimentary: false }])));
+          setPrefilled(true);
+        }
+      } catch { /* La captura manual sigue disponible. */ }
+    }
     setPhase(r.purpose === "redeem" ? { name: "redeem", claim: r, key: newIdempotencyKey("redeem") } : { name: "visit", claim: r, key: newIdempotencyKey("earn") });
   }
 
@@ -88,8 +103,7 @@ export function BarFlow({
   const selected = useMemo(() => catalog.filter((p) => lines[p.id]?.quantity).map((p) => ({ product: p, ...lines[p.id] })), [catalog, lines]);
   const eligibleUnits = selected.filter((s) => s.product.eligible && !s.complimentary && s.product.priceCents > 0).reduce((n, s) => n + s.quantity, 0);
   const total = selected.filter((s) => !s.complimentary).reduce((n, s) => n + s.product.priceCents * s.quantity, 0);
-  const quick = catalog.filter((p) => p.eligible).slice(0, QUICK_COUNT);
-  const others = catalog.filter((p) => !quick.includes(p));
+  const visibleProducts = catalog.filter((p) => p.name.toLocaleLowerCase("es-MX").includes(productQuery.toLocaleLowerCase("es-MX")));
 
   function add(id: string, delta: number) {
     setLines((prev) => {
@@ -117,6 +131,9 @@ export function BarFlow({
       r = { ok: false, error: "Sin conexión. Reintenta: no se duplicará el sello.", code: "network" };
     }
     if (r.ok) {
+      if (prefilled) {
+        try { sessionStorage.removeItem(PENDING_TICKET_KEY); } catch { /* Sin almacenamiento local. */ }
+      }
       const at = Date.now();
       setNow(at);
       setPhase({ name: "done_earn", claim, result: r, at });
@@ -155,11 +172,13 @@ export function BarFlow({
   // ================= Render =================
   if (phase.name === "scan" || phase.name === "claiming") {
     return (
-      <div className="mx-auto max-w-md space-y-4">
-        <header className="text-center">
-          <h1 className="text-3xl text-tabaco sm:text-4xl">Escanea al cliente</h1>
-          <p className="mt-1 text-tabaco/75">Visita o canje se detectan solos · {branchName}</p>
+      <div className="mx-auto max-w-xl space-y-4">
+        <header>
+          <p className="workspace-kicker">Operación diaria · {branchName}</p>
+          <h1 className="mt-2 text-3xl font-bold text-slate-950 sm:text-4xl">Fidelidad</h1>
+          <p className="mt-2 text-sm text-slate-600">Escanea el QR del cliente. El sistema reconocerá si corresponde sumar un sello o entregar una recompensa.</p>
         </header>
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">Si acabas de registrar una venta en caja en este dispositivo, se precargarán sus datos después de escanear una tarjeta de visita. Revisa el ticket antes de acreditar.</div>
         {phase.name === "scan" && phase.error ? <Notice tone="error" title={phase.error} /> : null}
         {phase.name === "claiming" ? (
           <div role="status" className="grid aspect-square place-items-center rounded-3xl bg-tabaco text-crema">
@@ -290,7 +309,10 @@ export function BarFlow({
   const ready = folio.trim().length > 0 && selected.length > 0 && eligibleUnits > 0;
   return (
     <div className="mx-auto max-w-2xl space-y-5 pb-40">
+      <div><p className="workspace-kicker">Paso 3 · Fidelidad</p><h1 className="mt-1 text-2xl font-bold text-slate-950">Confirma la visita</h1><p className="mt-1 text-sm text-slate-600">Compara el folio y los productos con el ticket antes de sumar el sello.</p></div>
       {customer}
+
+      {prefilled && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950"><span><strong>Datos precargados desde caja.</strong> Confirma que esta venta corresponde a este cliente. El registro de caja no valida automáticamente la identidad del cliente.</span><button type="button" onClick={() => { resetTicket(); try { sessionStorage.removeItem(PENDING_TICKET_KEY); } catch { /* Sin almacenamiento local. */ } }} className="font-bold underline underline-offset-2">Capturar otro ticket</button></div>}
 
       <div>
         <label htmlFor="folio" className="block text-sm font-semibold text-tabaco">
@@ -308,62 +330,14 @@ export function BarFlow({
         />
       </div>
 
-      <section aria-labelledby="mas-vendidos">
-        <h2 id="mas-vendidos" className="font-sans text-sm font-semibold tracking-normal text-tabaco">
-          ¿Qué compró? <span className="font-normal text-tabaco/75">Toca para agregar</span>
-        </h2>
-        <ul className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {quick.map((p) => {
-            const q = lines[p.id]?.quantity ?? 0;
-            return (
-              <li key={p.id} className="relative">
-                <button
-                  type="button"
-                  onClick={() => add(p.id, 1)}
-                  aria-label={`Agregar ${p.name}${q ? `, llevas ${q}` : ""}`}
-                  className={`flex min-h-20 w-full flex-col items-start justify-between rounded-2xl border p-3 text-left transition ${
-                    q ? "border-tabaco bg-tabaco text-crema" : "border-tabaco/15 bg-papel text-tabaco hover:border-tabaco"
-                  }`}
-                >
-                  <span className="font-semibold leading-tight">{p.name}</span>
-                  <span className={`text-sm ${q ? "text-crema/80" : "text-tabaco/75"}`}>{formatMxn(p.priceCents)}</span>
-                </button>
-                {q ? (
-                  <span className="pointer-events-none absolute right-2 top-2 grid h-7 min-w-7 place-items-center rounded-full bg-mostaza px-2 text-sm font-bold text-tabaco">
-                    {q}
-                  </span>
-                ) : null}
-              </li>
-            );
-          })}
+      <section aria-labelledby="productos-visita" className="workspace-card p-5">
+        <h2 id="productos-visita" className="text-lg font-bold text-slate-950">Productos del ticket</h2>
+        <p className="mt-1 text-sm text-slate-600">Selecciona lo que el cliente compró. Solo los productos elegibles pagados suman sello.</p>
+        <label className="mt-4 block text-sm font-medium text-slate-800">Buscar producto<input type="search" value={productQuery} onChange={(event) => setProductQuery(event.target.value)} placeholder="Nombre del producto" className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
+        <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+          {visibleProducts.map((p) => <li key={p.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3"><span className="min-w-0 text-sm text-slate-900"><strong className="block truncate">{p.name}</strong><span className="text-xs text-slate-500">{formatMxn(p.priceCents)} · {p.eligible ? "Elegible" : "No suma sello"}</span></span><span className="flex shrink-0 items-center gap-2"><button type="button" onClick={() => add(p.id, -1)} disabled={!lines[p.id]} aria-label={`Quitar ${p.name}`} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-800 disabled:opacity-40">−</button><span className="w-5 text-center font-semibold tabular-nums">{lines[p.id]?.quantity ?? 0}</span><button type="button" onClick={() => add(p.id, 1)} disabled={(lines[p.id]?.quantity ?? 0) >= 20} aria-label={`Agregar ${p.name}`} className="grid h-9 w-9 place-items-center rounded-lg bg-slate-900 text-white disabled:opacity-40">+</button></span></li>)}
         </ul>
-
-        {others.length > 0 ? (
-          <details className="mt-3 rounded-2xl border border-tabaco/10 bg-papel">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-tabaco">Otros productos ({others.length})</summary>
-            <ul className="divide-y divide-tabaco/10">
-              {others.map((p) => (
-                <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-2">
-                  <span className="text-tabaco">
-                    {p.name}
-                    <span className="block text-xs text-tabaco/75">
-                      {formatMxn(p.priceCents)} · {p.eligible ? "suma sello" : "no suma"}
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <button type="button" onClick={() => add(p.id, -1)} disabled={!lines[p.id]} aria-label={`Quitar ${p.name}`} className="grid h-10 w-10 place-items-center rounded-full border border-tabaco/25 disabled:opacity-40">
-                      −
-                    </button>
-                    <span className="w-5 text-center tabular-nums">{lines[p.id]?.quantity ?? 0}</span>
-                    <button type="button" onClick={() => add(p.id, 1)} aria-label={`Agregar ${p.name}`} className="grid h-10 w-10 place-items-center rounded-full bg-tabaco text-crema">
-                      +
-                    </button>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </details>
-        ) : null}
+        {visibleProducts.length === 0 && <p className="mt-4 text-sm text-slate-600">No hay productos que coincidan con tu búsqueda.</p>}
       </section>
 
       {selected.length > 0 ? (
@@ -396,7 +370,7 @@ export function BarFlow({
       ) : null}
 
       {/* Confirmación visible y fija antes de acreditar */}
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-tabaco/10 bg-crema/95 px-4 py-3 backdrop-blur lg:bottom-0 lg:left-64">
+      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:bottom-0 lg:left-[17.5rem]">
         <div className="mx-auto max-w-2xl space-y-2">
           {phase.error ? <Notice tone="error" title={phase.error.error} /> : null}
           {holdExpired ? <Notice tone="error" title="El apartado venció. Escanea de nuevo el código del cliente." /> : null}

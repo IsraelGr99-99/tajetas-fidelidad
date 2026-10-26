@@ -55,6 +55,7 @@ describe("sucursal activa", () => {
 
 describe("redirección segura después del login", () => {
   test.each([
+    ["/inicio", "/inicio"],
     ["/barra", "/barra"],
     ["/negocio/catalogo", "/negocio/catalogo"],
     ["/movimientos?todas=1", "/movimientos?todas=1"],
