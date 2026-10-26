@@ -1,6 +1,6 @@
-# Caja e inventario del piloto (base local)
+# Caja e inventario del piloto
 
-Esta funcionalidad todavía no está habilitada en el Supabase remoto. Primero revisa y aplica `supabase/migrations/20261028130000_inventory_checkout.sql` en un entorno de pruebas; después verifica el acceso con personal real. El seed local incluye insumos, recetas y cantidades **DEMO**, no existencias reales.
+La migración `supabase/migrations/20261028130000_inventory_checkout.sql` se aplicó al Supabase de pruebas el 26 de octubre de 2026. Se confirmó en el historial remoto y las RPC de caja e inventario responden; falta verificar el flujo con una sesión real de owner/admin y personal de caja. El seed local incluye insumos, recetas y cantidades **DEMO**, no existencias reales.
 
 ## Arranque local en Windows
 
@@ -26,7 +26,7 @@ Columnas: `insumo`, `unidad` (`pieza`, `g`, `kg`, `ml`, `l`), `existencia` y `mi
 
 ## Antes de operar con dinero real
 
-- Aplicar la migración y probar concurrencia, permisos multiempresa y sucursales en PostgreSQL/Supabase real.
+- Probar concurrencia, permisos multiempresa y sucursales en PostgreSQL/Supabase real con personal de pruebas.
 - Definir devoluciones, anulaciones, arqueo/corte de caja, impuestos, descuentos, propinas y conciliación del pago externo.
 - Conciliar cada venta de caja con el folio usado en `/barra` para que la misma visita no se cuente dos veces en reportes. Actualmente son flujos separados.
 - Sustituir precios, costos, recetas, mínimos y existencias DEMO por datos aprobados del negocio.
