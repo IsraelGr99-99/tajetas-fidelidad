@@ -2,6 +2,12 @@
 
 Esta funcionalidad todavía no está habilitada en el Supabase remoto. Primero revisa y aplica `supabase/migrations/20261028130000_inventory_checkout.sql` en un entorno de pruebas; después verifica el acceso con personal real. El seed local incluye insumos, recetas y cantidades **DEMO**, no existencias reales.
 
+## Arranque local en Windows
+
+Si Node muestra `UNABLE_TO_VERIFY_LEAF_SIGNATURE` al conectar con Supabase, inicia el servidor usando el almacén de certificados de Windows: `$env:NODE_USE_SYSTEM_CA='1'; npm run start -- -H 0.0.0.0 -p 3001` (o `npm run dev` durante desarrollo). Esta opción mantiene la verificación TLS. No uses `NODE_TLS_REJECT_UNAUTHORIZED=0` ni omitas la validación de certificados. Un HTTP 200 de la app local solo confirma que Next.js funciona; comprueba Supabase Auth y las RPC por separado.
+
+La caja conserva en `sessionStorage` la clave y las líneas de una venta cuya respuesta no se confirmó. Al volver a la misma pestaña, solo permite reintentar esa misma operación; el servidor debe devolver la venta original por idempotencia. No se guarda PII ni la credencial de sesión en ese dato. La venta reciente también puede precargar folio y productos en fidelidad, pero el empleado debe verificar que pertenecen al cliente escaneado; aún no existe conciliación automática entre ambas tablas.
+
 ## Recorrido
 
 1. Entra como owner/admin y abre `/negocio/catalogo`. Carga los productos y sus precios reales; la calculadora de precio es orientativa y no guarda nada.

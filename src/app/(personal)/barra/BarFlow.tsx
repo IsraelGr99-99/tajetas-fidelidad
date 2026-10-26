@@ -51,12 +51,16 @@ export function BarFlow({
   const [lines, setLines] = useState<Record<string, Line>>({});
   const [productQuery, setProductQuery] = useState("");
   const [prefilled, setPrefilled] = useState(false);
+  const [prefillIssue, setPrefillIssue] = useState<string | null>(null);
+  const [ticketConfirmed, setTicketConfirmed] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   const resetTicket = () => {
     setFolio("");
     setLines({});
     setPrefilled(false);
+    setPrefillIssue(null);
+    setTicketConfirmed(false);
   };
   const next = useCallback(() => {
     resetTicket();
@@ -85,9 +89,13 @@ export function BarFlow({
       try {
         const ticket = parsePendingTicket(sessionStorage.getItem(PENDING_TICKET_KEY), branchId);
         if (ticket) {
-          setFolio(ticket.folio);
-          setLines(Object.fromEntries(ticket.items.filter((item) => catalog.some((product) => product.id === item.product_id)).map((item) => [item.product_id, { quantity: item.quantity, complimentary: false }])));
-          setPrefilled(true);
+          if (ticket.items.length > 30 || ticket.items.some((item) => item.quantity > 20 || !catalog.some((product) => product.id === item.product_id))) {
+            setPrefillIssue("Esta venta no cabe completa en las reglas actuales de fidelidad (máximo 30 productos distintos y 20 unidades por producto, todos activos). No acredites un ticket parcial; pide apoyo a administración.");
+          } else {
+            setFolio(ticket.folio);
+            setLines(Object.fromEntries(ticket.items.map((item) => [item.product_id, { quantity: item.quantity, complimentary: false }])));
+            setPrefilled(true);
+          }
         }
       } catch { /* La captura manual sigue disponible. */ }
     }
@@ -106,6 +114,7 @@ export function BarFlow({
   const visibleProducts = catalog.filter((p) => p.name.toLocaleLowerCase("es-MX").includes(productQuery.toLocaleLowerCase("es-MX")));
 
   function add(id: string, delta: number) {
+    setTicketConfirmed(false);
     setLines((prev) => {
       const q = Math.max(0, Math.min(20, (prev[id]?.quantity ?? 0) + delta));
       const copy = { ...prev };
@@ -306,13 +315,15 @@ export function BarFlow({
 
   // Visita
   const final = phase.error && FINAL.has(phase.error.code ?? "");
-  const ready = folio.trim().length > 0 && selected.length > 0 && eligibleUnits > 0;
+  const ready = !prefillIssue && folio.trim().length > 0 && selected.length > 0 && eligibleUnits > 0 && (!prefilled || ticketConfirmed);
   return (
     <div className="mx-auto max-w-2xl space-y-5 pb-40">
       <div><p className="workspace-kicker">Paso 3 · Fidelidad</p><h1 className="mt-1 text-2xl font-bold text-slate-950">Confirma la visita</h1><p className="mt-1 text-sm text-slate-600">Compara el folio y los productos con el ticket antes de sumar el sello.</p></div>
       {customer}
 
-      {prefilled && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950"><span><strong>Datos precargados desde caja.</strong> Confirma que esta venta corresponde a este cliente. El registro de caja no valida automáticamente la identidad del cliente.</span><button type="button" onClick={() => { resetTicket(); try { sessionStorage.removeItem(PENDING_TICKET_KEY); } catch { /* Sin almacenamiento local. */ } }} className="font-bold underline underline-offset-2">Capturar otro ticket</button></div>}
+      {prefillIssue && <div className="space-y-2"><Notice tone="error" title={prefillIssue} /><button type="button" onClick={() => { resetTicket(); try { sessionStorage.removeItem(PENDING_TICKET_KEY); } catch { /* Sin almacenamiento local. */ } }} className="text-sm font-bold text-blue-700 underline underline-offset-2">Descartar precarga y capturar otro ticket</button></div>}
+
+      {prefilled && <div className="space-y-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950"><p><strong>Datos precargados desde caja.</strong> El registro de venta no identifica al cliente: compara el ticket físico o digital con esta tarjeta antes de acreditar.</p><label className="flex items-start gap-2 font-semibold"><input type="checkbox" checked={ticketConfirmed} onChange={(event) => setTicketConfirmed(event.target.checked)} className="mt-1" /><span>Confirmo que este ticket pertenece al cliente escaneado y que sus productos son correctos.</span></label><button type="button" onClick={() => { resetTicket(); try { sessionStorage.removeItem(PENDING_TICKET_KEY); } catch { /* Sin almacenamiento local. */ } }} className="font-bold underline underline-offset-2">Capturar otro ticket</button></div>}
 
       <div>
         <label htmlFor="folio" className="block text-sm font-semibold text-tabaco">
@@ -321,7 +332,7 @@ export function BarFlow({
         <input
           id="folio"
           value={folio}
-          onChange={(e) => setFolio(e.target.value)}
+          onChange={(e) => { setFolio(e.target.value); setTicketConfirmed(false); }}
           autoFocus
           autoComplete="off"
           maxLength={40}
@@ -358,7 +369,7 @@ export function BarFlow({
                   <input
                     type="checkbox"
                     checked={s.complimentary}
-                    onChange={(e) => setLines((prev) => ({ ...prev, [s.product.id]: { ...prev[s.product.id], complimentary: e.target.checked } }))}
+                    onChange={(e) => { setTicketConfirmed(false); setLines((prev) => ({ ...prev, [s.product.id]: { ...prev[s.product.id], complimentary: e.target.checked } })); }}
                     className="h-4 w-4 accent-[#3d2c24]"
                   />
                   Cortesía
@@ -381,6 +392,7 @@ export function BarFlow({
                 ? "Este ticket no suma sello (sin bebidas elegibles pagadas)."
                 : `Total ${formatMxn(total)} · se sumará 1 sello (${claim.stampsBalance} → ${Math.min(claim.stampsBalance + 1, claim.stampsRequired)} de ${claim.stampsRequired})`}
             {!folio.trim() && selected.length > 0 ? " · falta el folio" : ""}
+            {prefilled && !ticketConfirmed ? " · confirma que el ticket pertenece a este cliente" : ""}
           </p>
           <div className="flex gap-2">
             <button type="button" onClick={() => cancel(claim)} disabled={phase.submitting} className="btn border border-tabaco/25 px-4 text-tabaco">

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getStaffSession } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export type CheckoutResult = { ok: boolean; message: string; saleId?: string; totalCents?: number };
+export type CheckoutResult = { ok: boolean; message: string; saleId?: string; totalCents?: number; uncertain?: boolean };
 const unavailable = { ok: false, message: "La caja no está configurada o no tienes acceso." };
 const failed = { ok: false, message: "No se pudo completar la operación. Intenta de nuevo." };
 
@@ -34,7 +34,8 @@ export async function recordSaleAction(input: unknown): Promise<CheckoutResult> 
     p_payment_method: parsed.data.paymentMethod,
     p_lines: parsed.data.lines,
   });
-  if (error) return failed;
+  if (error?.code === "PGRST202") return { ok: false, message: "La caja no está disponible en esta base de datos. Aplica la migración de caja e inventario antes de vender." };
+  if (error) return { ok: false, uncertain: true, message: "No se pudo confirmar la respuesta de caja. Reintenta esta misma operación; no cobres otra vez todavía." };
   if (!data?.ok) {
     const messages: Record<string, string> = {
       insufficient_stock: "No hay existencias suficientes. Actualiza el inventario antes de cobrar.",

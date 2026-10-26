@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { recordSaleAction } from "@/actions/checkout";
+import { useEffect, useMemo, useState } from "react";
+import { recordSaleAction, type CheckoutResult } from "@/actions/checkout";
 import { PENDING_TICKET_KEY } from "@/domain/staff/pending-ticket";
+import { PENDING_SALE_KEY, parsePendingSale, type PendingSale } from "@/domain/staff/pending-sale";
 import { formatMxn as formatMoney } from "@/lib/format";
 
 type Product = { id: string; name: string; price_cents: number; available: number };
@@ -19,7 +20,25 @@ export function Checkout({ branchId, branchName, products }: { branchId: string;
   const [uncertain, setUncertain] = useState(false);
   const [outcome, setOutcome] = useState<string | null>(null);
   const [completed, setCompleted] = useState<string | null>(null);
+  const [pendingSale, setPendingSale] = useState<PendingSale | null>(null);
   const [key, setKey] = useState(() => crypto.randomUUID());
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      try {
+        const pending = parsePendingSale(sessionStorage.getItem(PENDING_SALE_KEY), branchId);
+        if (!pending) return;
+        setPendingSale(pending);
+        setCart(Object.fromEntries(pending.lines.map((line) => [line.product_id, line.quantity])));
+        setPayment(pending.paymentMethod);
+        setCashReceived(pending.cashReceived);
+        setKey(pending.key);
+        setUncertain(true);
+        setOutcome("Hay una venta cuya respuesta no se confirmó. No inicies otra: reintenta esta operación con la misma clave. Si ya existe, el servidor devolverá el mismo resultado.");
+      } catch { /* El almacenamiento puede estar deshabilitado. */ }
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [branchId]);
 
   const visibleProducts = useMemo(() => products.filter((product) => product.name.toLocaleLowerCase("es-MX").includes(query.toLocaleLowerCase("es-MX"))), [products, query]);
   const lines = useMemo(() => products.filter((product) => cart[product.id] > 0).map((product) => ({ product_id: product.id, quantity: cart[product.id], name: product.name, price_cents: product.price_cents })), [cart, products]);
@@ -40,6 +59,7 @@ export function Checkout({ branchId, branchName, products }: { branchId: string;
 
   function newSale() {
     try { sessionStorage.removeItem(PENDING_TICKET_KEY); } catch { /* Sin almacenamiento local. */ }
+    try { sessionStorage.removeItem(PENDING_SALE_KEY); } catch { /* Sin almacenamiento local. */ }
     setCart({});
     setPayment("cash");
     setCashReceived("");
@@ -47,28 +67,46 @@ export function Checkout({ branchId, branchName, products }: { branchId: string;
     setCompleted(null);
     setOutcome(null);
     setUncertain(false);
+    setPendingSale(null);
     setKey(crypto.randomUUID());
+  }
+
+  function handleResult(result: CheckoutResult, operation: PendingSale) {
+    if (!result.ok) {
+      setOutcome(result.message);
+      if (result.uncertain) {
+        setUncertain(true);
+      } else {
+        setPendingSale(null);
+        setConfirmed(false);
+        try { sessionStorage.removeItem(PENDING_SALE_KEY); } catch { /* Sin almacenamiento local. */ }
+      }
+      return;
+    }
+    setPendingSale(null);
+    setUncertain(false);
+    setOutcome(null);
+    try { sessionStorage.removeItem(PENDING_SALE_KEY); } catch { /* Sin almacenamiento local. */ }
+    const saleId = result.saleId ?? "";
+    if (saleId) {
+      try {
+        sessionStorage.setItem(PENDING_TICKET_KEY, JSON.stringify({ branchId, folio: saleId, items: operation.lines, savedAt: Date.now() }));
+      } catch { /* El enlace manual sigue disponible si el almacenamiento está bloqueado. */ }
+    }
+    setCompleted(saleId);
+    setConfirmed(false);
   }
 
   async function submit() {
     if (!canSubmit) return;
+    const operation: PendingSale = { branchId, key, lines: lines.map(({ product_id, quantity }) => ({ product_id, quantity })), paymentMethod: payment, cashReceived, savedAt: Date.now() };
+    setPendingSale(operation);
+    try { sessionStorage.setItem(PENDING_SALE_KEY, JSON.stringify(operation)); } catch { /* En memoria aún puede reintentarse. */ }
     setBusy(true);
     setOutcome(null);
     try {
-      const result = await recordSaleAction({ branchId, lines: lines.map(({ product_id, quantity }) => ({ product_id, quantity })), paymentMethod: payment, key });
-      if (!result.ok) {
-        setOutcome(result.message);
-        setConfirmed(false);
-        return;
-      }
-      const saleId = result.saleId ?? "";
-      if (saleId) {
-        try {
-          sessionStorage.setItem(PENDING_TICKET_KEY, JSON.stringify({ branchId, folio: saleId, items: lines.map(({ product_id, quantity }) => ({ product_id, quantity })), savedAt: Date.now() }));
-        } catch { /* El enlace manual sigue disponible si el almacenamiento está bloqueado. */ }
-      }
-      setCompleted(saleId);
-      setConfirmed(false);
+      const result = await recordSaleAction({ branchId: operation.branchId, lines: operation.lines, paymentMethod: operation.paymentMethod, key: operation.key });
+      handleResult(result, operation);
     } catch {
       setUncertain(true);
       setOutcome("No se pudo confirmar la respuesta. La venta podría haberse guardado. Reintenta con la misma operación; no cobres otra vez todavía.");
@@ -78,26 +116,13 @@ export function Checkout({ branchId, branchName, products }: { branchId: string;
   }
 
   async function retry() {
-    if (!uncertain || busy) return;
+    if (!uncertain || busy || !pendingSale) return;
     setUncertain(false);
-    setConfirmed(true);
     // Se conserva la misma clave para que el servidor resuelva la operación de forma idempotente.
     setBusy(true);
     try {
-      const result = await recordSaleAction({ branchId, lines: lines.map(({ product_id, quantity }) => ({ product_id, quantity })), paymentMethod: payment, key });
-      if (!result.ok) {
-        setOutcome(result.message);
-        setConfirmed(false);
-        return;
-      }
-      const saleId = result.saleId ?? "";
-      if (saleId) {
-        try {
-          sessionStorage.setItem(PENDING_TICKET_KEY, JSON.stringify({ branchId, folio: saleId, items: lines.map(({ product_id, quantity }) => ({ product_id, quantity })), savedAt: Date.now() }));
-        } catch { /* Se puede capturar manualmente. */ }
-      }
-      setCompleted(saleId);
-      setOutcome(null);
+      const result = await recordSaleAction({ branchId: pendingSale.branchId, lines: pendingSale.lines, paymentMethod: pendingSale.paymentMethod, key: pendingSale.key });
+      handleResult(result, pendingSale);
     } catch {
       setUncertain(true);
       setOutcome("La respuesta sigue sin confirmarse. Conserva esta pantalla y pide revisar la venta antes de repetir el cobro.");
