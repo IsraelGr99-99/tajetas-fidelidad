@@ -184,7 +184,7 @@ export async function generateDemoAction(): Promise<FinanceResult> {
   if (!ctx) return denied;
   const { data, error } = await ctx.supabase.rpc("generate_demo_finance", { p_business_id: ctx.businessId, p_days: 60 });
   if (error) return network;
-  return done(data, "Se generaron 60 días de datos DEMO. Puedes borrarlos cuando quieras.", ["/negocio", "/negocio/finanzas"]);
+  return done(data, "Se generaron 60 días de datos DEMO. Puedes borrarlos cuando quieras.", ["/inicio", "/negocio", "/negocio/finanzas"]);
 }
 
 export async function clearDemoAction(): Promise<FinanceResult> {
@@ -192,5 +192,5 @@ export async function clearDemoAction(): Promise<FinanceResult> {
   if (!ctx) return denied;
   const { data, error } = await ctx.supabase.rpc("clear_demo_finance", { p_business_id: ctx.businessId });
   if (error) return network;
-  return done(data, "Datos DEMO eliminados. Los datos reales no se tocaron.", ["/negocio", "/negocio/finanzas"]);
+  return done(data, "Datos DEMO eliminados. Los datos reales no se tocaron.", ["/inicio", "/negocio", "/negocio/finanzas"]);
 }

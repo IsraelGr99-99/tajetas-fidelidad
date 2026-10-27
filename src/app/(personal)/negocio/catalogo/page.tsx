@@ -22,7 +22,7 @@ export default async function CatalogPage() {
     .map((product): CatalogRow => ({ ...product, image_url: product.image_path && supabase
       ? supabase.storage.from("product-photos").getPublicUrl(product.image_path).data.publicUrl : null }));
   const categories = categoryResult?.error ? [...new Set(products.map((p) => p.category))] : (categoryResult?.data ?? []).map((c) => c.name);
-  const hasSamples = products.some((p) => p.name.includes("(ejemplo)"));
+  const hasSamples = products.some((p) => p.name.includes("(ejemplo)") || p.name.includes("(DEMO)"));
   const withoutCost = products.filter((p) => p.active && p.cost_cents === null).length;
 
   return (
@@ -36,8 +36,8 @@ export default async function CatalogPage() {
       {error ? <Notice tone="error" title="No se pudo cargar el catálogo." /> : null}
       {categoryResult?.error ? <Notice tone="error" title="No se pudieron cargar las categorías. Verifica la migración de catálogo." /> : null}
       {hasSamples ? (
-        <Notice tone="info" title="Hay productos de ejemplo">
-          Importa tu lista real o desactiva los marcados “(ejemplo)” antes del piloto.
+        <Notice tone="info" title="Hay productos de demostración">
+          Sus precios, costos y recetas son ficticios. Reemplaza o desactiva los marcados “(ejemplo)” o “(DEMO)” antes de operar con datos reales.
         </Notice>
       ) : null}
       {withoutCost > 0 ? (

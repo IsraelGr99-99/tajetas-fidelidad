@@ -10,5 +10,7 @@ export default defineConfig({
     // Las pruebas de base de datos arrancan PostgreSQL en WASM; dar margen.
     testTimeout: 30_000,
     hookTimeout: 60_000,
+    // Evita agotar la memoria al arrancar una instancia PGlite por archivo.
+    maxWorkers: 2,
   },
 });

@@ -1,14 +1,14 @@
 # Despliegue en `fidelidad-demo.iautomexa.com`
 
-Guía para publicar la demo. Está escrita para **Vercel** (plan gratuito, soporte nativo de Next.js 16); en otro hosting con Node 20+ los pasos equivalen.
+Guía para publicar la demo en **Hostinger** con Next.js como servidor Node 20.9+. No basta un hosting de archivos estáticos porque la app tiene rutas y acciones de servidor. Esta fase es una **demo guiada con acceso por invitación**, no un SaaS de autoservicio. El Supabase de pruebas actual puede contener cuentas reales de prueba: no compartas credenciales de propietario ni abras la consola a visitantes anónimos.
 
 ## 1. Proyecto en el hosting
-1. Importa el repositorio `IsraelGr99-99/tajetas-fidelidad`, rama `feat/fundamentos` (o `main` cuando la fusiones).
-2. Framework: Next.js. Build: `npm run build`. Node 20 o superior.
-3. Región cercana a tu proyecto Supabase.
+1. Confirma el plan: [Hostinger ofrece Node.js Web Apps en Business Web Hosting y Cloud](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/). En VPS el despliegue es manual. Si el plan no muestra **Web App**, no publiques esta aplicación como sitio estático.
+2. En hPanel: **Websites → Create Website → Web App → Import Git Repository**. Usa este flujo de Node.js, no el menú Git para sitios PHP/HTML. Conecta `IsraelGr99-99/tajetas-fidelidad` y selecciona la rama validada de la demo (actualmente `feat/ui-landing`; `main` solo tras integrarla). [Guía oficial de Hostinger](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/).
+3. Confirma Next.js como framework; usa `npm run build` y `npm run start` si Hostinger solicita comandos. Selecciona Node 22.x, compatible con el mínimo `>=20.9.0` del proyecto. Revisa el log de despliegue antes de conectar el dominio.
 
 ## 2. Variables de entorno (Production)
-Cópialas desde `.env.local`, salvo las marcadas como **nuevas para producción**. Configura como *Sensitive* las que son secretas.
+Configúralas en **Website Dashboard → Environment variables** de la Node.js Web App; no subas `.env.local` ni pegues secretos en el repositorio. Los valores `NEXT_PUBLIC_*` se incorporan al build: si cambian, vuelve a desplegar. Las variables de servidor requieren reiniciar la app tras cambiarlas. [Guía oficial de variables de Hostinger](https://www.hostinger.com/support/how-to-edit-or-add-environment-variables-after-deployment/).
 
 | Variable | Valor en producción | Secreta |
 |---|---|---|
@@ -21,7 +21,7 @@ Cópialas desde `.env.local`, salvo las marcadas como **nuevas para producción*
 | `SUPABASE_SECRET_KEY` | `sb_secret_…` | **sí** |
 | `PURCHASE_REFERENCE_PEPPER` | genera uno **nuevo** y no lo cambies después | **sí** |
 | `GOOGLE_WALLET_ISSUER_ID` | el de tu emisor | no |
-| `GOOGLE_WALLET_SERVICE_ACCOUNT_JSON_BASE64` | el mismo de `.env.local` | **sí** |
+| `GOOGLE_WALLET_SERVICE_ACCOUNT_JSON_BASE64` | solo si ya tienes una cuenta de servicio configurada; de lo contrario, deja Wallet como no configurado | **sí** |
 | `GOOGLE_WALLET_MODE` | `demo` (hasta que Google apruebe la emisión pública) | no |
 | `GOOGLE_WALLET_LOGO_URL` | la de `.env.local` (bucket `marca`) | no |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | ver paso 4 | no |
@@ -32,9 +32,9 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
 ## 3. Dominio
-1. En el hosting agrega el dominio `fidelidad-demo.iautomexa.com`.
-2. En el DNS de `iautomexa.com` (Hostinger) crea el registro que indique el hosting. En Vercel normalmente es `CNAME fidelidad-demo → cname.vercel-dns.com`.
-3. Espera a que el certificado HTTPS quede activo.
+1. Primero publica en el dominio temporal de la Node.js Web App y verifica que `/` y `/entrar` cargan. Después, en el dashboard de la aplicación, usa **Connect domain** para `fidelidad-demo.iautomexa.com`.
+2. Sigue los registros DNS que muestre Hostinger; si `iautomexa.com` usa nameservers externos, actualízalos en el proveedor DNS correspondiente. No copies un destino de otro hosting.
+3. Espera a que el certificado HTTPS esté activo antes de probar cámara, registro o redirecciones de Auth. [Conectar dominio en Hostinger](https://www.hostinger.com/support/how-to-connect-a-custom-domain-to-a-node-js-application/).
 
 ## 4. Supabase (proyecto en la nube)
 - **Authentication → URL Configuration:**
@@ -51,7 +51,8 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 - **Authentication → Multi-Factor:** confirma que TOTP está habilitado. Después, en `/cuenta`, activa tu verificación en dos pasos como propietario.
 - **Authentication → Rate Limits:** con SMTP propio, sube "emails per hour" según tu plan de Resend. Mantén los demás límites.
 - **Integrations → Cron:** confirma que existe el trabajo `fidelidad-limpieza-temporal`. Si no aparece, créalo con `select private.cleanup_ephemeral()` cada hora.
-- **Seed:** el negocio está marcado como demo (`is_demo = true`), así que se ve el aviso de demostración. Para el piloto real, cambia a `false` y reemplaza el catálogo de ejemplo.
+- **Datos de ejemplo:** `supabase/seed.sql` prepara un proyecto nuevo; `db push` no ejecuta el seed. Para el proyecto de pruebas actual, aplica `20261030120000_demo_catalog.sql` solo tras un respaldo nuevo de esquema y datos y la revisión del `dry-run` como indica [demo pública](demo-publica.md). No uses `db reset` remoto ni sustituyas datos existentes. El negocio debe seguir marcado `is_demo = true` mientras se muestren estos datos.
+- **Reportes ficticios:** desde `/inicio`, el propietario puede generar 60 días de ventas importadas y gastos marcados DEMO. Se pueden borrar desde la misma sección. No se crean clientes, sellos ni ventas reales de caja.
 
 ## 5. Google Wallet para tus amigos
 - En modo `demo`, agrega cada cuenta de Google que vaya a probar en **Google Pay & Wallet Console → Google Wallet API → Test accounts**.
@@ -59,6 +60,9 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 - Para que cualquiera pueda guardarlo: *Request publishing access* y luego `GOOGLE_WALLET_MODE=public`.
 
 ## 6. Verificación después de publicar
+- [ ] Solo hay acceso por invitación a la consola; ninguna contraseña de owner/admin se comparte con prospectos. La portada pública deja claro qué funciones aún no están integradas.
+- [ ] Datos personales de pruebas revisados antes de dar acceso a cualquier tercero; si el entorno contiene datos no ficticios, no dar acceso a la consola hasta separarlos.
+- [ ] `/inicio` muestra el recorrido y distingue los reportes DEMO; caja no presenta una venta de ejemplo como cobro real.
 - [ ] `https://fidelidad-demo.iautomexa.com` carga la portada sin errores de CSP en la consola del navegador.
 - [ ] Registro de cliente con código por correo; el QR aparece en `/tarjeta`.
 - [ ] Login del personal en `/entrar`, barra con cámara (HTTPS permite usar la cámara del celular) y un sello registrado.
@@ -75,3 +79,4 @@ Revisa `docs/seguridad.md` → *Pendientes antes de producción* y `docs/hoja-de
 - Aviso de privacidad revisado legalmente.
 - Catálogo y logotipo reales.
 - Apple Wallet.
+- Cobro integrado con tarjeta e impresión física: siguen **no configurados**; no afirmar que funcionan en una promoción.

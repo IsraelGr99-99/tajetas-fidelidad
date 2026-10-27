@@ -50,4 +50,5 @@ Las pruebas de base de datos aplican las migraciones reales en PostgreSQL (PGlit
 - [Sello NFC](docs/nfc-sello.md)
 - [Configuración externa: Supabase, Wallet, dominio](docs/implementacion.md)
 - [Despliegue](docs/despliegue.md)
+- [Recorrido de la demo](docs/demo-publica.md)
 - [Hoja de ruta](docs/hoja-de-ruta.md)

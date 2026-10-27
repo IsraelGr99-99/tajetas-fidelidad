@@ -3,6 +3,7 @@ import Link from "next/link";
 import { NavGlyph, type NavIcon } from "@/components/staff/ConsoleNav";
 import { requireStaff } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DemoControls } from "@/app/(personal)/negocio/finanzas/FinanceControls";
 
 export const metadata: Metadata = { title: "Inicio del espacio de trabajo" };
 
@@ -19,13 +20,16 @@ export default async function WorkspaceHome() {
   const { membership, activeBranch } = await requireStaff();
   const admin = membership.role === "owner" || membership.role === "admin";
   const supabase = admin ? await createSupabaseServerClient() : null;
-  const [catalogResult, inventoryResult] = supabase ? await Promise.all([
+  const [catalogResult, inventoryResult, demoResult] = supabase ? await Promise.all([
     supabase.rpc("admin_catalog", { p_business_id: membership.business_id }),
     supabase.rpc("inventory_overview", { p_business_id: membership.business_id }),
-  ]) : [null, null];
+    membership.is_demo ? supabase.rpc("finance_records", { p_business_id: membership.business_id }) : Promise.resolve(null),
+  ]) : [null, null, null];
   const catalog = catalogResult?.data?.ok && Array.isArray(catalogResult.data.products)
     ? (catalogResult.data.products as Product[]).filter((p) => p.active) : null;
   const inventory = inventoryResult?.data?.ok ? (inventoryResult.data as Inventory) : null;
+  const demoFinance = demoResult?.data?.ok ? demoResult.data as { imports?: { is_demo: boolean }[]; expenses?: { is_demo: boolean }[] } : null;
+  const hasDemoFinance = Boolean(demoFinance?.imports?.some((row) => row.is_demo) || demoFinance?.expenses?.some((row) => row.is_demo));
   const activeProductIds = new Set(catalog?.map((product) => product.id) ?? []);
   const hasRecipes = Boolean(inventory && activeProductIds.size > 0 &&
     [...activeProductIds].every((id) => inventory.recipes.some((recipe) => recipe.product_id === id)));
@@ -56,6 +60,21 @@ export default async function WorkspaceHome() {
       <div className="mt-6 flex flex-wrap items-center gap-3"><Link href={next.href} className="workspace-action">{next.label}<span aria-hidden="true">→</span></Link>
         <p className="max-w-md text-sm text-slate-600">{next.detail}</p></div>
     </section>
+
+    {membership.is_demo && admin && <section aria-labelledby="demo-titulo" className="workspace-card border-amber-200 bg-[linear-gradient(120deg,#fffaf0,#fff)] p-6 sm:p-8">
+      <p className="workspace-kicker text-amber-800">Recorrido de demostración · datos ficticios</p>
+      <h2 id="demo-titulo" className="mt-2 text-2xl text-slate-950">Muestra Loyalty en cinco minutos</h2>
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700">Explora el catálogo, el inventario y una venta en caja. Después consulta los reportes. Los importes generados aquí son ejemplos y nunca se presentan como ventas reales ni crean clientes ficticios.</p>
+      <ol className="mt-5 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+        <li><Link href="/negocio/catalogo" className="block rounded-xl border border-amber-100 bg-white p-3 font-semibold text-slate-800 hover:border-amber-400">1. Ver productos y variantes →</Link></li>
+        <li><Link href="/negocio/inventario" className="block rounded-xl border border-amber-100 bg-white p-3 font-semibold text-slate-800 hover:border-amber-400">2. Ver stock y recetas →</Link></li>
+        <li><Link href="/caja" className="block rounded-xl border border-amber-100 bg-white p-3 font-semibold text-slate-800 hover:border-amber-400">3. Probar la caja →</Link></li>
+        <li><Link href="/negocio?rango=30" className="block rounded-xl border border-amber-100 bg-white p-3 font-semibold text-slate-800 hover:border-amber-400">4. Revisar indicadores →</Link></li>
+      </ol>
+      <div className="mt-5 border-t border-amber-200 pt-4">
+        {demoFinance ? <><p className="mb-3 text-sm text-slate-700">{hasDemoFinance ? "Los reportes de ejemplo ya están cargados y rotulados DEMO." : "Si quieres ver gráficos con historia, carga 60 días ficticios de ventas y gastos."}</p><DemoControls hasDemo={hasDemoFinance} />{hasDemoFinance && <Link href="/negocio?rango=30" className="mt-3 inline-block text-sm font-bold text-blue-700 underline underline-offset-4">Ver análisis de ejemplo →</Link>}</> : <p className="text-sm text-amber-900">No se pudo consultar el estado de los reportes de ejemplo. Revisa la conexión antes de generarlos.</p>}
+      </div>
+    </section>}
 
     <section aria-labelledby="flujo-titulo" className="space-y-4"><div><p className="workspace-kicker">Operación diaria</p><h2 id="flujo-titulo" className="mt-1 text-2xl text-[#14233b]">El recorrido de una venta</h2>
       <p className="mt-1 text-sm text-slate-600">Dos registros distintos, presentados en el orden en que se atiende al cliente.</p></div>
