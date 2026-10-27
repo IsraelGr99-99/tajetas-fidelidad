@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { type Capability, type Membership, can, resolveActiveBranch, staffContextSchema } from "@/domain/staff/permissions";
-import { BRANCH_PICKER_PATH, LOGIN_PATH, NO_ACCESS_PATH } from "@/domain/staff/routes";
+import { BRANCH_PICKER_PATH, LOGIN_PATH, NO_ACCESS_PATH, safeNextPath } from "@/domain/staff/routes";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /** Cookie con la sucursal elegida. No es una credencial: el servidor la valida contra los permisos. */
@@ -73,9 +73,9 @@ export async function requireStaff(): Promise<StaffOnly> {
 }
 
 /** Exige personal con sucursal activa elegida. */
-export async function requireStaffWithBranch() {
+export async function requireStaffWithBranch(returnTo: string) {
   const session = await requireStaff();
-  if (!session.activeBranch) redirect(BRANCH_PICKER_PATH);
+  if (!session.activeBranch) redirect(`${BRANCH_PICKER_PATH}?siguiente=${encodeURIComponent(safeNextPath(returnTo))}`);
   return { ...session, activeBranch: session.activeBranch };
 }
 

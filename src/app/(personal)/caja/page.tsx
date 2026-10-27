@@ -14,7 +14,7 @@ const catalogSchema = z.object({ ok: z.literal(true), products: z.array(z.object
 })) });
 
 export default async function CheckoutPage() {
-  const { membership, activeBranch } = await requireStaffWithBranch();
+  const { membership, activeBranch } = await requireStaffWithBranch("/caja");
   if (!["owner", "admin", "manager", "barista"].includes(membership.role)) redirect(NO_ACCESS_PATH);
   const supabase = await createSupabaseServerClient();
   if (!supabase) return <p>Caja no configurada: conecta Supabase.</p>;

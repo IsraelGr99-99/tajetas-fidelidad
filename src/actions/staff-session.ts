@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { LOGIN_PATH, safeNextPath } from "@/domain/staff/routes";
@@ -29,12 +29,15 @@ export async function selectBranchAction(formData: FormData) {
     redirect("/cuenta?error=sucursal");
   }
 
+  // La sucursal es una preferencia, no una credencial. En el piloto HTTP local/LAN
+  // el atributo Secure impediría conservarla; en HTTPS sí se exige.
+  const origin = (await headers()).get("origin");
   (await cookies()).set(BRANCH_COOKIE, parsed.data.branchId, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" && !origin?.startsWith("http://"),
     path: "/",
-    maxAge: 60 * 60 * 12, // un turno
+    maxAge: 60 * 60 * 24 * 30, // preferencia; se revalida contra los permisos en cada petición
   });
   // Vuelve a la pantalla desde donde se cambió (solo rutas internas de la consola).
   redirect(safeNextPath(String(formData.get("returnTo") ?? "")));

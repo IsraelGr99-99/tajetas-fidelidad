@@ -29,7 +29,7 @@ const SOURCE_LABEL: Record<string, string> = {
 };
 
 export default async function LedgerPage({ searchParams }: { searchParams: Promise<{ antes?: string; todas?: string }> }) {
-  const { membership, activeBranch } = await requireStaffWithBranch();
+  const { membership, activeBranch } = await requireStaffWithBranch("/movimientos");
   if (!can(membership.role, "view_branch_ledger")) redirect(NO_ACCESS_PATH);
   const params = await searchParams;
   const isAdmin = can(membership.role, "adjust_stamps");

@@ -4,6 +4,7 @@ import { Notice } from "@/components/staff/OperationParts";
 import { MfaSetup } from "@/components/staff/Mfa";
 import { SignOutButton } from "@/components/staff/SignOutButton";
 import { ROLE_LABELS, capabilitiesOf } from "@/domain/staff/permissions";
+import { safeNextPath } from "@/domain/staff/routes";
 import { requireStaff } from "@/lib/staff/session";
 
 export const metadata: Metadata = { title: "Cuenta" };
@@ -21,9 +22,10 @@ const CAPABILITY_TEXT: Record<string, string> = {
   view_audit_log: "Auditoría",
 };
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; siguiente?: string }> }) {
   const { membership, activeBranch, email } = await requireStaff();
-  const { error } = await searchParams;
+  const { error, siguiente } = await searchParams;
+  const returnTo = safeNextPath(siguiente);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -48,6 +50,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           Sucursal de trabajo
         </h2>
         {error ? <Notice tone="error" title="No tienes acceso a esa sucursal. Elige una de la lista." /> : null}
+        {siguiente && membership.branches.length > 0 ? <Notice tone="info" title="Elige una sucursal para continuar">
+          No hay una sucursal activa. Selecciona una y te llevaremos a la pantalla que querías abrir.
+        </Notice> : null}
         {membership.branches.length === 0 ? (
           <Notice tone="info" title="Aún no tienes sucursales asignadas">
             Pide a administración que te asigne al menos una para operar.
@@ -60,7 +65,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                 <li key={b.id}>
                   <form action={selectBranchAction}>
                     <input type="hidden" name="branchId" value={b.id} />
-                    <input type="hidden" name="returnTo" value="/inicio" />
+                    <input type="hidden" name="returnTo" value={returnTo} />
                     <button
                       type="submit"
                       aria-current={current ? "true" : undefined}
