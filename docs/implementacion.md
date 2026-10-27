@@ -61,7 +61,7 @@ En Google Pay & Wallet Console crear el issuer, habilitar Google Wallet API en G
 **Enlace del pase:** el pase lleva a `NEXT_PUBLIC_APP_URL/tarjeta`. En local es `localhost`, así que el enlace solo funciona desde esta computadora; en el despliegue será `https://fidelidad-demo.iautomexa.com/tarjeta`.
 
 ## 4. Dominio y despliegue (no publicar sin autorización)
-- Hosting sugerido: Vercel (soporte nativo de Next.js). Alternativas: cualquier Node 20+.
+- Hosting de la demo: Hostinger Node.js Web App con Node 22 y build Webpack; ver `docs/despliegue.md`.
 - DNS: registro `CNAME fidelidad-demo` → destino que indique el hosting.
 - Variables de producción en el gestor de secretos; `NEXT_PUBLIC_APP_URL=https://fidelidad-demo.iautomexa.com`.
 - Antes de publicar: completar la lista de `docs/hoja-de-ruta.md` (sección “Antes del piloto”).

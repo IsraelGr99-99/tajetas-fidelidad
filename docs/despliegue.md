@@ -1,11 +1,11 @@
 # Despliegue en `fidelidad-demo.iautomexa.com`
 
-Guía para publicar la demo en **Hostinger** con Next.js como servidor Node 20.9+. No basta un hosting de archivos estáticos porque la app tiene rutas y acciones de servidor. Esta fase es una **demo guiada con acceso por invitación**, no un SaaS de autoservicio. El Supabase de pruebas actual puede contener cuentas reales de prueba: no compartas credenciales de propietario ni abras la consola a visitantes anónimos.
+Guía para publicar la demo en **Hostinger** con Next.js como servidor Node 22+. No basta un hosting de archivos estáticos porque la app tiene rutas y acciones de servidor. Esta fase es una **demo guiada con acceso por invitación**, no un SaaS de autoservicio. El Supabase de pruebas actual puede contener cuentas reales de prueba: no compartas credenciales de propietario ni abras la consola a visitantes anónimos.
 
 ## 1. Proyecto en el hosting
 1. Confirma el plan: [Hostinger ofrece Node.js Web Apps en Business Web Hosting y Cloud](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/). En VPS el despliegue es manual. Si el plan no muestra **Web App**, no publiques esta aplicación como sitio estático.
 2. En hPanel: **Websites → Create Website → Web App → Import Git Repository**. Usa este flujo de Node.js, no el menú Git para sitios PHP/HTML. Conecta `IsraelGr99-99/tajetas-fidelidad` y selecciona la rama validada de la demo (actualmente `feat/ui-landing`; `main` solo tras integrarla). [Guía oficial de Hostinger](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/).
-3. Confirma Next.js como framework; usa `npm run build` y `npm run start` si Hostinger solicita comandos. Selecciona Node 22.x, compatible con el mínimo `>=20.9.0` del proyecto. Revisa el log de despliegue antes de conectar el dominio.
+3. Confirma Next.js como framework; usa `npm run build` (este proyecto compila con Webpack) y `npm run start` si Hostinger solicita comandos. Selecciona Node 22.x. [Hostinger indica usar Webpack para Next.js 16.3.3+ por GLIBC](https://www.hostinger.com/support/how-to-fix-next-js-16-turbopack-build-errors-on-hostinger/). Revisa el log de despliegue antes de conectar el dominio.
 
 ## 2. Variables de entorno (Production)
 Configúralas en **Website Dashboard → Environment variables** de la Node.js Web App; no subas `.env.local` ni pegues secretos en el repositorio. Los valores `NEXT_PUBLIC_*` se incorporan al build: si cambian, vuelve a desplegar. Las variables de servidor requieren reiniciar la app tras cambiarlas. [Guía oficial de variables de Hostinger](https://www.hostinger.com/support/how-to-edit-or-add-environment-variables-after-deployment/).

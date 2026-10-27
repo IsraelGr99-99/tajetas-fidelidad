@@ -21,20 +21,3 @@ export function safeNextPath(value: string | null | undefined): string {
   const pathname = value.split(/[?#]/)[0];
   return isConsolePath(pathname) ? value : CONSOLE_HOME;
 }
-
-/** Rutas anteriores (etapas 3–5) que redirigen a las nuevas. */
-export const LEGACY_REDIRECTS: { source: string; destination: string }[] = [
-  { source: "/personal", destination: "/inicio" },
-  { source: "/personal/ingresar", destination: "/entrar" },
-  { source: "/personal/visita", destination: "/barra" },
-  { source: "/personal/canje", destination: "/barra" },
-  { source: "/personal/sucursal", destination: "/cuenta" },
-  { source: "/personal/sin-acceso", destination: "/sin-acceso" },
-  { source: "/personal/movimientos", destination: "/movimientos" },
-  { source: "/personal/admin", destination: "/negocio" },
-  { source: "/personal/admin/catalogo", destination: "/negocio/catalogo" },
-  { source: "/personal/admin/campana", destination: "/negocio/programa" },
-  { source: "/personal/admin/personal", destination: "/negocio/equipo" },
-  { source: "/personal/admin/sucursales", destination: "/negocio/equipo" },
-  { source: "/personal/admin/clientes", destination: "/negocio/clientes" },
-];
