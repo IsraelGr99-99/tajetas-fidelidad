@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { adjustStockAction, setRecipeAction, upsertStockItemAction, type CheckoutResult } from "@/actions/checkout";
+import { adjustStockAction, correctStockItemUnitAction, setRecipeAction, upsertStockItemAction, type CheckoutResult } from "@/actions/checkout";
 import type { Branch } from "@/domain/staff/permissions";
 import { IngredientList } from "./IngredientList";
 import { InventoryOverview } from "./InventoryOverview";
@@ -16,7 +16,7 @@ type Data = {
 };
 type CatalogProduct = { id: string; name: string; category: string; price_cents: number; cost_cents: number | null; active: boolean };
 type View = "stock" | "manage" | "recipes";
-type ManageMode = "create" | "adjust" | "import";
+type ManageMode = "create" | "adjust" | "unit" | "import";
 type RecipeRow = { id: number; itemId: string; quantity: string };
 const inputClass = "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-950";
 const secondaryClass = "min-h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:text-blue-700";
@@ -31,6 +31,9 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
   const [itemName, setItemName] = useState("");
   const [unit, setUnit] = useState("pieza");
   const [itemId, setItemId] = useState(data.items[0]?.id ?? "");
+  const [correctedUnit, setCorrectedUnit] = useState(data.items[0]?.unit ?? "pieza");
+  const [unitMode, setUnitMode] = useState<"convert" | "relabel">("convert");
+  const [acknowledgeRelabel, setAcknowledgeRelabel] = useState(false);
   const [delta, setDelta] = useState("");
   const [minimum, setMinimum] = useState("0");
   const [reason, setReason] = useState("");
@@ -63,6 +66,17 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
   function openAdjustment(id: string) {
     chooseItem(id);
     setManageMode("adjust");
+    setView("manage");
+    setOutcome(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    requestAnimationFrame(() => document.getElementById("manage-heading")?.focus());
+  }
+
+  function openUnitCorrection(id: string) {
+    setItemId(id);
+    setCorrectedUnit(items.find((item) => item.id === id)?.unit ?? "pieza");
+    setAcknowledgeRelabel(false);
+    setManageMode("unit");
     setView("manage");
     setOutcome(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -109,7 +123,7 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
     {outcome && <p role="status" className={`rounded-xl border px-4 py-3 text-sm ${outcome.ok ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"}`}>{outcome.message}</p>}
 
     {view === "stock" && <div className="space-y-5">
-      <IngredientList items={items} balances={data.balances} branches={branches} branchId={branchId} onAdjust={openAdjustment} />
+      <IngredientList items={items} balances={data.balances} branches={branches} branchId={branchId} onAdjust={openAdjustment} onEditUnit={openUnitCorrection} />
       <div className="grid gap-3 sm:grid-cols-2">
         <StatusCard label="En mínimo o agotados" value={lowBalances.length} attention={lowBalances.length > 0} />
         <StatusCard label="Sin conteo en esta sucursal" value={missingBalances.length} attention={missingBalances.length > 0} />
@@ -124,13 +138,13 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
         <p className="mt-1 text-sm text-slate-600">Crea un insumo una sola vez. Las existencias y el mínimo se registran por sucursal.</p>
         <div className="mt-5 flex flex-wrap gap-2" aria-label="Acciones de insumos">
           {([
-            ["create", "Nuevo insumo"], ["adjust", "Registrar movimiento"], ["import", "Importar Excel"],
+            ["create", "Nuevo insumo"], ["adjust", "Registrar movimiento"], ["unit", "Corregir unidad"], ["import", "Importar Excel"],
           ] as const).map(([key, label]) => <button key={key} type="button" aria-pressed={manageMode === key} onClick={() => { setManageMode(key); setOutcome(null); }}
             className={`min-h-11 rounded-xl px-4 text-sm font-semibold ${manageMode === key ? "bg-blue-50 text-blue-800 ring-1 ring-blue-200" : "text-slate-600 hover:bg-slate-50"}`}>{label}</button>)}
         </div>
         {manageMode === "create" && <form className="mt-6 grid gap-4 border-t border-slate-200 pt-5 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-end" onSubmit={(event) => { event.preventDefault(); void run(() => upsertStockItemAction({ businessId, name: itemName, unit }), (result) => { if (result.itemId) { setJustCreated({ id: result.itemId, name: itemName.trim(), unit }); chooseItem(result.itemId); setManageMode("adjust"); } setItemName(""); }); }}>
           <label className="grid gap-1 text-sm font-semibold text-slate-700">Nombre del insumo<input required minLength={2} maxLength={100} value={itemName} onChange={(event) => setItemName(event.target.value)} placeholder="Ej. café molido" className={inputClass} /></label>
-          <label className="grid gap-1 text-sm font-semibold text-slate-700">Unidad<select value={unit} onChange={(event) => setUnit(event.target.value)} className={inputClass}>{["pieza", "g", "kg", "ml", "l"].map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+          <label className="grid gap-1 text-sm font-semibold text-slate-700">Unidad<select value={unit} onChange={(event) => setUnit(event.target.value)} className={inputClass}>{["pieza", "caja", "g", "kg", "ml", "l"].map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
           <button disabled={busy} className="workspace-action disabled:opacity-50">Guardar insumo</button>
         </form>}
         {manageMode === "adjust" && <form className="mt-6 space-y-4 border-t border-slate-200 pt-5" onSubmit={(event) => { event.preventDefault(); void run(() => adjustStockAction({ branchId, itemId, delta: Number(delta), minimum: Number(minimum), reason }), () => { setDelta(""); setReason(""); }); }}>
@@ -143,6 +157,19 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
             <p className="text-sm text-slate-600">Escribe una cantidad positiva para agregar o negativa para retirar. El movimiento queda en la bitácora; el mínimo no se suma al stock.</p>
             <button disabled={busy || !branchId || !itemId} className="workspace-action disabled:opacity-50">Registrar movimiento</button>
           </>}
+        </form>}
+        {manageMode === "unit" && <form className="mt-6 space-y-4 border-t border-slate-200 pt-5" onSubmit={(event) => { event.preventDefault(); if (unitMode === "relabel" && !acknowledgeRelabel) return; void run(() => correctStockItemUnitAction({ businessId, itemId, unit: correctedUnit, mode: unitMode })); }}>
+          <p className="max-w-2xl text-sm text-slate-700">Elige cómo tratar las cantidades de todas las sucursales y recetas. El historial de movimientos se conserva en la unidad anterior.</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1 text-sm font-semibold text-slate-700">Insumo<select value={itemId} onChange={(event) => { const id = event.target.value; setItemId(id); setCorrectedUnit(items.find((item) => item.id === id)?.unit ?? "pieza"); setAcknowledgeRelabel(false); }} className={inputClass}>{items.map((item) => <option key={item.id} value={item.id}>{item.name} ({item.unit})</option>)}</select></label>
+            <label className="grid gap-1 text-sm font-semibold text-slate-700">Unidad correcta<select value={correctedUnit} onChange={(event) => setCorrectedUnit(event.target.value)} className={inputClass}>{["pieza", "caja", "g", "kg", "ml", "l"].map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+          </div>
+          <fieldset className="space-y-2"><legend className="text-sm font-bold text-slate-800">¿Qué hacemos con las cantidades?</legend>
+            <label className="flex gap-3 rounded-xl border border-slate-200 p-3 text-sm"><input type="radio" name="unitMode" value="convert" checked={unitMode === "convert"} onChange={() => setUnitMode("convert")} /> Convertir automáticamente (g ↔ kg o ml ↔ l). Ejemplo: 1000 g pasan a 1 kg.</label>
+            <label className="flex gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm"><input type="radio" name="unitMode" value="relabel" checked={unitMode === "relabel"} onChange={() => setUnitMode("relabel")} /> Solo corregir etiqueta, sin cambiar números (por ejemplo, g → caja). Revisa existencias y recetas antes de vender.</label>
+          </fieldset>
+          {unitMode === "relabel" && <label className="flex max-w-2xl gap-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-semibold text-amber-950"><input type="checkbox" checked={acknowledgeRelabel} onChange={(event) => setAcknowledgeRelabel(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0" /> Entiendo que las cantidades y recetas no se recalcularán y las revisaré antes de volver a vender este producto.</label>}
+          <button disabled={busy || !itemId || correctedUnit === items.find((item) => item.id === itemId)?.unit || (unitMode === "relabel" && !acknowledgeRelabel)} className="workspace-action disabled:opacity-50">Guardar cambio de unidad</button>
         </form>}
       </div>
       {manageMode === "import" && <StockImport key={branchId} branches={branches} initialBranchId={branchId} onImported={setBranchId} />}

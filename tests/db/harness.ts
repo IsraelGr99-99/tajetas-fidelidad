@@ -48,6 +48,25 @@ alter default privileges in schema public grant all on sequences to anon, authen
 alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
 `;
 
+const STORAGE_STUB = `
+create schema storage;
+create table storage.buckets (
+  id text primary key, name text not null, public boolean not null default false,
+  file_size_limit integer, allowed_mime_types text[]
+);
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(), bucket_id text not null,
+  name text not null
+);
+create function storage.foldername(p_name text) returns text[] language sql immutable as $$
+  select string_to_array(regexp_replace(p_name, '/[^/]*$', ''), '/')
+$$;
+alter table storage.objects enable row level security;
+grant usage on schema storage to authenticated;
+grant select, insert, delete on storage.objects to authenticated;
+grant execute on function storage.foldername(text) to authenticated;
+`;
+
 export const IDS = {
   business: "00000000-0000-4000-8000-000000000001",
   branch: "00000000-0000-4000-8000-0000000000b1",
@@ -59,9 +78,10 @@ export type Json = Record<string, unknown>;
 export class TestDb {
   private constructor(readonly pg: PGlite) {}
 
-  static async create(): Promise<TestDb> {
+  static async create(options: { storage?: boolean } = {}): Promise<TestDb> {
     const pg = new PGlite();
     await pg.exec(SUPABASE_STUB);
+    if (options.storage) await pg.exec(STORAGE_STUB);
     for (const file of readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).sort()) {
       await pg.exec(readFileSync(path.join(MIGRATIONS_DIR, file), "utf8"));
     }

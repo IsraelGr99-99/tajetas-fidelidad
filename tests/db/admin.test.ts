@@ -196,6 +196,45 @@ describe("personal", () => {
 });
 
 describe("clientes", () => {
+  test("cliente desactiva, propietario ve motivo y cliente puede reactivar sin perder tarjeta", async () => {
+    const owner = await db.createStaff("owner");
+    const barista = await db.createStaff("barista");
+    const c = await db.createCustomer({ email: "pausa@correo.test" });
+    expect(await db.rpc(c.userId, "disable_my_customer_account", ["cafe-nomada", "no_uso", "Ya no voy a esta sucursal"]))
+      .toMatchObject({ ok: true });
+    expect(await db.rpc(c.userId, "get_my_card", ["cafe-nomada"]))
+      .toMatchObject({ ok: false, code: "not_enrolled" });
+    expect(await db.rpc(c.userId, "issue_scan_token", [c.cardId, "identify", ticketHash(), 120]))
+      .toMatchObject({ ok: false, code: "card_not_found" });
+    expect(await db.rpc(c.userId, "get_my_account_status", ["cafe-nomada"]))
+      .toMatchObject({ ok: true, status: "disabled" });
+    const ownerRows = await db.as<{ closure_reason: string }>(owner.userId,
+      "select closure_reason from public.customers where auth_user_id = $1", [c.userId]);
+    expect(ownerRows).toEqual([{ closure_reason: "Ya no voy a esta sucursal" }]);
+    const audit = await db.admin<{ details: unknown }>(
+      "select details from public.audit_log where action = 'customer.disable' and entity_id = (select customer_id::text from public.loyalty_cards where id = $1)", [c.cardId]);
+    expect(JSON.stringify(audit)).not.toContain("Ya no voy a esta sucursal");
+    expect(await db.as(barista.userId, "select closure_reason from public.customers where auth_user_id = $1", [c.userId])).toEqual([]);
+    expect(await db.rpc(owner.userId, "reactivate_my_customer_account", ["cafe-nomada", "2026-10-23"]))
+      .toMatchObject({ ok: false, code: "not_disabled" });
+    expect(await db.rpc(c.userId, "reactivate_my_customer_account", ["cafe-nomada", "2026-10-23"]))
+      .toMatchObject({ ok: true });
+    const [restored] = await db.admin<{ status: string; closure_reason: string | null }>(
+      "select status, closure_reason from public.customers where auth_user_id = $1", [c.userId]);
+    expect(restored).toEqual({ status: "active", closure_reason: null });
+    expect((await db.rpc(c.userId, "get_my_card", ["cafe-nomada"])).card).toMatchObject({ id: c.cardId });
+  });
+
+  test("eliminación desde cuenta desactivada borra motivo libre y datos personales", async () => {
+    const c = await db.createCustomer({ email: "eliminar-pausa@correo.test" });
+    await db.rpc(c.userId, "disable_my_customer_account", ["cafe-nomada", "otro", "Motivo privado de prueba"]);
+    expect(await db.rpc(c.userId, "delete_my_customer_data", ["cafe-nomada", "privacidad"]))
+      .toMatchObject({ ok: true });
+    const [row] = await db.admin<{ status: string; closure_reason: string | null; closure_category: string; contact_email: string | null }>(
+      "select status, closure_reason, closure_category, contact_email from public.customers cu join public.loyalty_cards c on c.customer_id = cu.id where c.id = $1", [c.cardId]);
+    expect(row).toEqual({ status: "deleted", closure_reason: null, closure_category: "privacidad", contact_email: null });
+  });
+
   test("búsqueda por correo, teléfono o nombre sin auditar el dato", async () => {
     await db.createCustomer({ email: "buscada@correo.test" });
     await db.createCustomer({ phone: "522225551234" });
@@ -213,7 +252,7 @@ describe("clientes", () => {
   test("el cliente elimina sus datos: se anonimiza y el historial se conserva", async () => {
     const c = await db.createCustomer({ email: "borrar@correo.test" });
     const e = await earnFor(c);
-    expect(await db.rpc(c.userId, "delete_my_customer_data", ["cafe-nomada"])).toMatchObject({ ok: true, is_staff: false });
+    expect(await db.rpc(c.userId, "delete_my_customer_data", ["cafe-nomada", "privacidad"])).toMatchObject({ ok: true, is_staff: false });
     const [cu] = await db.admin<Record<string, unknown>>(
       "select status, contact_email, display_name, auth_user_id from public.customers cu join public.loyalty_cards c on c.customer_id = cu.id where c.id = $1",
       [c.cardId],

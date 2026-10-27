@@ -8,6 +8,7 @@ export type CustomerSession =
   | { status: "not_configured" }
   | { status: "anonymous" }
   | { status: "not_enrolled"; contact: string | null }
+  | { status: "disabled"; contact: string | null }
   | { status: "enrolled"; card: MyCard };
 
 /** Sesión del cliente (JWT verificado) y su tarjeta desde `get_my_card()`, una vez por petición. */
@@ -31,5 +32,9 @@ export const getCustomerSession = cache(async (): Promise<CustomerSession> => {
       : typeof claims.phone === "string" && claims.phone
         ? `+${claims.phone.replace(/^\+/, "")}`
         : null;
+  if (parsed.code === "not_enrolled") {
+    const account = await supabase.rpc("get_my_account_status", { p_business_slug: PILOT_BUSINESS_SLUG });
+    if (!account.error && account.data?.status === "disabled") return { status: "disabled", contact };
+  }
   return { status: "not_enrolled", contact };
 });

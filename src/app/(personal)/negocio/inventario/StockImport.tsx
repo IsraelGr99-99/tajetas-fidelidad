@@ -6,7 +6,7 @@ import type { Branch } from "@/domain/staff/permissions";
 import { normalizeHeader, toCsv, type Cell } from "@/domain/imports/spreadsheet";
 import { downloadCsv, readSpreadsheet } from "@/lib/read-spreadsheet";
 
-type Row = { name: string; unit: "pieza" | "g" | "kg" | "ml" | "l"; quantity: number; minimum: number };
+type Row = { name: string; unit: "pieza" | "caja" | "g" | "kg" | "ml" | "l"; quantity: number; minimum: number };
 const columns = ["insumo", "unidad", "existencia", "minimo"] as const;
 
 function parseStock(matrix: Cell[][]): { rows: Row[]; errors: string[] } {
@@ -22,7 +22,7 @@ function parseStock(matrix: Cell[][]): { rows: Row[]; errors: string[] } {
     const minimumText = String(cells[positions[3]] ?? "").trim().replace(",", ".");
     const quantity = Number(quantityText);
     const minimum = Number(minimumText);
-    if (name.length < 2 || name.length > 100 || !["pieza", "g", "kg", "ml", "l"].includes(unit)
+    if (name.length < 2 || name.length > 100 || !["pieza", "caja", "g", "kg", "ml", "l"].includes(unit)
       || !quantityText || !minimumText
       || !Number.isFinite(quantity) || quantity < 0 || quantity > 1000000 || !Number.isFinite(minimum) || minimum < 0 || minimum > 1000000
       || Math.abs(Math.round(quantity * 1000) - quantity * 1000) > 1e-7

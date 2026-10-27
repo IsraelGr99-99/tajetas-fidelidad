@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type CardStatus, type QrResult, cardStatusAction, issueQrAction } from "@/app/tarjeta/actions";
 import { PassportCard } from "@/components/loyalty/PassportCard";
+import type { CardTheme } from "@/domain/loyalty/branding";
 
 type Purpose = "identify" | "redeem";
 type View =
@@ -30,12 +31,14 @@ export function CardQr({
   stampsBalance,
   stampsRequired,
   rewardDescription,
+  theme,
 }: {
   cardId: string;
   rewardsAvailable: number;
   stampsBalance: number;
   stampsRequired: number;
   rewardDescription: string;
+  theme?: CardTheme;
 }) {
   const router = useRouter();
   const [view, setView] = useState<View>({ state: "loading", purpose: "identify" });
@@ -210,6 +213,7 @@ export function CardQr({
             <p className="mt-1 text-crema/85">{view.detail}</p>
           </div>
           <PassportCard
+            theme={theme}
             stampsBalance={view.after}
             stampsRequired={stampsRequired}
             rewardsAvailable={view.rewards}

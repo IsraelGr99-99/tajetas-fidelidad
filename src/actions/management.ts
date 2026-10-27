@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { campaignRulesSchema } from "@/domain/loyalty/campaign";
+import { uploadProductImage } from "@/actions/product-image";
 import { rpcErrorMessage } from "@/domain/loyalty/messages";
 import { type Capability, STAFF_ROLES, can } from "@/domain/staff/permissions";
 import { getStaffSession } from "@/lib/staff/session";
@@ -15,7 +16,7 @@ import { syncWalletAfterResponse } from "@/lib/wallet/sync";
  * sobre el objeto concreto. La empresa siempre sale de la sesión, nunca del formulario.
  */
 
-export type ActionState = { ok: boolean; message: string | null; fieldErrors?: Record<string, string>; productId?: string };
+export type ActionState = { ok: boolean; message: string | null; fieldErrors?: Record<string, string>; productId?: string; imageUrl?: string | null; partial?: boolean };
 const idle: ActionState = { ok: false, message: null };
 export async function initialState(): Promise<ActionState> {
   return idle;
@@ -106,6 +107,11 @@ const productSchema = z.object({
 export async function upsertProductAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = productSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return fromZod(parsed.error);
+  const image = formData.get("image");
+  if (image instanceof File && image.size > 0 &&
+      (image.size > 2 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(image.type))) {
+    return { ok: false, message: "La foto debe ser JPG, PNG o WebP y pesar como máximo 2 MB.", fieldErrors: { image: "Elige una imagen válida de hasta 2 MB." } };
+  }
   const ctx = await context("manage_campaigns");
   if ("error" in ctx) return { ok: false, message: ctx.error ?? null };
   const d = parsed.data;
@@ -123,6 +129,18 @@ export async function upsertProductAction(_prev: ActionState, formData: FormData
   if (error) return { ok: false, message: "No se pudo contactar al servidor. Intenta de nuevo." };
   if (!data?.ok) return { ok: false, message: rpcErrorMessage(data?.code) };
   for (const path of ["/negocio/catalogo", "/negocio/inventario", "/caja", "/barra"]) revalidatePath(path);
+  if (image instanceof File && image.size > 0) {
+    const photo = new FormData();
+    photo.set("productId", data.product_id);
+    photo.set("image", image);
+    const result = await uploadProductImage(photo);
+    if (!result.ok) return {
+      ok: true, partial: true, productId: data.product_id,
+      message: `Producto guardado, pero la foto no se subió. ${result.message} Puedes reintentar abajo sin crear otro producto.`,
+    };
+    return { ok: true, productId: data.product_id, imageUrl: result.imageUrl,
+      message: d.productId ? "Producto y foto actualizados." : "Producto y foto agregados. Ahora configura la receta." };
+  }
   return { ok: true, message: d.productId ? "Producto actualizado." : "Producto agregado. Ahora puedes añadir su foto y receta.", productId: data.product_id };
 }
 

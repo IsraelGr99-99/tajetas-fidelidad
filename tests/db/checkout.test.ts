@@ -7,6 +7,63 @@ beforeAll(async () => { db = await TestDb.create(); });
 afterAll(async () => { await db?.close(); });
 
 describe("caja e inventario transaccional", () => {
+  test("convierte existencias y recetas, conserva historial y admite corregir etiqueta", async () => {
+    const owner = await db.createStaff("owner");
+    const barista = await db.createStaff("barista");
+    const fresh = await db.rpc(owner.userId, "upsert_stock_item", [IDS.business, "Insumo con unidad errónea", "g"], "aal2");
+    const freshId = fresh.item_id as string;
+    expect(await db.rpc(barista.userId, "change_stock_item_unit", [IDS.business, freshId, "kg", "convert"]))
+      .toMatchObject({ ok: false, code: "forbidden" });
+    expect(await db.rpc(owner.userId, "change_stock_item_unit", [IDS.business, freshId, "kg", "convert"], "aal2"))
+      .toMatchObject({ ok: true });
+    const [updated] = await db.admin<{ unit: string }>("select unit from public.stock_items where id = $1", [freshId]);
+    expect(updated.unit).toBe("kg");
+    expect(await db.rpc(owner.userId, "adjust_stock", [IDS.branch, freshId, 2, 1, "Carga de prueba"], "aal2"))
+      .toMatchObject({ ok: true });
+    const product = await db.productId("Americano (ejemplo)");
+    expect(await db.rpc(owner.userId, "set_product_recipe", [IDS.business, product,
+      JSON.stringify([{ item_id: freshId, quantity: 0.018 }])], "aal2")).toMatchObject({ ok: true });
+    expect(await db.rpc(owner.userId, "change_stock_item_unit", [IDS.business, freshId, "g", "convert"], "aal2"))
+      .toMatchObject({ ok: true, factor: 1000 });
+    const [balance] = await db.admin<{ quantity: string; minimum: string }>(
+      "select quantity, minimum from public.stock_balances where item_id = $1 and branch_id = $2", [freshId, IDS.branch]);
+    expect(balance).toMatchObject({ quantity: "2000.000", minimum: "1000.000" });
+    const [recipe] = await db.admin<{ quantity: string }>(
+      "select quantity from public.product_recipes where item_id = $1 and product_id = $2", [freshId, product]);
+    expect(recipe.quantity).toBe("18.000");
+    expect(await db.rpc(owner.userId, "change_stock_item_unit", [IDS.business, freshId, "caja", "convert"], "aal2"))
+      .toMatchObject({ ok: false, code: "incompatible_units" });
+    expect(await db.rpc(owner.userId, "change_stock_item_unit", [IDS.business, freshId, "caja", "relabel"], "aal2"))
+      .toMatchObject({ ok: true });
+    const [sameBalance] = await db.admin<{ quantity: string; minimum: string }>(
+      "select quantity,minimum from public.stock_balances where item_id = $1 and branch_id = $2", [freshId, IDS.branch]);
+    expect(sameBalance).toEqual(balance);
+    const history = await db.admin<{ old_unit: string; new_unit: string; mode: string }>(
+      "select old_unit,new_unit,mode from public.stock_unit_changes where item_id = $1 order by changed_at", [freshId]);
+    expect(history).toHaveLength(3);
+    expect(history.at(-1)).toMatchObject({ old_unit: "g", new_unit: "caja", mode: "relabel" });
+    expect(await db.rpc(owner.userId, "change_stock_item_unit", [IDS.business, freshId, "kg", "convert"], "aal2"))
+      .toMatchObject({ ok: false, code: "incompatible_units" });
+    expect(await db.rpc(owner.userId, "adjust_stock", [IDS.branch, freshId, 1, 1, "Una caja nueva"], "aal2"))
+      .toMatchObject({ ok: true });
+    const movementUnits = await db.admin<{ event_unit: string }>(
+      "select event_unit from public.stock_movements_with_unit where item_id = $1 order by created_at,id", [freshId]);
+    expect(movementUnits.map((row) => row.event_unit)).toEqual(["kg", "caja"]);
+  });
+
+  test("rechaza conversiones que redondearían ingredientes pequeños", async () => {
+    const owner = await db.createStaff("owner");
+    const item = await db.rpc(owner.userId, "upsert_stock_item", [IDS.business, "Micro ingrediente de prueba", "g"], "aal2");
+    const itemId = item.item_id as string;
+    const product = await db.productId("Concha artesanal (ejemplo)");
+    expect(await db.rpc(owner.userId, "set_product_recipe", [IDS.business, product,
+      JSON.stringify([{ item_id: itemId, quantity: 0.001 }])], "aal2")).toMatchObject({ ok: true });
+    expect(await db.rpc(owner.userId, "change_stock_item_unit", [IDS.business, itemId, "kg", "convert"], "aal2"))
+      .toMatchObject({ ok: false, code: "precision_loss" });
+    const [unchanged] = await db.admin<{ unit: string }>("select unit from public.stock_items where id = $1", [itemId]);
+    expect(unchanged.unit).toBe("g");
+  });
+
   test("descuenta receta por sucursal, registra empleado y no duplica una petición repetida", async () => {
     const owner = await db.createStaff("owner");
     const barista = await db.createStaff("barista");

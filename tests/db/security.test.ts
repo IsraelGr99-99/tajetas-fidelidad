@@ -21,7 +21,7 @@ afterAll(async () => {
 });
 
 describe("acceso anónimo", () => {
-  test.each(["customers", "loyalty_cards", "ledger_events", "staff_members", "scan_tokens", "audit_log", "purchases", "product_categories", "stock_items", "stock_balances", "product_recipes", "pos_sales", "pos_sale_lines", "stock_movements"])(
+  test.each(["customers", "loyalty_cards", "ledger_events", "staff_members", "scan_tokens", "audit_log", "purchases", "product_categories", "stock_items", "stock_balances", "product_recipes", "pos_sales", "pos_sale_lines", "stock_movements", "stock_unit_changes", "stock_movements_with_unit"])(
     "anon no puede leer %s",
     async (table) => {
       await expect(db.as(null, `select * from public.${table}`)).rejects.toThrow(/permission denied/);
@@ -43,6 +43,24 @@ describe("acceso anónimo", () => {
 });
 
 describe("escrituras directas bloqueadas", () => {
+  test("solo owner/admin con segundo factor cambia el diseño de tarjeta por RPC", async () => {
+    const owner = await db.createStaff("owner");
+    await db.admin("insert into auth.mfa_factors (user_id, status) values ($1, 'verified')", [owner.userId]);
+    const barista = await db.createStaff("barista");
+    const outsider = await db.createStaff("owner", { businessId: otherBusiness, branchAccess: false });
+    const args = [IDS.business, "#172b4d", "#f6bb54", "#ffffff", null];
+    await expect(db.as(owner.userId, "update public.businesses set card_background_color = '#000000' where id = $1", [IDS.business], "aal2"))
+      .rejects.toThrow(/permission denied/);
+    expect(await db.rpc(barista.userId, "set_business_card_theme", args)).toMatchObject({ ok: false, code: "forbidden" });
+    expect(await db.rpc(outsider.userId, "set_business_card_theme", args, "aal2")).toMatchObject({ ok: false, code: "forbidden" });
+    expect(await db.rpc(owner.userId, "set_business_card_theme", args)).toMatchObject({ ok: false, code: "forbidden" });
+    expect(await db.rpc(owner.userId, "set_business_card_theme", [IDS.business, "red", "#f6bb54", "#ffffff", null], "aal2"))
+      .toMatchObject({ ok: false, code: "invalid_request" });
+    expect(await db.rpc(owner.userId, "set_business_card_theme", [IDS.business, "#eeeeee", "#f6bb54", "#ffffff", null], "aal2"))
+      .toMatchObject({ ok: false, code: "poor_contrast" });
+    expect(await db.rpc(owner.userId, "set_business_card_theme", args, "aal2")).toMatchObject({ ok: true });
+  });
+
   test("un usuario autenticado no puede insertar ni modificar el ledger ni saldos", async () => {
     const c = await db.createCustomer();
     await expect(db.as(c.userId, "update public.loyalty_cards set stamps_balance = 99")).rejects.toThrow(/permission denied/);
@@ -55,12 +73,13 @@ describe("escrituras directas bloqueadas", () => {
 
   test("un usuario autenticado no puede alterar inventario ni ventas directamente", async () => {
     const staff = await db.createStaff("barista");
-    for (const table of ["stock_items", "stock_balances", "product_recipes", "pos_sales", "pos_sale_lines", "stock_movements"]) {
+    for (const table of ["stock_items", "stock_balances", "product_recipes", "pos_sales", "pos_sale_lines", "stock_movements", "stock_unit_changes"]) {
       await expect(db.as(staff.userId, `insert into public.${table} default values`)).rejects.toThrow(/permission denied/);
       await expect(db.as(staff.userId, `update public.${table} set business_id = $1`, [IDS.business])).rejects.toThrow(/permission denied/);
       await expect(db.as(staff.userId, `delete from public.${table}`)).rejects.toThrow(/permission denied/);
     }
     expect(await db.as(staff.userId, "select * from public.stock_balances")).toEqual([]);
+    expect(await db.as(staff.userId, "select * from public.stock_movements_with_unit")).toEqual([]);
     await expect(db.as(staff.userId, "update public.products set image_path = null where business_id = $1", [IDS.business]))
       .rejects.toThrow(/permission denied/);
   });
@@ -78,6 +97,16 @@ describe("escrituras directas bloqueadas", () => {
     expect(await db.rpc(owner.userId, "set_product_image_path", [product, path], "aal2")).toMatchObject({ ok: true });
     const catalog = await db.rpc(owner.userId, "admin_catalog", [IDS.business], "aal2");
     expect((catalog.products as { id: string; image_path: string | null }[]).find((row) => row.id === product)?.image_path).toBe(path);
+  });
+
+  test("Storage usa un helper de rol ejecutable sin exponer el helper administrativo", async () => {
+    const owner = await db.createStaff("owner");
+    const barista = await db.createStaff("barista");
+    const check = "select private.has_role($1, array['owner','admin']::public.staff_role[]) as allowed";
+    expect(await db.as(owner.userId, check, [IDS.business], "aal2")).toEqual([{ allowed: true }]);
+    expect(await db.as(barista.userId, check, [IDS.business])).toEqual([{ allowed: false }]);
+    await expect(db.as(owner.userId, "select private.is_admin($1)", [IDS.business], "aal2"))
+      .rejects.toThrow(/permission denied/);
   });
 
   test("el ledger es append-only incluso para el superusuario", async () => {
@@ -102,7 +131,7 @@ describe("aislamiento entre clientes y roles (IDOR/BOLA)", () => {
     const barista = await db.createStaff("barista");
     const active = await db.createCustomer();
     const deleted = await db.createCustomer();
-    await db.rpc(deleted.userId, "delete_my_customer_data", ["cafe-nomada"]);
+    await db.rpc(deleted.userId, "delete_my_customer_data", ["cafe-nomada", "privacidad"]);
     const query = `select c.id from public.loyalty_cards c
       join public.customers cu on cu.id = c.customer_id
       where c.business_id = $1 and cu.status = 'active'`;

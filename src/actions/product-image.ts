@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getStaffSession } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export type ImageState = { ok: boolean; message: string; imageUrl?: string | null };
+export type ImageState = { ok: boolean; message: string; imageUrl?: string | null; requiresVerification?: boolean };
 const bucket = "product-photos";
 const maxBytes = 2 * 1024 * 1024;
 
@@ -24,10 +24,10 @@ async function context(productId: string) {
   if (!supabase) return null;
   const { data: product, error } = await supabase.from("products").select("id,business_id,image_path").eq("id", productId).single();
   if (error || !product || product.business_id !== session.membership.business_id) return null;
-  return { supabase, product, businessId: session.membership.business_id };
+  return { supabase, product, businessId: session.membership.business_id, mfaPending: session.membership.mfa_pending };
 }
 
-async function uploadProductImage(formData: FormData): Promise<ImageState> {
+export async function uploadProductImage(formData: FormData): Promise<ImageState> {
   const parsedId = z.uuid().safeParse(formData.get("productId"));
   const file = formData.get("image");
   if (!parsedId.success || !(file instanceof File) || file.size === 0 || file.size > maxBytes) {
@@ -35,12 +35,24 @@ async function uploadProductImage(formData: FormData): Promise<ImageState> {
   }
   const ctx = await context(parsedId.data);
   if (!ctx) return { ok: false, message: "No tienes acceso a este producto." };
+  if (ctx.mfaPending) return { ok: false, message: "Confirma tu identidad en dos pasos antes de subir la foto.", requiresVerification: true };
   const bytes = new Uint8Array(await file.arrayBuffer());
   const type = imageType(bytes);
   if (!type || file.type !== type.contentType) return { ok: false, message: "El archivo no es una imagen JPG, PNG o WebP válida." };
   const path = `${ctx.businessId}/${parsedId.data}/${randomUUID()}.${type.extension}`;
   const { error: uploadError } = await ctx.supabase.storage.from(bucket).upload(path, bytes, { contentType: type.contentType, cacheControl: "31536000", upsert: false });
-  if (uploadError) return { ok: false, message: "No se pudo subir la foto. Verifica que la migración y Storage estén configurados." };
+  if (uploadError) {
+    const status = Number(uploadError.statusCode);
+    const detail = uploadError.message.toLowerCase();
+    const message = status === 403 || detail.includes("row-level security") || detail.includes("not authorized")
+      ? "Storage rechazó la foto por la política del bucket. La cuenta ya pasó la verificación; comprueba que la migración de corrección de rutas esté aplicada."
+      : status === 404 || detail.includes("bucket not found")
+        ? "No existe el espacio de fotos en Storage. Avisa al administrador."
+        : status === 413
+          ? "La foto excede el tamaño permitido de 2 MB."
+          : "Storage no pudo guardar la foto. Intenta de nuevo; si continúa, avisa al administrador.";
+    return { ok: false, message };
+  }
   const { data, error } = await ctx.supabase.rpc("set_product_image_path", { p_product_id: parsedId.data, p_image_path: path });
   if (error || !data?.ok) {
     await ctx.supabase.storage.from(bucket).remove([path]);
@@ -57,6 +69,7 @@ async function removeProductImage(formData: FormData): Promise<ImageState> {
   if (!parsedId.success) return { ok: false, message: "Producto inválido." };
   const ctx = await context(parsedId.data);
   if (!ctx) return { ok: false, message: "No tienes acceso a este producto." };
+  if (ctx.mfaPending) return { ok: false, message: "Confirma tu identidad en dos pasos antes de quitar la foto.", requiresVerification: true };
   const { data, error } = await ctx.supabase.rpc("set_product_image_path", { p_product_id: parsedId.data, p_image_path: null });
   if (error || !data?.ok) return { ok: false, message: "No se pudo quitar la foto." };
   if (data.previous_path) await ctx.supabase.storage.from(bucket).remove([data.previous_path]);

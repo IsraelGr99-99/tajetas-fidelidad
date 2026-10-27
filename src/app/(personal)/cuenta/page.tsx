@@ -50,9 +50,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           Sucursal de trabajo
         </h2>
         {error ? <Notice tone="error" title="No tienes acceso a esa sucursal. Elige una de la lista." /> : null}
-        {siguiente && membership.branches.length > 0 ? <Notice tone="info" title="Elige una sucursal para continuar">
-          No hay una sucursal activa. Selecciona una y te llevaremos a la pantalla que querías abrir.
-        </Notice> : null}
+        {!activeBranch && membership.branches.length > 0 ? <div role="alert" className="rounded-2xl border border-rose-300 bg-rose-50 px-5 py-4 text-rose-950 shadow-sm">
+          <p className="font-bold">Elige una sucursal para continuar</p>
+          <p className="mt-1 text-sm leading-6">Todavía no hay una sucursal activa. Selecciona dónde vas a trabajar y {siguiente ? "te llevaremos a la pantalla que querías abrir" : "podrás usar caja, fidelidad e inventario"}.</p>
+        </div> : null}
         {membership.branches.length === 0 ? (
           <Notice tone="info" title="Aún no tienes sucursales asignadas">
             Pide a administración que te asigne al menos una para operar.

@@ -25,7 +25,7 @@ describe("cumpleaños opcional", () => {
     expect(await db.rpc(userId, "get_my_birthday_offer", ["cafe-nomada"]))
       .toMatchObject({ ok: true, opted_in: false, month: null, day: null });
     await db.rpc(userId, "set_my_birthday_offer", ["cafe-nomada", 6, 15, true, "2026-10-26"]);
-    await db.rpc(userId, "delete_my_customer_data", ["cafe-nomada"]);
+    await db.rpc(userId, "delete_my_customer_data", ["cafe-nomada", "privacidad"]);
     const [row] = await db.admin<{ birth_month: number | null; birth_day: number | null }>(
       "select birth_month, birth_day from public.customers where contact_email is null and display_name is null order by deleted_at desc limit 1",
     );

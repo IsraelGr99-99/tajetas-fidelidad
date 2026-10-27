@@ -52,7 +52,7 @@ export async function recordSaleAction(input: unknown): Promise<CheckoutResult> 
     saleId: data.sale_id, totalCents: data.total_cents };
 }
 
-const normalizedUnit = z.string().trim().toLowerCase().pipe(z.enum(["pieza", "g", "kg", "ml", "l"]));
+const normalizedUnit = z.string().trim().toLowerCase().pipe(z.enum(["pieza", "caja", "g", "kg", "ml", "l"]));
 const itemInput = z.object({ businessId: z.uuid(), name: z.string().trim().min(2).max(100), unit: normalizedUnit });
 export async function upsertStockItemAction(input: unknown): Promise<CheckoutResult> {
   const parsed = itemInput.safeParse(input);
@@ -62,9 +62,33 @@ export async function upsertStockItemAction(input: unknown): Promise<CheckoutRes
   const { data, error } = await ctx.supabase.rpc("upsert_stock_item", {
     p_business_id: parsed.data.businessId, p_name: parsed.data.name, p_unit: parsed.data.unit,
   });
-  if (error || !data?.ok) return failed;
+  if (error) return failed;
+  if (!data?.ok) return { ok: false, message: data?.code === "unit_conflict"
+    ? "Ese insumo ya existe con otra unidad. Corrige el insumo existente en vez de duplicarlo."
+    : "No se pudo guardar el insumo. Revisa nombre y unidad." };
   revalidatePath("/negocio/inventario");
   return { ok: true, message: "Insumo guardado. Ahora registra su existencia en la sucursal.", itemId: data.item_id };
+}
+
+const unitCorrectionInput = z.object({ businessId: z.uuid(), itemId: z.uuid(), unit: normalizedUnit, mode: z.enum(["convert", "relabel"]) });
+export async function correctStockItemUnitAction(input: unknown): Promise<CheckoutResult> {
+  const parsed = unitCorrectionInput.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "Elige una unidad válida." };
+  const ctx = await context(true);
+  if (!ctx || ctx.session.membership.business_id !== parsed.data.businessId) return unavailable;
+  const { data, error } = await ctx.supabase.rpc("change_stock_item_unit", {
+    p_business_id: parsed.data.businessId, p_item_id: parsed.data.itemId, p_unit: parsed.data.unit, p_mode: parsed.data.mode,
+  });
+  if (error) return failed;
+  if (!data?.ok) return { ok: false, message: data?.code === "incompatible_units"
+    ? "Estas unidades no se convierten automáticamente. Elige 'Corregir etiqueta' y revisa después existencias y recetas."
+    : data?.code === "precision_loss" ? "La conversión perdería decimales o excedería el límite. Ajusta las cantidades o recetas antes de convertir."
+    : data?.code === "not_found" ? "Ese insumo ya no existe en tu negocio." : "No se pudo corregir la unidad." };
+  revalidatePath("/negocio/inventario");
+  revalidatePath("/caja");
+  return { ok: true, message: data.unchanged ? "La unidad ya era la seleccionada." : parsed.data.mode === "convert"
+    ? "Unidad convertida en todas las sucursales y recetas. El historial conserva su unidad original."
+    : "Etiqueta corregida. Las cifras no cambiaron: verifica existencias y recetas antes de vender." };
 }
 
 const maxThreeDecimals = (n: number) => Math.abs(Math.round(n * 1000) - n * 1000) < 1e-7;

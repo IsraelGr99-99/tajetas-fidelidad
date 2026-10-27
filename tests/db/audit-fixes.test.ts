@@ -41,7 +41,7 @@ describe("M2: la baja del cliente actualiza la versión de la tarjeta (para el p
   test("version sube al eliminar los datos", async () => {
     const c = await db.createCustomer();
     const [before] = await db.admin<{ version: number }>("select version from public.loyalty_cards where id = $1", [c.cardId]);
-    await db.rpc(c.userId, "delete_my_customer_data", ["cafe-nomada"]);
+    await db.rpc(c.userId, "delete_my_customer_data", ["cafe-nomada", "privacidad"]);
     const [after] = await db.admin<{ version: number }>("select version from public.loyalty_cards where id = $1", [c.cardId]);
     expect(Number(after.version)).toBe(Number(before.version) + 1);
     const [{ r: snap }] = await db.service<{ r: Record<string, unknown> }>("select public.wallet_card_snapshot($1) as r", [c.cardId]);
@@ -157,6 +157,8 @@ describe("I5: inventario de funciones ejecutables", () => {
       "public.record_pos_sale", "public.inventory_overview", "public.pos_catalog", "public.pos_sales_report",
       "public.upsert_product_category", "public.upsert_product_variant", "public.bulk_upsert_product_variants", "public.set_product_image_path",
       "public.operations_dashboard", "public.set_my_birthday_offer", "public.get_my_birthday_offer", "public.enroll_customer_with_birthday",
+      "public.get_my_account_status", "public.disable_my_customer_account", "public.reactivate_my_customer_account",
+      "public.change_stock_item_unit", "public.set_business_card_theme",
       "private.staff_role_in", "private.has_role", "private.can_operate_branch", "private.owns_card",
     ]);
     const rows = await db.admin<{ name: string }>(`

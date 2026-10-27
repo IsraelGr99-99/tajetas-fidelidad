@@ -9,8 +9,8 @@ type Filter = "all" | "low" | "uncounted";
 const PAGE_SIZE = 12;
 const searchKey = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-MX");
 
-export function IngredientList({ items, balances, branches, branchId, onAdjust }: {
-  items: Item[]; balances: Balance[]; branches: Branch[]; branchId: string; onAdjust: (itemId: string) => void;
+export function IngredientList({ items, balances, branches, branchId, onAdjust, onEditUnit }: {
+  items: Item[]; balances: Balance[]; branches: Branch[]; branchId: string; onAdjust: (itemId: string) => void; onEditUnit: (itemId: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -47,7 +47,7 @@ export function IngredientList({ items, balances, branches, branchId, onAdjust }
         const balance = byItem.get(item.id);
         const status = !balance ? "Sin conteo" : balance.quantity === 0 ? "Agotado" : balance.quantity <= balance.minimum ? "En mínimo" : "Disponible";
         return <li key={item.id} className="rounded-xl border border-slate-200 p-4 text-sm"><div className="flex items-start justify-between gap-2"><div><strong className="text-slate-950">{item.name}</strong><span className="mt-1 block text-slate-600">Existencia: {balance ? `${balance.quantity} ${item.unit}` : "sin conteo"}</span><span className="block text-slate-600">Mínimo: {balance ? `${balance.minimum} ${item.unit}` : "—"}</span></div><span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold ${status === "Disponible" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}>{status}</span></div>
-          <button type="button" onClick={() => onAdjust(item.id)} className="mt-3 min-h-10 rounded-lg px-2 font-bold text-blue-700">Ajustar existencia →</button></li>;
+          <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => onAdjust(item.id)} className="min-h-10 rounded-lg px-2 font-bold text-blue-700">Ajustar existencia →</button><button type="button" onClick={() => onEditUnit(item.id)} className="min-h-10 rounded-lg px-2 font-semibold text-slate-700">Corregir unidad</button></div></li>;
       })}</ul><div className="mt-4 hidden overflow-x-auto md:block"><table className="w-full min-w-[38rem] text-left text-sm"><thead className="border-b border-slate-200 text-slate-600"><tr><th scope="col" className="px-2 py-3">Insumo</th><th scope="col" className="px-2 py-3 text-right">Existencia</th><th scope="col" className="px-2 py-3 text-right">Mínimo</th><th scope="col" className="px-2 py-3">Estado</th><th scope="col" className="px-2 py-3 text-right">Acción</th></tr></thead>
         <tbody>{pageItems.map((item) => {
           const balance = byItem.get(item.id);
@@ -56,7 +56,7 @@ export function IngredientList({ items, balances, branches, branchId, onAdjust }
           return <tr key={item.id} className="border-b border-slate-100 last:border-0"><th scope="row" className="px-2 py-3 font-semibold text-slate-950">{item.name}<span className="block text-xs font-normal text-slate-500">{item.unit}</span></th>
             <td className="px-2 py-3 text-right tabular-nums text-slate-900">{balance ? `${balance.quantity} ${item.unit}` : "—"}</td><td className="px-2 py-3 text-right tabular-nums text-slate-600">{balance ? `${balance.minimum} ${item.unit}` : "—"}</td>
             <td className="px-2 py-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${status === "Disponible" ? "bg-emerald-50 text-emerald-800" : status === "Sin conteo" ? "bg-slate-100 text-slate-700" : "bg-amber-50 text-amber-900"}`}>{status}</span></td>
-            <td className="px-2 py-3 text-right"><button type="button" onClick={() => onAdjust(item.id)} className="min-h-10 rounded-lg px-2 font-semibold text-blue-700 hover:bg-blue-50">Ajustar →</button></td></tr>;
+            <td className="px-2 py-3 text-right"><div className="flex justify-end gap-2"><button type="button" onClick={() => onEditUnit(item.id)} className="min-h-10 rounded-lg px-2 font-semibold text-slate-700 hover:bg-slate-50">Unidad</button><button type="button" onClick={() => onAdjust(item.id)} className="min-h-10 rounded-lg px-2 font-semibold text-blue-700 hover:bg-blue-50">Ajustar →</button></div></td></tr>;
         })}</tbody></table></div></>}
     {pages > 1 && <nav aria-label="Páginas de insumos" className="mt-4 flex items-center justify-between text-sm"><button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)} className="font-semibold text-blue-700 disabled:opacity-40">← Anterior</button><span>Página {currentPage} de {pages}</span><button type="button" disabled={currentPage === pages} onClick={() => setPage(currentPage + 1)} className="font-semibold text-blue-700 disabled:opacity-40">Siguiente →</button></nav>}
   </section>;

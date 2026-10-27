@@ -144,8 +144,42 @@ export async function customerSignOutAction() {
   redirect("/tarjeta/acceso?salida=1");
 }
 
+const reasonCategory = z.enum(["no_uso", "privacidad", "experiencia", "otro"]);
+
+export async function disableMyAccountAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (String(formData.get("confirm") ?? "").trim().toUpperCase() !== "DESACTIVAR") {
+    return { error: "Escribe DESACTIVAR para confirmar." };
+  }
+  const category = reasonCategory.safeParse(formData.get("category"));
+  const reason = z.string().trim().min(3).max(200).safeParse(formData.get("reason"));
+  if (!category.success || !reason.success) return { error: "Elige un motivo y explica brevemente por qué (3 a 200 caracteres)." };
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { error: "El servicio no está configurado." };
+  const { data: mine } = await supabase.rpc("get_my_card", { p_business_slug: PILOT_BUSINESS_SLUG });
+  const cardId = mine?.ok ? (mine.card?.id as string | undefined) : undefined;
+  const { data, error } = await supabase.rpc("disable_my_customer_account", {
+    p_business_slug: PILOT_BUSINESS_SLUG, p_category: category.data, p_reason: reason.data,
+  });
+  if (error || !data?.ok) return { error: "No pudimos desactivar tu tarjeta. Inténtalo de nuevo." };
+  if (cardId) await syncGoogleWallet(cardId, { force: true }).catch(() => undefined);
+  await supabase.auth.signOut({ scope: "local" });
+  redirect("/tarjeta/acceso?desactivada=1");
+}
+
+export async function reactivateMyAccountAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (formData.get("privacy") !== "on") return { error: "Confirma que aceptas el aviso de privacidad para reactivar tu tarjeta." };
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { error: "El servicio no está configurado." };
+  const { data, error } = await supabase.rpc("reactivate_my_customer_account", {
+    p_business_slug: PILOT_BUSINESS_SLUG, p_privacy_version: PRIVACY_VERSION,
+  });
+  if (error || !data?.ok) return { error: "No pudimos reactivar tu tarjeta. Inténtalo de nuevo." };
+  revalidatePath("/tarjeta");
+  redirect("/tarjeta?reactivada=1");
+}
+
 /**
- * Elimina los datos personales del cliente (LFPDPPP, derecho de cancelación).
+ * Elimina los datos personales del cliente.
  * 1) La base anonimiza su registro (el historial contable queda sin PII).
  * 2) Si la cuenta no es de personal, se borra también el usuario de Supabase Auth.
  */
@@ -153,6 +187,8 @@ export async function deleteMyDataAction(_prev: FormState, formData: FormData): 
   if (String(formData.get("confirm") ?? "").trim().toUpperCase() !== "ELIMINAR") {
     return { error: "Escribe ELIMINAR para confirmar." };
   }
+  const category = reasonCategory.safeParse(formData.get("category"));
+  if (!category.success) return { error: "Selecciona el motivo de la eliminación." };
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { error: "El servicio no está configurado en este entorno." };
   const { data: claims } = await supabase.auth.getClaims();
@@ -160,9 +196,13 @@ export async function deleteMyDataAction(_prev: FormState, formData: FormData): 
   if (!userId) redirect("/tarjeta/acceso");
 
   const { data: mine } = await supabase.rpc("get_my_card", { p_business_slug: PILOT_BUSINESS_SLUG });
-  const cardId = mine?.ok ? (mine.card?.id as string | undefined) : undefined;
+  let cardId = mine?.ok ? (mine.card?.id as string | undefined) : undefined;
+  if (!cardId) {
+    const { data: account } = await supabase.rpc("get_my_account_status", { p_business_slug: PILOT_BUSINESS_SLUG });
+    cardId = account?.card_id as string | undefined;
+  }
 
-  const { data, error } = await supabase.rpc("delete_my_customer_data", { p_business_slug: PILOT_BUSINESS_SLUG });
+  const { data, error } = await supabase.rpc("delete_my_customer_data", { p_business_slug: PILOT_BUSINESS_SLUG, p_category: category.data });
   if (error) return { error: "No pudimos eliminar tus datos. Inténtalo de nuevo en un momento." };
   if (!data?.ok) return { error: rpcErrorMessage(data?.code) };
 

@@ -14,6 +14,9 @@
 | 8 | Auditoría, hardening y despliegue | 🟡 auditoría y correcciones ✅ · despliegue ⏳ | Auditoría independiente sin hallazgos altos abiertos; pruebas de concurrencia en Supabase; CSP con nonce; plan de despliegue aprobado |
 
 ## Antes del piloto
+- [x] Respaldar esquema y datos, incluido Storage, antes de aplicar `20261030100000_loyalty_card_branding.sql` y `20261030110000_fix_storage_photo_path_scoping.sql`. Los archivos se crearon y verificaron el 27 de octubre en `.local-backups/pre-card-photos-20261027-*.sql`; el propietario informó que aplicó ambas migraciones al Supabase de pruebas (la CLI del agente no pudo confirmarlo directamente).
+- [ ] Probar subida real de logo, cambio de colores y foto de producto con owner autenticado después de las migraciones.
+- [ ] Definir proveedor de cobro presencial compatible con México. Stripe Terminal no está disponible para el piloto de Puebla; mientras tanto tarjeta en caja es registro manual de un cobro externo, no cobro integrado.
 - [x] Aplicar y verificar la migración `20261028130000_inventory_checkout.sql` en Supabase de pruebas.
 - [ ] Validar caja e inventario con owner/admin y personal de caja; cargar recetas y conteos reales por sucursal.
 - [x] Respaldar y aplicar `20261029130000_product_images_and_stock_reasons.sql` en Supabase de pruebas; historial remoto confirmado.

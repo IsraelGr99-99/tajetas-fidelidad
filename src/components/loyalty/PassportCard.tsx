@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { LogoMark } from "@/components/brand/Logo";
 import { describeProgress } from "@/domain/loyalty/campaign";
+import type { CardTheme } from "@/domain/loyalty/branding";
 
 /**
  * Tarjeta como página de pasaporte: cada visita estampa una parada distinta del
@@ -25,6 +27,7 @@ type Props = {
   /** Al montar, anima la casilla de recompensa (tarjeta recién completada). */
   highlightReward?: boolean;
   className?: string;
+  theme?: CardTheme;
 };
 
 const GLYPHS: { name: string; path: React.ReactNode }[] = [
@@ -59,6 +62,7 @@ export function PassportCard({
   highlightFrom,
   highlightReward,
   className,
+  theme,
 }: Props) {
   const progress = describeProgress({ stampsBalance, stampsRequired, rewardsAvailable });
   const total = stampsRequired + 1; // + la casilla de recompensa
@@ -79,6 +83,24 @@ export function PassportCard({
   }
 
   const route = Array.from({ length: total }, (_, i) => slotPosition(i, total));
+
+  if (theme) return <figure aria-label={`Tarjeta de fidelidad de ${theme.businessName}: ${progress.label}`} className={`relative overflow-hidden rounded-[2rem] p-6 shadow-[0_25px_55px_-25px_rgba(15,23,42,.5)] sm:p-8 ${className ?? ""}`} style={{ backgroundColor: theme.background, color: theme.text }}>
+    <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-20 h-56 w-56 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: theme.secondary }} />
+    <div className="relative flex items-center gap-4">
+      {theme.logoUrl ? <Image src={theme.logoUrl} width={64} height={64} alt={`Logo de ${theme.businessName}`} unoptimized className="h-16 w-16 shrink-0 rounded-2xl bg-white object-contain p-1.5" /> : <span aria-hidden="true" className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl text-3xl font-black" style={{ backgroundColor: theme.secondary, color: theme.background }}>{theme.businessName.slice(0, 1)}</span>}
+      <div><p className="text-xs font-bold uppercase tracking-[0.18em] opacity-75">Tarjeta de fidelidad</p><p className="mt-1 text-2xl font-bold leading-tight">{theme.businessName}</p></div>
+    </div>
+    <div aria-hidden="true" className="relative mt-8 grid grid-cols-5 gap-2 sm:gap-3">
+      {Array.from({ length: stampsRequired }, (_, i) => {
+        const done = i < progress.filled;
+        return <span key={i} className="grid aspect-square place-items-center rounded-full border-2 text-sm font-bold sm:text-lg" style={{ backgroundColor: done ? theme.secondary : "transparent", borderColor: theme.secondary, color: done ? theme.background : theme.text }} aria-hidden="true">{done ? "✓" : i + 1}</span>;
+      })}
+    </div>
+    <figcaption className="relative mt-7 flex flex-wrap items-end justify-between gap-3 border-t pt-5" style={{ borderColor: `${theme.text}55` }}>
+      <span><strong className="block text-xl">{progress.hasReward ? "¡Recompensa disponible!" : `${progress.filled} de ${stampsRequired} sellos`}</strong><span className="mt-1 block text-sm opacity-80">{progress.hasReward ? rewardDescription : progress.remaining === 1 ? "Te falta 1 visita" : `Faltan ${progress.remaining} visitas`}</span></span>
+      <span className="rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide" style={{ backgroundColor: theme.secondary, color: theme.background }}>{rewardsAvailable > 0 ? `${rewardsAvailable} por canjear` : "Sigue sumando"}</span>
+    </figcaption>
+  </figure>;
 
   return (
     <figure

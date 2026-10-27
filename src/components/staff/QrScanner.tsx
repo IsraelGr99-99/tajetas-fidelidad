@@ -9,7 +9,7 @@ type BarcodeDetectorCtor = {
   getSupportedFormats?: () => Promise<string[]>;
 };
 
-type CameraState = "starting" | "scanning" | "denied" | "unavailable" | "error";
+type CameraState = "off" | "starting" | "scanning" | "denied" | "unavailable" | "error";
 
 const SCAN_INTERVAL_MS = 200;
 
@@ -24,7 +24,9 @@ export function QrScanner({ onScan, label = "Escanea el código QR del cliente" 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const onScanRef = useRef(onScan);
-  const [camera, setCamera] = useState<CameraState>("starting");
+  const [camera, setCamera] = useState<CameraState>("off");
+  const [enabled, setEnabled] = useState(false);
+  const [requestKey, setRequestKey] = useState(0);
   const manualId = useId();
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export function QrScanner({ onScan, label = "Escanea el código QR del cliente" 
   }, [onScan]);
 
   useEffect(() => {
+    if (!enabled) return;
     let stream: MediaStream | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let stopped = false;
@@ -55,7 +58,12 @@ export function QrScanner({ onScan, label = "Escanea el código QR del cliente" 
       await video.play().catch(() => undefined);
       setCamera("scanning");
 
-      const decode = await createDecoder(canvasRef.current);
+      const decode = await createDecoder(canvasRef.current).catch(() => null);
+      if (!decode) {
+        stream?.getTracks().forEach((track) => track.stop());
+        setCamera("error");
+        return;
+      }
       const tick = async () => {
         if (stopped) return;
         if (video.readyState >= 2) {
@@ -63,6 +71,8 @@ export function QrScanner({ onScan, label = "Escanea el código QR del cliente" 
           if (text && !stopped) {
             stopped = true;
             stream?.getTracks().forEach((t) => t.stop());
+            setEnabled(false);
+            setCamera("off");
             onScanRef.current(text);
             return;
           }
@@ -78,7 +88,19 @@ export function QrScanner({ onScan, label = "Escanea el código QR del cliente" 
       if (timer) clearTimeout(timer);
       stream?.getTracks().forEach((t) => t.stop());
     };
-  }, []);
+  }, [enabled, requestKey]);
+
+  function toggleCamera() {
+    if (enabled && camera !== "starting" && camera !== "scanning") {
+      setCamera("starting");
+      setRequestKey((key) => key + 1);
+      return;
+    }
+    setEnabled((current) => {
+      setCamera(current ? "off" : "starting");
+      return !current;
+    });
+  }
 
   function onManualSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -90,6 +112,12 @@ export function QrScanner({ onScan, label = "Escanea el código QR del cliente" 
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-tabaco">Lector de cámara</p>
+        <button type="button" onClick={toggleCamera} aria-pressed={enabled && (camera === "starting" || camera === "scanning")} className="min-h-11 cursor-pointer rounded-xl border border-tabaco/20 bg-papel px-4 text-sm font-semibold text-tabaco transition hover:border-tabaco hover:bg-crema focus-visible:outline-3 focus-visible:outline-mostaza">
+          {enabled && (camera === "starting" || camera === "scanning") ? "Apagar cámara" : enabled ? "Reintentar cámara" : "Encender cámara"}
+        </button>
+      </div>
       <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-3xl bg-tinta">
         <video ref={videoRef} muted playsInline aria-hidden="true" className="h-full w-full object-cover" />
         <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
@@ -97,8 +125,9 @@ export function QrScanner({ onScan, label = "Escanea el código QR del cliente" 
           <div aria-hidden="true" className="pointer-events-none absolute inset-10 rounded-2xl border-4 border-mostaza/80 shadow-[0_0_0_999px_rgb(36_25_20/0.35)]" />
         ) : (
           <div className="absolute inset-0 grid place-items-center p-6 text-center text-sm leading-6 text-crema">
+            {camera === "off" ? "Cámara apagada. Enciéndela para escanear o escribe el código abajo." : null}
             {camera === "starting" ? "Abriendo la cámara…" : null}
-            {camera === "denied" ? "No hay permiso para usar la cámara. Actívalo en la configuración del navegador o usa el campo de abajo." : null}
+            {camera === "denied" ? "El navegador bloqueó la cámara. Puedes volver a intentar aquí; si negaste el permiso permanentemente, cámbialo en el navegador o usa el campo de abajo." : null}
             {camera === "unavailable" ? "Este dispositivo no tiene cámara disponible (o la página no es segura). Usa un lector USB o el campo de abajo." : null}
             {camera === "error" ? "No se pudo abrir la cámara. Cierra otras apps que la usen y vuelve a intentar." : null}
           </div>

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Notice } from "@/components/staff/OperationParts";
+import { DEFAULT_CARD_THEME } from "@/domain/loyalty/branding";
 import { formatDateTime, formatMxn } from "@/lib/format";
 import { requireCapability } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CampaignForm } from "./CampaignForm";
+import { CardThemeForm } from "./CardThemeForm";
 
 export const metadata: Metadata = { title: "Campaña" };
 
@@ -26,6 +28,15 @@ type Version = {
 export default async function CampaignPage() {
   const { membership } = await requireCapability("manage_campaigns");
   const supabase = await createSupabaseServerClient();
+  const themeResult = await supabase?.from("businesses").select("name,card_background_color,card_secondary_color,card_text_color,card_logo_path").eq("id", membership.business_id).single();
+  const themeRow = themeResult?.data;
+  const theme = themeRow ? {
+    businessName: themeRow.name,
+    background: themeRow.card_background_color,
+    secondary: themeRow.card_secondary_color,
+    text: themeRow.card_text_color,
+    logoUrl: themeRow.card_logo_path && supabase ? supabase.storage.from("business-logos").getPublicUrl(themeRow.card_logo_path).data.publicUrl : null,
+  } : { ...DEFAULT_CARD_THEME, businessName: membership.business_name };
   const campaign = await supabase?.from("campaigns").select("id, name").eq("business_id", membership.business_id).eq("is_active", true).maybeSingle();
   const versions = campaign?.data
     ? await supabase
@@ -48,6 +59,8 @@ export default async function CampaignPage() {
           mantienen el tope con el que se emitieron.
         </p>
       </div>
+
+      {themeResult?.error ? <Notice tone="error" title="El diseño de tarjeta aún no está disponible. Aplica la migración de identidad visual." /> : <CardThemeForm key={themeRow?.card_logo_path ?? "no-logo"} initial={theme} />}
 
       {!current ? (
         <Notice tone="error" title="No hay una campaña activa configurada." />

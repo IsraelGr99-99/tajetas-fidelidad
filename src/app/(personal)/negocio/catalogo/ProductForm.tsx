@@ -21,13 +21,17 @@ export type ProductValues = {
 export function ProductForm({ product, categories }: { product: ProductValues | null; categories: string[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(upsertProductAction, { ok: false, message: null });
   const p = product ?? { id: null, baseName: "", variantLabel: null, category: categories[0] ?? "", priceCents: 0, costCents: null, eligible: true, active: true, imageUrl: null };
+  const [savedId, setSavedId] = useState<string | null>(p.id);
+  const [savedImageUrl, setSavedImageUrl] = useState<string | null>(p.imageUrl);
+  if (state.productId && savedId !== state.productId) setSavedId(state.productId);
+  if (state.imageUrl !== undefined && savedImageUrl !== state.imageUrl) setSavedImageUrl(state.imageUrl);
   const [categoryChoice, setCategoryChoice] = useState(p.category || "__new__");
   const uid = p.id ?? "nuevo";
   const err = state.fieldErrors ?? {};
 
   return (
     <div className="space-y-5"><form action={action} className="space-y-4">
-      <input type="hidden" name="productId" value={p.id ?? ""} />
+      <input type="hidden" name="productId" value={savedId ?? ""} />
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor={`${uid}-base-name`} className={labelClass}>
@@ -83,6 +87,12 @@ export function ProductForm({ product, categories }: { product: ProductValues | 
           {err.cost ? <p className={errorTextClass}>{err.cost}</p> : null}
         </div>
       </div>
+      <div>
+        <label htmlFor={`${uid}-image`} className={labelClass}>Foto del producto <span className="font-normal text-slate-500">(opcional)</span></label>
+        <input id={`${uid}-image`} type="file" name="image" accept="image/jpeg,image/png,image/webp" className="mt-2 block w-full cursor-pointer rounded-xl border border-slate-300 bg-white p-2 text-sm text-slate-700 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-semibold file:text-blue-800" />
+        <p className="mt-1 text-xs text-slate-500">Puedes subirla al crear el producto o cambiarla después. JPG, PNG o WebP; máximo 2 MB.</p>
+        {err.image ? <p className={errorTextClass}>{err.image}</p> : null}
+      </div>
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-tabaco">
         <label className="flex items-center gap-2">
           <input type="checkbox" name="eligible" defaultChecked={p.eligible} className="h-5 w-5 accent-blue-700" /> Cuenta para el programa de fidelidad
@@ -93,11 +103,11 @@ export function ProductForm({ product, categories }: { product: ProductValues | 
       </div>
       <FormMessage state={state} />
       <button type="submit" disabled={pending} className="workspace-action disabled:opacity-70">
-        {pending ? "Guardando…" : p.id ? "Guardar cambios" : "Agregar producto"}
+        {pending ? "Guardando…" : savedId ? "Guardar cambios" : "Agregar producto"}
       </button>
       {state.ok && !p.id && <p className="text-sm text-slate-700">Siguiente: <a href="/negocio/inventario?vista=recetas" className="font-bold text-blue-700 underline underline-offset-2">configura los ingredientes de este producto</a> para que caja los descuente al vender.</p>}
     </form>
-    {(p.id || state.productId) && <ProductImageManager key={p.id ?? state.productId} productId={(p.id ?? state.productId)!} initialUrl={p.imageUrl} />}
+    {savedId && <ProductImageManager key={savedId} productId={savedId} initialUrl={savedImageUrl} />}
     </div>
   );
 }

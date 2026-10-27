@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { updateProductImage, type ImageState } from "@/actions/product-image";
 import { ProductThumbnail } from "@/components/staff/ProductThumbnail";
@@ -21,5 +22,6 @@ export function ProductImageManager({ productId, initialUrl }: { productId: stri
     </form>
     {imageUrl && <form action={action} className="mt-2"><input type="hidden" name="productId" value={productId} /><input type="hidden" name="intent" value="remove" /><button disabled={pending} className="min-h-10 cursor-pointer text-sm font-semibold text-slate-600 underline underline-offset-2 hover:text-red-700">Quitar foto</button></form>}
     {state.message && <p role="status" className={`mt-3 text-sm ${state.ok ? "text-emerald-800" : "text-red-700"}`}>{state.message}</p>}
+    {state.requiresVerification && <Link href="/cuenta/verificacion" className="mt-2 inline-block text-sm font-semibold text-blue-700 underline underline-offset-2">Completar verificación en dos pasos →</Link>}
   </div>;
 }

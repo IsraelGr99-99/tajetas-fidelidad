@@ -25,6 +25,12 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
       .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
     : { data: null, count: null, error: new Error("Supabase no configurado") };
   const total = count ?? 0;
+  const { data: disabledAccounts, count: disabledCount, error: disabledError } = supabase
+    ? await supabase.from("customers")
+      .select("id, display_name, contact_email, contact_phone, disabled_at, closure_category, closure_reason", { count: "exact" })
+      .eq("business_id", membership.business_id).eq("status", "disabled")
+      .order("disabled_at", { ascending: false }).limit(50)
+    : { data: null, count: null, error: new Error("Supabase no configurado") };
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   if (!error && page > totalPages) redirect(`/negocio/clientes?pagina=${totalPages}`);
   return (
@@ -65,6 +71,23 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               {page < totalPages ? <Link href={`/negocio/clientes?pagina=${page + 1}`} className="font-semibold text-blue-700">Siguiente →</Link> : <span />}
             </nav>
           </> : <p className="mt-4 text-sm text-tabaco/70">Aún no hay tarjetas activas en este negocio.</p>}
+      </section>
+      <section aria-labelledby="disabled-accounts" className="workspace-card p-5">
+        <div className="flex flex-wrap items-end justify-between gap-3"><div>
+          <p className="workspace-kicker">Control de cuentas</p>
+          <h2 id="disabled-accounts" className="mt-1 text-xl font-semibold text-tabaco">Tarjetas desactivadas</h2>
+          <p className="mt-1 text-sm text-slate-600">El cliente puede reactivarla al volver a entrar. Su historial y saldos permanecen guardados.</p>
+        </div><span className="text-2xl font-bold tabular-nums text-tabaco">{disabledCount ?? "—"}</span></div>
+        {disabledError ? <p role="alert" className="mt-4 text-sm text-red-700">No se pudo cargar este listado. Revisa que la migración de cuentas esté aplicada.</p>
+          : disabledAccounts?.length ? <>
+            <ul className="mt-4 divide-y divide-tabaco/10">{disabledAccounts.map((customer) => <li key={customer.id} className="py-4 text-sm">
+              <p className="font-semibold text-tabaco">{customer.display_name || customer.contact_email || customer.contact_phone || "Cliente"}</p>
+              {customer.display_name && (customer.contact_email || customer.contact_phone) ? <p className="text-slate-600">{customer.contact_email || customer.contact_phone}</p> : null}
+              <p className="mt-1 text-slate-600">Desactivada {customer.disabled_at ? formatDateTime(customer.disabled_at) : "recientemente"}</p>
+              <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-amber-950">Motivo: {customer.closure_reason || customer.closure_category || "No indicado"}</p>
+            </li>)}</ul>
+            {disabledCount && disabledCount > disabledAccounts.length ? <p className="mt-3 text-sm text-slate-600">Se muestran las 50 desactivaciones más recientes.</p> : null}
+          </> : <p className="mt-4 text-sm text-slate-600">No hay tarjetas desactivadas.</p>}
       </section>
     </div>
   );

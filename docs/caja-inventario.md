@@ -12,6 +12,10 @@ La caja conserva en `sessionStorage` la clave y las líneas de una venta cuya re
 
 La migración `20261029130000_product_images_and_stock_reasons.sql` se aplicó al Supabase de pruebas el 26 de octubre de 2026 y se confirmó en el historial remoto. Añade fotos opcionales y muestra los insumos concretos que impiden vender un producto en la sucursal. No cambia saldos ni ventas. En Catálogo, abre un producto y sube una foto JPG, PNG o WebP de hasta 2 MB; también puedes añadirla justo después de crear el producto. Las fotos son públicas: no incluyas personas, documentos ni información privada. Si falta la foto, se muestra una ilustración neutra, no una fotografía inventada. La carga de una foto real y el recorrido autenticado de caja siguen pendientes de prueba manual.
 
+La política de Storage se corrigió en `20261029140000_fix_storage_product_photos.sql` y está aplicada al Supabase de pruebas. Usa una función accesible para el rol autenticado y mantiene la comprobación owner/admin con MFA. La subida real todavía requiere verificación con una sesión de propietario.
+
+Una prueba posterior encontró otro defecto en esa política: `foldername(name)` tomaba `products.name` en lugar de `storage.objects.name`, por lo que incluso el propietario verificado recibía un rechazo de Storage. La migración nueva `20261030110000_fix_storage_photo_path_scoping.sql` califica la columna correcta. Está validada localmente; el propietario informó que la aplicó al Supabase de pruebas el 27 de octubre de 2026, pendiente de comprobar una subida real. El formulario de producto ya permite seleccionar la foto desde el alta; si se guarda el producto pero falla la foto, informa el resultado parcial y permite reintentar sin duplicarlo.
+
 Al vender, caja vuelve a validar inventario en PostgreSQL: la disponibilidad mostrada puede quedar desactualizada si otra caja consume el último insumo. Si la respuesta de la venta no llega, se conserva la clave original y solo se permite reintentar esa operación. Una venta confirmada abre un diálogo central con «Aplicar fidelidad» o «Nueva cuenta».
 
 ## Recorrido
@@ -24,7 +28,9 @@ Al vender, caja vuelve a validar inventario en PostgreSQL: la disponibilidad mos
 
 ## Importación de inventario
 
-Columnas: `insumo`, `unidad` (`pieza`, `g`, `kg`, `ml`, `l`), `existencia` y `minimo`. Cada archivo aplica un **conteo absoluto** a la sucursal elegida. Repetir el mismo conteo sin cambios no suma stock ni crea otro movimiento. No importes conteos desactualizados mientras se venden artículos: un conteo posterior puede sobrescribir el saldo que dejó la caja.
+Columnas: `insumo`, `unidad` (`pieza`, `caja`, `g`, `kg`, `ml`, `l`), `existencia` y `minimo`. Cada archivo aplica un **conteo absoluto** a la sucursal elegida. Repetir el mismo conteo sin cambios no suma stock ni crea otro movimiento. No importes conteos desactualizados mientras se venden artículos: un conteo posterior puede sobrescribir el saldo que dejó la caja.
+
+Para corregir una unidad, abre el insumo en Inventario → «Corregir unidad». «Convertir» actualiza cantidades y recetas de todas las sucursales para `g ↔ kg` o `ml ↔ l` (si la precisión de tres decimales lo permite). «Solo corregir etiqueta» mantiene los números, útil para errores como `g → caja`; obliga a revisar las existencias y recetas antes de volver a vender. Los cambios quedan en un historial inmutable. La migración de snapshots de unidad por movimiento `20261029180000_stock_movement_unit_snapshots.sql` fue aplicada por el propietario al Supabase de pruebas y se confirmó en el historial remoto el 27 de octubre de 2026.
 
 ## Impresora ESC/POS
 
