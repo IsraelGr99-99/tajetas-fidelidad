@@ -45,10 +45,9 @@ export default async function FinancePage() {
         </p>
       </div>
 
-      <section aria-labelledby="demo" className={`rounded-3xl p-6 ${hasDemo ? "bg-mostaza/25" : "bg-papel"}`}>
-        <h2 id="demo" className="text-2xl text-tabaco">
-          Datos de demostración
-        </h2>
+      <details className={`workspace-card p-6 ${hasDemo ? "border-amber-200" : ""}`}>
+        <summary className="cursor-pointer text-lg font-semibold text-tabaco">Opciones de demostración {hasDemo ? "· hay datos DEMO" : ""}</summary>
+        <div className="mt-4">
         <p className="mt-1 max-w-2xl text-sm leading-6 text-tabaco/80">
           {hasDemo
             ? "Hay datos DEMO cargados (ventas, gastos y una sucursal ficticia). Se muestran rotulados en el panel y puedes borrarlos con un clic."
@@ -57,7 +56,8 @@ export default async function FinancePage() {
         <div className="mt-4">
           <DemoControls hasDemo={hasDemo} />
         </div>
-      </section>
+        </div>
+      </details>
 
       <SalesImport branches={branches} />
 

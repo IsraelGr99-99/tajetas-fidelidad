@@ -26,10 +26,10 @@ export function ProductForm({ product, categories }: { product: ProductValues | 
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="productId" value={p.id ?? ""} />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1.2fr_1fr_1fr]">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor={`${uid}-base-name`} className={labelClass}>
-            Producto base
+            Nombre del producto
           </label>
           <input id={`${uid}-base-name`} name="baseName" defaultValue={p.baseName} required maxLength={60} placeholder="Americano" className={inputClass} />
           {err.baseName ? <p className={errorTextClass}>{err.baseName}</p> : null}
@@ -68,7 +68,7 @@ export function ProductForm({ product, categories }: { product: ProductValues | 
         </div>
         <div>
           <label htmlFor={`${uid}-cost`} className={labelClass}>
-            Costo <span className="font-normal text-tabaco/75">(opcional)</span>
+            Costo por unidad <span className="font-normal text-tabaco/75">(opcional)</span>
           </label>
           <input
             id={`${uid}-cost`}
@@ -83,16 +83,17 @@ export function ProductForm({ product, categories }: { product: ProductValues | 
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-tabaco">
         <label className="flex items-center gap-2">
-          <input type="checkbox" name="eligible" defaultChecked={p.eligible} className="h-5 w-5 accent-[#3d2c24]" /> Suma sello (bebida elegible)
+          <input type="checkbox" name="eligible" defaultChecked={p.eligible} className="h-5 w-5 accent-blue-700" /> Cuenta para el programa de fidelidad
         </label>
         <label className="flex items-center gap-2">
-          <input type="checkbox" name="active" defaultChecked={p.active} className="h-5 w-5 accent-[#3d2c24]" /> Disponible en la barra
+          <input type="checkbox" name="active" defaultChecked={p.active} className="h-5 w-5 accent-blue-700" /> Disponible para vender
         </label>
       </div>
       <FormMessage state={state} />
-      <button type="submit" disabled={pending} className="btn btn-oscuro disabled:opacity-70">
+      <button type="submit" disabled={pending} className="workspace-action disabled:opacity-70">
         {pending ? "Guardando…" : p.id ? "Guardar cambios" : "Agregar producto"}
       </button>
+      {state.ok && !p.id && <p className="text-sm text-slate-700">Siguiente: <a href="/negocio/inventario?vista=recetas" className="font-bold text-blue-700 underline underline-offset-2">configura los ingredientes de este producto</a> para que caja los descuente al vender.</p>}
     </form>
   );
 }

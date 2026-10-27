@@ -40,18 +40,20 @@ export function CustomerSearch() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="flex flex-col gap-2 sm:flex-row" role="search">
-        <label htmlFor="q" className="sr-only">
-          Nombre, correo, teléfono o serial de tarjeta
+      <form onSubmit={onSubmit} className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-end" role="search">
+        <label htmlFor="q" className="flex-1 text-sm font-semibold text-slate-800">
+          Nombre, correo, teléfono o número de tarjeta
+          <input
+            id="q"
+            name="q"
+            type="search"
+            required
+            autoComplete="off"
+            placeholder="Ej. Ana o ana@correo.com"
+            className={`${inputClass} mt-2`}
+          />
         </label>
-        <input
-          id="q"
-          name="q"
-          autoComplete="off"
-          placeholder="Nombre, correo completo, teléfono o serial"
-          className={`${inputClass} mt-0`}
-        />
-        <button type="submit" disabled={busy} className="btn btn-oscuro shrink-0 disabled:opacity-70">
+        <button type="submit" disabled={busy} className="workspace-action shrink-0 disabled:opacity-70">
           {busy ? "Buscando…" : "Buscar"}
         </button>
       </form>

@@ -41,10 +41,13 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
   const [recipePage, setRecipePage] = useState(1);
   const [outcome, setOutcome] = useState<CheckoutResult | null>(null);
   const [busy, setBusy] = useState(false);
+  const [justCreated, setJustCreated] = useState<{ id: string; name: string; unit: string } | null>(null);
+  const items = justCreated && !data.items.some((item) => item.id === justCreated.id)
+    ? [...data.items, justCreated] : data.items;
 
   const branch = branches.find((entry) => entry.id === branchId);
   const lowBalances = data.balances.filter((balance) => balance.branch_id === branchId && balance.quantity <= balance.minimum);
-  const missingBalances = data.items.filter((item) => !data.balances.some((balance) => balance.branch_id === branchId && balance.item_id === item.id));
+  const missingBalances = items.filter((item) => !data.balances.some((balance) => balance.branch_id === branchId && balance.item_id === item.id));
   const recipesByProduct = data.products.filter((product) => data.recipes.some((recipe) => recipe.product_id === product.id)
     && product.name.toLocaleLowerCase("es-MX").includes(recipeFilter.toLocaleLowerCase("es-MX")));
   const recipePages = Math.max(1, Math.ceil(recipesByProduct.length / 8));
@@ -95,9 +98,9 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
 
     <nav aria-label="Secciones del inventario" className="grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 sm:grid-cols-3">
       {([
-        ["stock", "1. Consultar stock", `${data.items.length} insumos · ${lowBalances.length} en mínimo`],
-        ["manage", "2. Gestionar insumos", "Crear, ajustar o importar"],
-        ["recipes", "3. Configurar recetas", `${new Set(data.recipes.map((recipe) => recipe.product_id)).size} de ${data.products.length} productos`],
+        ["stock", "Ver existencias", `${items.length} insumos · ${lowBalances.length} en mínimo`],
+        ["manage", "Agregar o corregir", "Insumos y cantidades"],
+        ["recipes", "Recetas", `${new Set(data.recipes.map((recipe) => recipe.product_id)).size} de ${data.products.length} productos`],
       ] as const).map(([key, label, hint]) => <button key={key} type="button" aria-pressed={view === key} onClick={() => { setView(key); setOutcome(null); }}
         className={`min-h-16 rounded-xl px-4 py-3 text-left transition ${view === key ? "bg-[#14233b] text-white shadow-sm" : "text-slate-700 hover:bg-slate-50"}`}>
         <span className="block text-sm font-bold">{label}</span><span className={`mt-1 block text-xs ${view === key ? "text-slate-200" : "text-slate-500"}`}>{hint}</span>
@@ -106,13 +109,12 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
     {outcome && <p role="status" className={`rounded-xl border px-4 py-3 text-sm ${outcome.ok ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"}`}>{outcome.message}</p>}
 
     {view === "stock" && <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatusCard label="Insumos registrados" value={data.items.length} />
+      <IngredientList items={items} balances={data.balances} branches={branches} branchId={branchId} onAdjust={openAdjustment} />
+      <div className="grid gap-3 sm:grid-cols-2">
         <StatusCard label="En mínimo o agotados" value={lowBalances.length} attention={lowBalances.length > 0} />
         <StatusCard label="Sin conteo en esta sucursal" value={missingBalances.length} attention={missingBalances.length > 0} />
       </div>
-      <IngredientList items={data.items} balances={data.balances} branches={branches} branchId={branchId} onAdjust={openAdjustment} />
-      <InventoryOverview branchId={branchId} products={catalog} items={data.items} recipes={data.recipes} balances={data.balances} />
+      <InventoryOverview branchId={branchId} products={catalog} items={items} recipes={data.recipes} balances={data.balances} />
       <div className="flex flex-wrap gap-3"><button type="button" onClick={() => { setManageMode("create"); setView("manage"); }} className="workspace-action">+ Crear insumo</button>
         <button type="button" onClick={() => setView("recipes")} className={secondaryClass}>Configurar recetas →</button></div>
     </div>}
@@ -126,15 +128,15 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
           ] as const).map(([key, label]) => <button key={key} type="button" aria-pressed={manageMode === key} onClick={() => { setManageMode(key); setOutcome(null); }}
             className={`min-h-11 rounded-xl px-4 text-sm font-semibold ${manageMode === key ? "bg-blue-50 text-blue-800 ring-1 ring-blue-200" : "text-slate-600 hover:bg-slate-50"}`}>{label}</button>)}
         </div>
-        {manageMode === "create" && <form className="mt-6 grid gap-4 border-t border-slate-200 pt-5 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-end" onSubmit={(event) => { event.preventDefault(); void run(() => upsertStockItemAction({ businessId, name: itemName, unit }), (result) => { if (result.itemId) chooseItem(result.itemId); setItemName(""); setManageMode("adjust"); }); }}>
+        {manageMode === "create" && <form className="mt-6 grid gap-4 border-t border-slate-200 pt-5 sm:grid-cols-[minmax(0,1fr)_11rem_auto] sm:items-end" onSubmit={(event) => { event.preventDefault(); void run(() => upsertStockItemAction({ businessId, name: itemName, unit }), (result) => { if (result.itemId) { setJustCreated({ id: result.itemId, name: itemName.trim(), unit }); chooseItem(result.itemId); setManageMode("adjust"); } setItemName(""); }); }}>
           <label className="grid gap-1 text-sm font-semibold text-slate-700">Nombre del insumo<input required minLength={2} maxLength={100} value={itemName} onChange={(event) => setItemName(event.target.value)} placeholder="Ej. café molido" className={inputClass} /></label>
           <label className="grid gap-1 text-sm font-semibold text-slate-700">Unidad<select value={unit} onChange={(event) => setUnit(event.target.value)} className={inputClass}>{["pieza", "g", "kg", "ml", "l"].map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
           <button disabled={busy} className="workspace-action disabled:opacity-50">Guardar insumo</button>
         </form>}
         {manageMode === "adjust" && <form className="mt-6 space-y-4 border-t border-slate-200 pt-5" onSubmit={(event) => { event.preventDefault(); void run(() => adjustStockAction({ branchId, itemId, delta: Number(delta), minimum: Number(minimum), reason }), () => { setDelta(""); setReason(""); }); }}>
-          {!data.items.length ? <p className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Primero crea un insumo o importa un conteo.</p> : <>
-            <div className="grid gap-4 sm:grid-cols-2"><label className="grid gap-1 text-sm font-semibold text-slate-700">Insumo<select value={itemId} onChange={(event) => chooseItem(event.target.value)} className={inputClass}>{data.items.map((item) => <option key={item.id} value={item.id}>{item.name} ({item.unit})</option>)}</select></label>
-              <label className="grid gap-1 text-sm font-semibold text-slate-700">Sucursal<select value={branchId} onChange={(event) => { const id = event.target.value; setBranchId(id); setMinimum(String(data.balances.find((entry) => entry.branch_id === id && entry.item_id === itemId)?.minimum ?? 0)); }} className={inputClass}>{branches.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select></label></div>
+          {!items.length ? <p className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Primero crea un insumo o importa un conteo.</p> : <>
+            <label className="grid max-w-xl gap-1 text-sm font-semibold text-slate-700">Insumo<select value={itemId} onChange={(event) => chooseItem(event.target.value)} className={inputClass}>{items.map((item) => <option key={item.id} value={item.id}>{item.name} ({item.unit})</option>)}</select></label>
+            <p className="text-sm text-slate-600">El movimiento se registrará en <strong>{branch?.name ?? "la sucursal seleccionada"}</strong>. Puedes cambiarla arriba.</p>
             <div className="grid gap-4 sm:grid-cols-3"><label className="grid gap-1 text-sm font-semibold text-slate-700">Cambio de existencia<input required type="number" step="0.001" value={delta} onChange={(event) => setDelta(event.target.value)} placeholder="Ej. 10 o -2" className={inputClass} /></label>
               <label className="grid gap-1 text-sm font-semibold text-slate-700">Mínimo para alertar<input required type="number" min="0" step="0.001" value={minimum} onChange={(event) => setMinimum(event.target.value)} className={inputClass} /></label>
               <label className="grid gap-1 text-sm font-semibold text-slate-700">Motivo<input required minLength={3} maxLength={200} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Compra, merma, corrección…" className={inputClass} /></label></div>

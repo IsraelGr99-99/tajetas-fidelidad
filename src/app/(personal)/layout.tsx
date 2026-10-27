@@ -34,25 +34,25 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   ];
 
   return <div className="console-shell min-h-dvh lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)]">
-    <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto bg-[#14233b] px-4 py-6 text-white lg:flex">
+    <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto border-r border-white/80 bg-white/75 px-4 py-6 text-slate-900 shadow-[8px_0_35px_rgba(44,68,125,0.05)] backdrop-blur-xl lg:flex">
       <Link href="/inicio" className="mb-8 flex items-center gap-3 px-2" aria-label="Loyalty, ir al inicio">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#3972e4] text-xl font-black text-white">L</span>
-        <span><span className="block text-[0.65rem] font-bold uppercase tracking-[0.17em] text-sky-200">iautomexa</span>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-xl font-black text-white shadow-lg shadow-blue-200">L</span>
+        <span><span className="block text-[0.65rem] font-bold uppercase tracking-[0.17em] text-blue-700">iautomexa</span>
           <span className="block text-lg font-bold leading-5">Loyalty</span></span>
       </Link>
-      <div className="mb-6 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-        <p className="text-[0.68rem] font-semibold uppercase tracking-wider text-slate-400">Espacio de</p>
-        <p className="mt-1 truncate text-sm font-semibold text-white">{membership.business_name}</p>
+      <div className="mb-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-violet-50 px-4 py-3">
+        <p className="text-[0.68rem] font-semibold uppercase tracking-wider text-blue-700">Tu negocio</p>
+        <p className="mt-1 truncate text-sm font-semibold text-slate-900">{membership.business_name}</p>
       </div>
-      <nav aria-label="Navegación del espacio de trabajo" className="flex-1"><SideNav groups={groups} /></nav>
-      <div className="mt-8 space-y-3 border-t border-white/10 pt-5">
-        <div className="px-2"><p className="text-sm font-semibold">{membership.display_name}</p><p className="text-xs text-slate-400">{ROLE_LABELS[role]}</p></div>
-        <SignOutButton className="min-h-10 w-full rounded-lg border border-white/20 px-3 text-left text-sm font-semibold text-slate-200 hover:bg-white/10" />
+      <nav aria-label="Navegación del espacio de trabajo" className="flex-1"><SideNav groups={groups} light /></nav>
+      <div className="mt-8 space-y-3 border-t border-slate-200 pt-5">
+        <div className="px-2"><p className="text-sm font-semibold">{membership.display_name}</p><p className="text-xs text-slate-600">{ROLE_LABELS[role]}</p></div>
+        <SignOutButton className="min-h-10 w-full rounded-xl border border-slate-200 px-3 text-left text-sm font-semibold text-slate-700 hover:bg-blue-50" />
       </div>
     </aside>
 
     <div className="min-w-0">
-      <header className="sticky top-0 z-30 border-b border-[#e5eaf2] bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-white/80 bg-white/75 shadow-[0_5px_24px_rgba(44,68,125,0.04)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-[80rem] items-center justify-between gap-3 px-4 py-3 sm:px-8">
           <div className="min-w-0 lg:hidden"><Link href="/inicio" className="flex items-center gap-2 text-sm font-bold text-[#14233b]">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#3972e4] text-white">L</span>

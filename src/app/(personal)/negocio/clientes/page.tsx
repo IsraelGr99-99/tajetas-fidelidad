@@ -32,9 +32,14 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
       <div>
         <h1 className="text-4xl text-tabaco">Clientes</h1>
         <p className="mt-2 max-w-2xl leading-7 text-tabaco/75">
-          Consulta las tarjetas activas de este negocio. El listado muestra solo nombre o referencia de tarjeta; para ver un contacto enmascarado y ajustar sellos, busca el dato exacto que te dé el cliente. Cada búsqueda queda registrada sin guardar el dato buscado.
+          Encuentra una tarjeta por nombre o por el correo que te indique el cliente. También puedes revisar abajo todas las tarjetas activas.
         </p>
       </div>
+      <section aria-labelledby="buscar-cliente" className="workspace-card space-y-4 p-5 sm:p-6">
+        <div><p className="workspace-kicker">Acción principal</p><h2 id="buscar-cliente" className="mt-1 text-xl font-semibold text-tabaco">Encontrar un cliente</h2>
+          <p className="mt-1 text-sm text-slate-600">Si usas correo, escríbelo completo. La consulta queda registrada, pero no guardamos el dato buscado.</p></div>
+        <CustomerSearch />
+      </section>
       <section aria-labelledby="padron-title" className="workspace-card p-5">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
@@ -60,10 +65,6 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               {page < totalPages ? <Link href={`/negocio/clientes?pagina=${page + 1}`} className="font-semibold text-blue-700">Siguiente →</Link> : <span />}
             </nav>
           </> : <p className="mt-4 text-sm text-tabaco/70">Aún no hay tarjetas activas en este negocio.</p>}
-      </section>
-      <section aria-labelledby="buscar-cliente" className="space-y-4">
-        <h2 id="buscar-cliente" className="text-xl font-semibold text-tabaco">Buscar un cliente concreto</h2>
-        <CustomerSearch />
       </section>
     </div>
   );

@@ -21,6 +21,17 @@ Fecha: 26 de octubre de 2026. Alcance: acceso del personal, inicio, catálogo, i
 2. Operación: registrar venta cobrada en caja → aplicar fidelidad con el mismo folio cuando el cliente participe → consultar ventas y movimientos.
 3. Reabastecimiento: inventario → buscar insumo → «Ajustar» → motivo y cantidad → revisar estado.
 
+## Segunda pasada: claridad y limpieza
+
+- Clientes: la búsqueda estaba después del padrón completo. Ahora es la primera acción, con etiqueta visible y explicación breve sobre correo exacto y privacidad.
+- Inventario: la lista de insumos y su buscador quedaron antes de los indicadores; se quitó el contador repetido. Las tres vistas ya no aparentan ser pasos obligatorios. Se eliminó el selector de sucursal duplicado dentro del formulario de ajuste; la sucursal activa se muestra en texto.
+- Alta de insumo: la respuesta exitosa incorpora inmediatamente el artículo a la lista local mientras se refrescan los datos del servidor, y abre el registro de existencias con ese artículo seleccionado. No se inventa una existencia.
+- Catálogo: se eliminó el enlace «Ver productos» que llevaba al listado inmediatamente siguiente. El formulario pasó de cinco columnas estrechas a dos, usa etiquetas de operación y guía hacia la receta después de crear un producto.
+- Ventas: el historial reciente se divide en páginas de 15 filas con navegación que conserva el filtro de sucursal.
+- Reportes: las opciones para generar datos de demostración siguen disponibles, pero plegadas para que no compitan con las tareas habituales.
+- Diseño: navegación lateral clara, superficies translúcidas sobre fondo luminoso, acciones con color y foco de teclado visible. La transparencia es decorativa; el texto mantiene fondo claro de alto contraste y la animación respeta movimiento reducido.
+- Código retirado: `SectionTabs`, `WalletPhone` y `DashboardPreview` no tenían referencias fuera de sus propios archivos. No se tocó la base de datos, los archivos de usuario ni funcionalidades con uso comprobado.
+
 ## Riesgos y trabajo posterior
 
 - Caja y fidelidad aún son dos registros separados. El enlace entre ambas pantallas ayuda, pero falta conciliación transaccional de folio/venta para evitar dobles capturas y errores de operación.

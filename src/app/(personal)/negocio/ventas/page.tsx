@@ -11,11 +11,14 @@ const schema = z.object({ ok: z.literal(true),
   by_staff: z.array(z.object({ staff_id: z.uuid(), staff_name: z.string(), sales_count: z.number(), total_cents: z.number() })),
 });
 const payment: Record<string, string> = { cash: "Efectivo", card_manual: "Tarjeta externa", transfer_manual: "Transferencia externa" };
+const PAGE_SIZE = 15;
 
-export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sucursal?: string }> }) {
+export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sucursal?: string; pagina?: string }> }) {
   const { membership } = await requireCapability("manage_staff");
-  const requested = (await searchParams).sucursal;
+  const params = await searchParams;
+  const requested = params.sucursal;
   const branchId = membership.branches.find((b) => b.id === requested)?.id ?? null;
+  const requestedPage = typeof params.pagina === "string" && /^[1-9]\d{0,3}$/.test(params.pagina) ? Number(params.pagina) : 1;
   const supabase = await createSupabaseServerClient();
   if (!supabase) return <p>Ventas no configuradas: conecta Supabase.</p>;
   const { data, error } = await supabase.rpc("pos_sales_report", { p_business_id: membership.business_id, p_branch_id: branchId });
@@ -24,6 +27,9 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   if (!parsed.success) return <p>No se pudo leer el reporte de ventas.</p>;
   const { sales, by_staff } = parsed.data;
   const total = by_staff.reduce((sum, row) => sum + row.total_cents, 0);
+  const pages = Math.max(1, Math.ceil(sales.length / PAGE_SIZE));
+  const page = Math.min(requestedPage, pages);
+  const pageHref = (number: number) => `/negocio/ventas?${new URLSearchParams({ ...(branchId ? { sucursal: branchId } : {}), pagina: String(number) })}`;
   return <div className="space-y-7">
     <header><p className="bitacora text-tabaco/60">Últimos 30 días · {membership.branches.find((b) => b.id === branchId)?.name ?? "todas las sucursales"}</p><h1 className="font-display text-4xl text-tabaco">Ventas de caja por empleado</h1>
       <p className="mt-2 text-sm text-tabaco/75">Solo incluye ventas registradas en esta caja. No suma archivos importados del POS ni acreditaciones de fidelidad.</p></header>
@@ -32,8 +38,9 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     <section className="rounded-3xl bg-tabaco p-6 text-crema"><p className="text-sm text-crema/70">Total registrado en 30 días</p><p className="font-display text-4xl">{formatMxn(total)}</p></section>
     <section className="rounded-3xl bg-papel p-5"><h2 className="text-xl font-semibold text-tabaco">Por empleado</h2>
       {by_staff.length === 0 ? <p className="mt-3 text-sm text-tabaco/70">Aún no hay ventas registradas.</p> : <ul className="mt-4 space-y-2">{by_staff.map((r) => <li key={r.staff_id} className="flex justify-between gap-3 rounded-xl bg-white p-3 text-sm"><span>{r.staff_name} · {r.sales_count} ventas</span><strong>{formatMxn(r.total_cents)}</strong></li>)}</ul>}</section>
-    <section className="rounded-3xl bg-white p-5"><h2 className="text-xl font-semibold text-tabaco">Ventas recientes</h2>
-      <ul className="mt-4 space-y-2">{sales.map((s) => <li key={s.id} className="flex flex-wrap justify-between gap-2 border-b border-tabaco/10 py-2 text-sm"><span>{new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Mexico_City" }).format(new Date(s.created_at))} · {s.staff_name} · {membership.branches.find((b) => b.id === s.branch_id)?.name ?? "Sucursal"}</span><span>{payment[s.payment_method] ?? s.payment_method} · <strong>{formatMxn(s.total_cents)}</strong></span></li>)}</ul>
+    <section className="workspace-card p-5"><h2 className="text-xl font-semibold text-tabaco">Ventas recientes ({sales.length})</h2>
+      {sales.length === 0 ? <p className="mt-3 text-sm text-slate-600">Aún no hay ventas de caja en este período.</p> : <ul className="mt-4 space-y-2">{sales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((s) => <li key={s.id} className="flex flex-wrap justify-between gap-2 border-b border-tabaco/10 py-2 text-sm"><span>{new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short", timeZone: "America/Mexico_City" }).format(new Date(s.created_at))} · {s.staff_name} · {membership.branches.find((b) => b.id === s.branch_id)?.name ?? "Sucursal"}</span><span>{payment[s.payment_method] ?? s.payment_method} · <strong>{formatMxn(s.total_cents)}</strong></span></li>)}</ul>}
+      {pages > 1 && <nav aria-label="Páginas de ventas" className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-4 text-sm"><div>{page > 1 && <Link href={pageHref(page - 1)} className="font-semibold text-blue-700">← Anterior</Link>}</div><span>Página {page} de {pages}</span><div>{page < pages && <Link href={pageHref(page + 1)} className="font-semibold text-blue-700">Siguiente →</Link>}</div></nav>}
     </section>
   </div>;
 }

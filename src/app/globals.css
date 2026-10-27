@@ -153,21 +153,23 @@
   .btn-contorno:hover { border-color: var(--color-mostaza); color: var(--color-mostaza); }
 }
 
-/* Consola de iautomexa Loyalty: neutral y orientada a trabajo diario.
+/* Consola de iautomexa Loyalty: superficies luminosas y trabajo diario.
    Solo se aplica al personal; la tarjeta pública conserva la marca Café Nómada. */
 @layer components {
   .console-shell {
     --color-tabaco: #14233b;
     --color-tabaco-900: #0d192b;
-    --color-crema: #f4f7fb;
+    --color-crema: #f7f9ff;
     --color-papel: #ffffff;
     --color-mostaza: #bdd2fa;
     --color-mostaza-200: #e2ebff;
-    --color-arcilla: #3e65ab;
+    --color-arcilla: #345dd7;
     --color-arcilla-texto: #315da6;
     --color-tinta: #14233b;
     --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-    background: var(--color-crema);
+    background: radial-gradient(circle at 18% 8%, #e5f1ff 0, transparent 32rem),
+      radial-gradient(circle at 95% 28%, #f4e9ff 0, transparent 31rem),
+      radial-gradient(circle at 50% 90%, #e9fbf4 0, transparent 33rem), var(--color-crema);
     color: var(--color-tabaco);
     font-family: var(--font-display);
   }
@@ -179,14 +181,16 @@
   }
   .console-shell .btn { border-radius: 0.75rem; }
   .console-shell .bitacora { letter-spacing: 0.055em; text-transform: uppercase; font-size: 0.68rem; }
-  .console-shell :focus-visible { outline-color: #3268cd; }
-  .workspace-card { border: 1px solid #e2e8f2; border-radius: 1rem; background: #fff; box-shadow: 0 1px 3px rgb(20 35 59 / 0.03); }
-  .workspace-kicker { color: #315da6; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-  .workspace-action { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.7rem; background: #285cc0; padding: 0.6rem 1rem; color: #fff; font-size: 0.875rem; font-weight: 700; transition: background 150ms ease; }
-  .workspace-action:hover { background: #194999; }
+  .console-shell :focus-visible { outline: 3px solid #2859df; outline-offset: 3px; }
+  .console-shell :is(input, select, textarea) { font-size: max(1rem, 16px); }
+  .workspace-card { border: 1px solid rgb(255 255 255 / 0.85); border-radius: 1.35rem; background: rgb(255 255 255 / 0.91); box-shadow: 0 14px 45px rgb(38 61 112 / 0.07), 0 1px 4px rgb(38 61 112 / 0.05); backdrop-filter: blur(18px); }
+  .workspace-kicker { color: #244fbd; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+  .workspace-action { display: inline-flex; min-height: 2.9rem; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.9rem; background: linear-gradient(135deg, #2859df, #6142d8); padding: 0.65rem 1.1rem; color: #fff; font-size: 0.875rem; font-weight: 700; box-shadow: 0 7px 18px rgb(54 75 195 / 0.2); transition: transform 150ms ease, box-shadow 150ms ease; }
+  .workspace-action:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgb(54 75 195 / 0.27); }
   .workspace-action:disabled { cursor: not-allowed; opacity: 0.5; }
-  .workspace-action-secondary { display: inline-flex; min-height: 2.75rem; align-items: center; justify-content: center; gap: 0.5rem; border: 1px solid #cad7ea; border-radius: 0.7rem; padding: 0.6rem 1rem; color: #1d477e; font-size: 0.875rem; font-weight: 700; transition: background 150ms ease; }
-  .workspace-action-secondary:hover { background: #eef4ff; }
+  .workspace-action-secondary { display: inline-flex; min-height: 2.9rem; align-items: center; justify-content: center; gap: 0.5rem; border: 1px solid #cbd9f6; border-radius: 0.9rem; background: rgb(255 255 255 / 0.84); padding: 0.65rem 1.1rem; color: #184698; font-size: 0.875rem; font-weight: 700; transition: background 150ms ease, border-color 150ms ease; }
+  .workspace-action-secondary:hover { background: #edf3ff; border-color: #7695e7; }
+  @media (prefers-reduced-motion: reduce) { .workspace-action { transition: none; } .workspace-action:hover { transform: none; } }
 }
 
 /* ---------------------------------------------------------------

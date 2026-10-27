@@ -45,7 +45,6 @@ export default async function CatalogPage() {
       ) : null}
 
       <nav aria-label="Acciones del catálogo" className="flex flex-wrap gap-2 text-sm font-semibold">
-        <a href="#lista-productos" className="workspace-action-secondary">Ver productos</a>
         <a href="#nuevo-producto" className="workspace-action">+ Nuevo producto</a>
         <a href="#categorias" className="workspace-action-secondary">Categorías</a>
         <a href="#importar-catalogo" className="workspace-action-secondary">Importar Excel</a>
