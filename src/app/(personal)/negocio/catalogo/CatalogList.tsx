@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { ProductThumbnail } from "@/components/staff/ProductThumbnail";
 import { formatMxn } from "@/lib/format";
 import { ProductForm } from "./ProductForm";
 
 export type CatalogRow = { id: string; name: string; base_name?: string; variant_label?: string | null; category: string;
-  price_cents: number; cost_cents: number | null; eligible: boolean; active: boolean };
+  price_cents: number; cost_cents: number | null; eligible: boolean; active: boolean; image_url: string | null };
 const PAGE_SIZE = 10;
 const key = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-MX");
 
@@ -27,8 +28,8 @@ export function CatalogList({ products, categories }: { products: CatalogRow[]; 
       <ul className="mt-4 space-y-2">{visible.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((p) => {
         const margin = p.cost_cents !== null && p.price_cents > 0 ? Math.round(((p.price_cents - p.cost_cents) / p.price_cents) * 100) : null;
         return <li key={p.id} className={`rounded-2xl border border-tabaco/10 bg-papel ${p.active ? "" : "opacity-75"}`}>
-          <details><summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4"><span className="min-w-0"><span className="font-semibold text-tabaco">{p.name}</span><span className="block text-sm text-tabaco/75">{p.category} · {p.eligible ? "suma sello" : "no suma"}{p.active ? "" : " · no disponible"}</span></span><span className="shrink-0 text-right text-sm"><span className="block font-semibold text-tabaco">{formatMxn(p.price_cents)}</span><span className="text-tabaco/75">{margin !== null ? `margen ${margin} %` : "sin costo"}</span></span></summary>
-            <div className="border-t border-tabaco/10 p-4"><ProductForm product={{ id: p.id, baseName: p.base_name ?? p.name, variantLabel: p.variant_label ?? null, category: p.category, priceCents: p.price_cents, costCents: p.cost_cents, eligible: p.eligible, active: p.active }} categories={categories} /></div>
+          <details><summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4"><span className="flex min-w-0 items-center gap-3"><ProductThumbnail src={p.image_url} size={52} /><span className="min-w-0"><span className="font-semibold text-tabaco">{p.name}</span><span className="block text-sm text-tabaco/75">{p.category} · {p.eligible ? "suma sello" : "no suma"}{p.active ? "" : " · no disponible"}</span></span></span><span className="shrink-0 text-right text-sm"><span className="block font-semibold text-tabaco">{formatMxn(p.price_cents)}</span><span className="text-tabaco/75">{margin !== null ? `margen ${margin} %` : "sin costo"}</span></span></summary>
+            <div className="border-t border-tabaco/10 p-4"><ProductForm product={{ id: p.id, baseName: p.base_name ?? p.name, variantLabel: p.variant_label ?? null, category: p.category, priceCents: p.price_cents, costCents: p.cost_cents, eligible: p.eligible, active: p.active, imageUrl: p.image_url }} categories={categories} /></div>
           </details>
         </li>;
       })}</ul>

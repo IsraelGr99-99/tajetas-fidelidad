@@ -15,7 +15,7 @@ import { syncWalletAfterResponse } from "@/lib/wallet/sync";
  * sobre el objeto concreto. La empresa siempre sale de la sesión, nunca del formulario.
  */
 
-export type ActionState = { ok: boolean; message: string | null; fieldErrors?: Record<string, string> };
+export type ActionState = { ok: boolean; message: string | null; fieldErrors?: Record<string, string>; productId?: string };
 const idle: ActionState = { ok: false, message: null };
 export async function initialState(): Promise<ActionState> {
   return idle;
@@ -109,8 +109,7 @@ export async function upsertProductAction(_prev: ActionState, formData: FormData
   const ctx = await context("manage_campaigns");
   if ("error" in ctx) return { ok: false, message: ctx.error ?? null };
   const d = parsed.data;
-  return run(
-    ctx.supabase.rpc("upsert_product_variant", {
+  const { data, error } = await ctx.supabase.rpc("upsert_product_variant", {
       p_business_id: ctx.businessId,
       p_product_id: d.productId,
       p_base_name: d.baseName,
@@ -120,10 +119,11 @@ export async function upsertProductAction(_prev: ActionState, formData: FormData
       p_cost_cents: d.cost,
       p_eligible: d.eligible,
       p_active: d.active,
-    }),
-    d.productId ? "Producto actualizado." : "Producto agregado.",
-    ["/negocio/catalogo", "/negocio/inventario", "/caja", "/barra"],
-  );
+    });
+  if (error) return { ok: false, message: "No se pudo contactar al servidor. Intenta de nuevo." };
+  if (!data?.ok) return { ok: false, message: rpcErrorMessage(data?.code) };
+  for (const path of ["/negocio/catalogo", "/negocio/inventario", "/caja", "/barra"]) revalidatePath(path);
+  return { ok: true, message: d.productId ? "Producto actualizado." : "Producto agregado. Ahora puedes añadir su foto y receta.", productId: data.product_id };
 }
 
 const categorySchema = z.object({ name: z.string().trim().min(2).max(40) });

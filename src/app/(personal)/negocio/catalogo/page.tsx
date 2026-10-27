@@ -18,7 +18,9 @@ export default async function CatalogPage() {
     supabase?.from("product_categories").select("name").eq("business_id", membership.business_id).order("name"),
   ]);
   const { data, error } = catalogResult ?? { data: null, error: true };
-  const products = (data?.ok ? data.products : []) as CatalogRow[];
+  const products = ((data?.ok ? data.products : []) as (Omit<CatalogRow, "image_url"> & { image_path?: string | null })[])
+    .map((product): CatalogRow => ({ ...product, image_url: product.image_path && supabase
+      ? supabase.storage.from("product-photos").getPublicUrl(product.image_path).data.publicUrl : null }));
   const categories = categoryResult?.error ? [...new Set(products.map((p) => p.category))] : (categoryResult?.data ?? []).map((c) => c.name);
   const hasSamples = products.some((p) => p.name.includes("(ejemplo)"));
   const withoutCost = products.filter((p) => p.active && p.cost_cents === null).length;

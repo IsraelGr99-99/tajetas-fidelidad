@@ -61,6 +61,23 @@ describe("escrituras directas bloqueadas", () => {
       await expect(db.as(staff.userId, `delete from public.${table}`)).rejects.toThrow(/permission denied/);
     }
     expect(await db.as(staff.userId, "select * from public.stock_balances")).toEqual([]);
+    await expect(db.as(staff.userId, "update public.products set image_path = null where business_id = $1", [IDS.business]))
+      .rejects.toThrow(/permission denied/);
+  });
+
+  test("la foto del producto solo se asocia por RPC a un producto del negocio propio", async () => {
+    const owner = await db.createStaff("owner");
+    const barista = await db.createStaff("barista");
+    const outsider = await db.createStaff("owner", { businessId: otherBusiness, branchAccess: false });
+    const product = await db.productId("Espresso (ejemplo)");
+    const path = `${IDS.business}/${product}/${randomUUID()}.webp`;
+    expect(await db.rpc(barista.userId, "set_product_image_path", [product, path])).toMatchObject({ ok: false, code: "forbidden" });
+    expect(await db.rpc(outsider.userId, "set_product_image_path", [product, path], "aal2")).toMatchObject({ ok: false, code: "forbidden" });
+    expect(await db.rpc(owner.userId, "set_product_image_path", [product, "otro-negocio/otra-foto.webp"], "aal2"))
+      .toMatchObject({ ok: false, code: "invalid_request" });
+    expect(await db.rpc(owner.userId, "set_product_image_path", [product, path], "aal2")).toMatchObject({ ok: true });
+    const catalog = await db.rpc(owner.userId, "admin_catalog", [IDS.business], "aal2");
+    expect((catalog.products as { id: string; image_path: string | null }[]).find((row) => row.id === product)?.image_path).toBe(path);
   });
 
   test("el ledger es append-only incluso para el superusuario", async () => {

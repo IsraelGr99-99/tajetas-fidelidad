@@ -13,7 +13,7 @@ export function buildCsp(nonce: string, opts: { dev: boolean; supabaseUrl?: stri
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${turnstile}${opts.dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob: ${supabase}`.trim(),
     "font-src 'self'",
     `connect-src 'self' ${supabase} ${supabaseWs} ${turnstile}`.trim(),
     `frame-src ${turnstile}`,

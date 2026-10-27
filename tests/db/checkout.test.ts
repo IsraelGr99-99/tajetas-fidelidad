@@ -20,7 +20,8 @@ describe("caja e inventario transaccional", () => {
       .toMatchObject({ ok: true, quantity: 100 });
     const catalog = await db.rpc(barista.userId, "pos_catalog", [IDS.branch]);
     expect(catalog.ok).toBe(true);
-    expect((catalog.products as { id: string; available: number }[]).find((p) => p.id === product)?.available).toBe(5);
+    expect((catalog.products as { id: string; available: number; recipe_configured: boolean; missing_ingredients: unknown[] }[]).find((p) => p.id === product))
+      .toMatchObject({ available: 5, recipe_configured: true, missing_ingredients: [] });
     const key = randomUUID();
     const lines = JSON.stringify([{ product_id: product, quantity: 2 }]);
     const sale = await db.rpc(barista.userId, "record_pos_sale", [IDS.branch, key, "cash", lines]);
@@ -58,6 +59,9 @@ describe("caja e inventario transaccional", () => {
       .toMatchObject({ ok: true });
     const attempt = await db.rpc(barista.userId, "record_pos_sale", [IDS.branch, randomUUID(), "cash", JSON.stringify([{ product_id: product, quantity: 1 }])]);
     expect(attempt).toMatchObject({ ok: false, code: "insufficient_stock", item_id: itemId });
+    const catalog = await db.rpc(barista.userId, "pos_catalog", [IDS.branch]);
+    expect((catalog.products as { id: string; available: number; missing_ingredients: { name: string; needed: number; in_stock: number }[] }[]).find((p) => p.id === product))
+      .toMatchObject({ available: 0, missing_ingredients: [{ name: "Leche de prueba", needed: 250, in_stock: 0 }] });
     const [count] = await db.admin<{ n: number }>("select count(*)::integer as n from public.pos_sales");
     expect(count.n).toBe(1);
   });

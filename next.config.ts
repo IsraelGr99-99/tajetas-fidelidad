@@ -24,6 +24,7 @@ if (turnstileSiteKey && turnstileSiteKey.length !== 24) {
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  experimental: { serverActions: { bodySizeLimit: "3mb" } },
   // Rutas anteriores de la consola: redirección temporal a las nuevas, cortas.
   async redirects() {
     return LEGACY_REDIRECTS.map((r) => ({ ...r, permanent: false }));

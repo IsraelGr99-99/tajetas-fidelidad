@@ -16,6 +16,8 @@
 ## Antes del piloto
 - [x] Aplicar y verificar la migración `20261028130000_inventory_checkout.sql` en Supabase de pruebas.
 - [ ] Validar caja e inventario con owner/admin y personal de caja; cargar recetas y conteos reales por sucursal.
+- [x] Respaldar y aplicar `20261029130000_product_images_and_stock_reasons.sql` en Supabase de pruebas; historial remoto confirmado.
+- [ ] Probar foto real, producto sin ingrediente y venta confirmada en móvil/escritorio con sesión de owner/caja.
 - [ ] Definir modelo y conexión de impresora ESC/POS, implementar transporte y probar tickets/corte en sucursal.
 - [ ] Definir proceso de devoluciones, cancelaciones, corte de caja y conciliación caja ↔ fidelidad ↔ POS externo.
 - [ ] Precios y catálogo reales de Café Nómada (el seed usa precios de ejemplo).

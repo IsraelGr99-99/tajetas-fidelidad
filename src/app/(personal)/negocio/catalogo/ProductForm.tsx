@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { type ActionState, upsertProductAction } from "@/actions/management";
 import { FormMessage } from "@/components/ui/FormMessage";
 import { errorTextClass, inputClass, labelClass } from "@/components/ui/form";
+import { ProductImageManager } from "./ProductImageManager";
 
 export type ProductValues = {
   id: string | null;
@@ -14,17 +15,18 @@ export type ProductValues = {
   costCents: number | null;
   eligible: boolean;
   active: boolean;
+  imageUrl: string | null;
 };
 
 export function ProductForm({ product, categories }: { product: ProductValues | null; categories: string[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(upsertProductAction, { ok: false, message: null });
-  const p = product ?? { id: null, baseName: "", variantLabel: null, category: categories[0] ?? "", priceCents: 0, costCents: null, eligible: true, active: true };
+  const p = product ?? { id: null, baseName: "", variantLabel: null, category: categories[0] ?? "", priceCents: 0, costCents: null, eligible: true, active: true, imageUrl: null };
   const [categoryChoice, setCategoryChoice] = useState(p.category || "__new__");
   const uid = p.id ?? "nuevo";
   const err = state.fieldErrors ?? {};
 
   return (
-    <form action={action} className="space-y-4">
+    <div className="space-y-5"><form action={action} className="space-y-4">
       <input type="hidden" name="productId" value={p.id ?? ""} />
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -95,5 +97,7 @@ export function ProductForm({ product, categories }: { product: ProductValues | 
       </button>
       {state.ok && !p.id && <p className="text-sm text-slate-700">Siguiente: <a href="/negocio/inventario?vista=recetas" className="font-bold text-blue-700 underline underline-offset-2">configura los ingredientes de este producto</a> para que caja los descuente al vender.</p>}
     </form>
+    {(p.id || state.productId) && <ProductImageManager key={p.id ?? state.productId} productId={(p.id ?? state.productId)!} initialUrl={p.imageUrl} />}
+    </div>
   );
 }

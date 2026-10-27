@@ -8,6 +8,12 @@ Si Node muestra `UNABLE_TO_VERIFY_LEAF_SIGNATURE` al conectar con Supabase, inic
 
 La caja conserva en `sessionStorage` la clave y las líneas de una venta cuya respuesta no se confirmó. Al volver a la misma pestaña, solo permite reintentar esa misma operación; el servidor debe devolver la venta original por idempotencia. No se guarda PII ni la credencial de sesión en ese dato. La venta reciente también puede precargar folio y productos en fidelidad, pero el empleado debe verificar que pertenecen al cliente escaneado; aún no existe conciliación automática entre ambas tablas.
 
+## Fotos y disponibilidad en caja
+
+La migración `20261029130000_product_images_and_stock_reasons.sql` se aplicó al Supabase de pruebas el 26 de octubre de 2026 y se confirmó en el historial remoto. Añade fotos opcionales y muestra los insumos concretos que impiden vender un producto en la sucursal. No cambia saldos ni ventas. En Catálogo, abre un producto y sube una foto JPG, PNG o WebP de hasta 2 MB; también puedes añadirla justo después de crear el producto. Las fotos son públicas: no incluyas personas, documentos ni información privada. Si falta la foto, se muestra una ilustración neutra, no una fotografía inventada. La carga de una foto real y el recorrido autenticado de caja siguen pendientes de prueba manual.
+
+Al vender, caja vuelve a validar inventario en PostgreSQL: la disponibilidad mostrada puede quedar desactualizada si otra caja consume el último insumo. Si la respuesta de la venta no llega, se conserva la clave original y solo se permite reintentar esa operación. Una venta confirmada abre un diálogo central con «Aplicar fidelidad» o «Nueva cuenta».
+
 ## Recorrido
 
 1. Entra como owner/admin y abre `/negocio/catalogo`. Carga los productos y sus precios reales; la calculadora de precio es orientativa y no guarda nada.
