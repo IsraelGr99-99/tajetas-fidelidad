@@ -3,7 +3,7 @@
   background: #eef3fb;
   color: #152337;
   font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  scroll-margin-top: 24px;
+  scroll-margin-top: 86px;
 }
 .wrap { width: min(100% - 64px, 1220px); margin-inline: auto; }
 .intro { display: grid; grid-template-columns: 1.1fr .75fr; gap: 8%; align-items: end; }

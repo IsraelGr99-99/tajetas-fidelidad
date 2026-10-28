@@ -93,6 +93,57 @@ test("sin desbordamiento horizontal en móvil", async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
+test("la composición se adapta de 320 px a escritorio amplio", async ({ page, isMobile }) => {
+  test.skip(isMobile, "Se prueban todos los anchos en un único contexto de escritorio");
+  for (const width of [320, 375, 430, 768, 1024, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow, `desbordamiento a ${width}px`).toBeLessThanOrEqual(0);
+  }
+});
+
+test("el menú móvil abre, navega y se cierra", async ({ page, isMobile }) => {
+  test.skip(!isMobile, "Solo aplica al menú táctil");
+  await page.goto("/");
+  const menu = page.locator("details summary").filter({ hasText: "Menú" });
+  await menu.click();
+  const nav = page.getByRole("navigation", { name: "Navegación móvil" });
+  await expect(nav.getByRole("link", { name: "Prueba la demo" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(nav).not.toBeVisible();
+  await menu.click();
+  await nav.getByRole("link", { name: "Prueba la demo" }).click();
+  await expect(page).toHaveURL(/#demo-interactiva$/);
+  await expect(nav).not.toBeVisible();
+});
+
+test("el contenido principal permanece disponible sin JavaScript", async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  try {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Haz que cada visita cuente");
+    await expect(page.getByRole("list", { name: "Ejemplos de tarjetas por giro" }).locator("li")).toHaveCount(5);
+    await expect(page.getByRole("link", { name: "Solicitar información" }).first()).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test("el acceso público conserva sus opciones sin cambiar la autenticación", async ({ page }) => {
+  await page.goto("/entrar");
+  await expect(page.getByRole("heading", { level: 1, name: "Entra a Loyalty" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "iautomexa Loyalty, ir al inicio" }).first()).toHaveAttribute("href", "/");
+  if (await page.getByText("Acceso no disponible.").count()) {
+    await expect(page.getByRole("alert")).toContainText("no tiene conexión con Supabase");
+  } else {
+    await expect(page.getByRole("button", { name: "Contraseña", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Código por correo", exact: true })).toBeVisible();
+  }
+});
+
 test("cabeceras de seguridad presentes", async ({ request }) => {
   const res = await request.get("/");
   const h = res.headers();

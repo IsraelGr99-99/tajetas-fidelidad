@@ -1,7 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import styles from "./CardShowcase.module.css";
+
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 type Locale = "es" | "en";
 
@@ -52,45 +57,38 @@ export function CardShowcase({ locale }: { locale: Locale }) {
     progress: "Visits",
   };
 
-  useEffect(() => {
+  useGSAP(() => {
     const root = section.current;
     if (!root) return;
-    let cancelled = false;
-    let revert: (() => void) | undefined;
-    Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(([{ gsap }, { ScrollTrigger }]) => {
-      if (cancelled) return;
-      gsap.registerPlugin(ScrollTrigger);
-      const mm = gsap.matchMedia();
-      mm.add("(min-width: 900px) and (prefers-reduced-motion: no-preference)", () => {
-        const items = Array.from(root.querySelectorAll<HTMLElement>(`.${styles.card}`));
-        if (items.length !== cards.length) return;
-        root.classList.add(styles.animated);
-        gsap.set(items.slice(1), { yPercent: 16, scale: 0.86, opacity: 0, rotate: 8 });
-        const timeline = gsap.timeline({
-          scrollTrigger: {
-            trigger: root,
-            start: "top top",
-            end: () => `+=${Math.round(window.innerHeight * 0.72 * (items.length - 1))}`,
-            pin: true,
-            scrub: 0.7,
-            anticipatePin: 1,
-            invalidateOnRefresh: true,
-            onUpdate: (self) => setActive(Math.min(items.length - 1, Math.round(self.progress * (items.length - 1)))),
-          },
-        });
-        items.slice(0, -1).forEach((item, index) => {
-          timeline.to(item, { xPercent: -115, rotate: -15, scale: 0.82, opacity: 0, duration: 1, ease: "power2.inOut" }, index);
-          timeline.to(items[index + 1], { yPercent: 0, rotate: 0, scale: 1, opacity: 1, duration: 1, ease: "power2.inOut" }, index);
-        });
-        return () => { root.classList.remove(styles.animated); };
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 900px) and (prefers-reduced-motion: no-preference)", () => {
+      const items = Array.from(root.querySelectorAll<HTMLElement>(`.${styles.card}`));
+      if (items.length !== cards.length) return;
+      root.classList.add(styles.animated);
+      gsap.set(items.slice(1), { yPercent: 12, scale: 0.9, opacity: 0, rotate: 5 });
+      const timeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: root,
+          start: "top top",
+          end: () => `+=${Math.round(window.innerHeight * 0.52 * (items.length - 1))}`,
+          pin: true,
+          scrub: 0.65,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => setActive(Math.min(items.length - 1, Math.round(self.progress * (items.length - 1)))),
+        },
       });
-      revert = () => mm.revert();
-    }).catch(() => { /* El carrusel sigue accesible sin animación si GSAP no carga. */ });
-    return () => { cancelled = true; revert?.(); };
-  }, []);
+      items.slice(0, -1).forEach((item, index) => {
+        timeline.to(item, { xPercent: -108, rotate: -8, scale: 0.88, opacity: 0, duration: 1, ease: "power2.inOut" }, index);
+        timeline.to(items[index + 1], { yPercent: 0, rotate: 0, scale: 1, opacity: 1, duration: 1, ease: "power2.inOut" }, index);
+      });
+      return () => { root.classList.remove(styles.animated); };
+    });
+    return () => mm.revert();
+  }, { scope: section });
 
   return (
-    <section id="aplicaciones" ref={section} className={styles.section} aria-labelledby="showcase-title">
+    <section data-motion-section id="aplicaciones" ref={section} className={styles.section} aria-labelledby="showcase-title">
       <div className={styles.wrap}>
         <div className={styles.intro}>
           <div><p className={styles.eyebrow}>{t.eyebrow}</p><h2 id="showcase-title">{t.title}</h2></div>

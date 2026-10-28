@@ -1,4 +1,4 @@
-.section { position: relative; background: #101b31; color: #fff; overflow: clip; font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif; }
+.section { position: relative; background: #101b31; color: #fff; overflow: clip; scroll-margin-top: 86px; font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif; }
 .section::before { content: ""; position: absolute; right: -8%; top: 8%; width: 42vw; aspect-ratio: 1; border-radius: 50%; background: #283c76; opacity: .17; filter: blur(90px); pointer-events: none; }
 .wrap { width: min(100% - 64px, 1220px); min-height: 780px; margin: auto; padding-block: clamp(80px, 8vw, 110px); }
 .intro { display: grid; grid-template-columns: 1.15fr .75fr; gap: 8%; align-items: end; }

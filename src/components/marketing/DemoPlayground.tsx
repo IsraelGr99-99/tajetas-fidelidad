@@ -67,7 +67,7 @@ export function DemoPlayground({ locale }: { locale: Locale }) {
   };
 
   return (
-    <section id="demo-interactiva" className={styles.section} aria-labelledby="demo-title">
+    <section data-motion-section id="demo-interactiva" className={styles.section} aria-labelledby="demo-title">
       <div className={styles.wrap}>
         <div className={styles.intro}>
           <div><p className={styles.eyebrow}>{t.eyebrow}</p><h2 id="demo-title">{t.title}</h2></div>

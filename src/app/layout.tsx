@@ -42,7 +42,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           href="#contenido"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-tabaco focus:px-5 focus:py-3 focus:text-crema"
         >
-          Saltar al contenido
+          {locale === "en" ? "Skip to content" : "Saltar al contenido"}
         </a>
         {children}
       </body>

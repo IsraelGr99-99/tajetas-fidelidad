@@ -12,7 +12,6 @@ export default async function NotFound() {
   const english = (await headers()).get("x-site-locale") === "en";
   return (
     <main id="contenido" className={styles.page}>
-      <div className={styles.glow} aria-hidden="true" />
       <div className={styles.wrap}>
         <Link href={english ? "/en" : "/"} className={styles.brand} aria-label="Loyalty by iautomexa">
           <span className={styles.brandMark} aria-hidden="true">✳</span>
