@@ -5,10 +5,14 @@ import { calculateProductPrice } from "@/domain/pricing/calculator";
 import { formatMxn } from "@/lib/format";
 
 type Ingredient = { id: number; name: string; quantity: string; unitCost: string };
+type CalculatorProduct = { id: string; name: string; priceCents: number; costCents: number | null };
+type CalculatorItem = { id: string; name: string; unit: string };
+type CalculatorRecipe = { product_id: string; item_id: string; quantity: number };
 const pesos = (value: string) => Math.round(Number(value || 0) * 100);
 const moneyInput = "min-h-11 w-full rounded-xl border border-tabaco/20 bg-white px-3 text-tabaco focus:border-tabaco";
 
-export function PricingCalculator() {
+export function PricingCalculator({ products, items, recipes }: { products: CalculatorProduct[]; items: CalculatorItem[]; recipes: CalculatorRecipe[] }) {
+  const [selectedProductId, setSelectedProductId] = useState("");
   const [rows, setRows] = useState<Ingredient[]>([{ id: 1, name: "", quantity: "1", unitCost: "" }]);
   const [nextId, setNextId] = useState(2);
   const [labor, setLabor] = useState("");
@@ -17,6 +21,18 @@ export function PricingCalculator() {
   const [waste, setWaste] = useState("0");
   const [margin, setMargin] = useState("40");
   const [tax, setTax] = useState("0");
+  const selectedProduct = products.find((product) => product.id === selectedProductId);
+  const selectedRecipe = recipes.filter((recipe) => recipe.product_id === selectedProductId);
+
+  function chooseProduct(id: string) {
+    setSelectedProductId(id);
+    const recipeRows = recipes.filter((recipe) => recipe.product_id === id).map((recipe, index) => {
+      const item = items.find((entry) => entry.id === recipe.item_id);
+      return { id: index + 1, name: item ? `${item.name} (${item.unit})` : "Insumo no encontrado", quantity: String(recipe.quantity), unitCost: "" };
+    });
+    setRows(recipeRows.length ? recipeRows : [{ id: 1, name: "", quantity: "1", unitCost: "" }]);
+    setNextId(recipeRows.length + 1);
+  }
 
   const result = useMemo(() => rows.some((row) => Boolean(row.name.trim()) !== Boolean(row.unitCost.trim())) ? null : calculateProductPrice({
     ingredients: rows.filter((row) => row.name.trim() && row.unitCost !== "").map((row) => ({
@@ -43,6 +59,13 @@ export function PricingCalculator() {
           Desglosa el costo de una unidad vendible y fija un margen objetivo sobre el precio sin impuestos. El impuesto es configurable porque
           depende de tu producto y situación fiscal; esto es una estimación comercial, no asesoría fiscal.
         </p>
+
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+          <label className="grid max-w-xl gap-2 text-sm font-semibold text-blue-950">Usar un producto del catálogo
+            <select value={selectedProductId} onChange={(event) => chooseProduct(event.target.value)} className={moneyInput}><option value="">Calcular desde cero</option>{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select>
+          </label>
+          {selectedProduct ? <p className="mt-3 text-sm text-blue-950">Precio actual: <strong>{formatMxn(selectedProduct.priceCents)}</strong> · costo total guardado: <strong>{selectedProduct.costCents === null ? "sin registrar" : formatMxn(selectedProduct.costCents)}</strong>. {selectedRecipe.length ? "Cargamos sus ingredientes y cantidades; completa el costo de cada unidad de insumo para calcular." : "Este producto aún no tiene receta. Agrégala en Inventario para precargar sus insumos."}</p> : <p className="mt-3 text-sm text-blue-900">También puedes hacer un cálculo manual sin modificar el catálogo.</p>}
+        </div>
 
         <fieldset className="space-y-3">
           <legend className="font-semibold text-tabaco">Insumos o componentes por unidad vendida</legend>
@@ -90,6 +113,7 @@ export function PricingCalculator() {
           <div className="rounded-2xl bg-tabaco p-5 text-crema" aria-live="polite">
             <p className="bitacora text-mostaza">Precio mínimo estimado para tu margen</p>
             <p className="mt-1 font-display text-4xl">{formatMxn(result.finalPriceCents)}</p>
+            {selectedProduct && <p className="mt-2 text-sm text-crema/85">Precio actual {formatMxn(selectedProduct.priceCents)} · diferencia frente al recomendado {formatMxn(result.finalPriceCents - selectedProduct.priceCents)}.</p>}
             <dl className="mt-5 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
               <div><dt className="text-crema/70">Costo total</dt><dd className="font-semibold">{formatMxn(result.totalCostCents)}</dd></div>
               <div><dt className="text-crema/70">Precio sin impuesto</dt><dd className="font-semibold">{formatMxn(result.netPriceCents)}</dd></div>

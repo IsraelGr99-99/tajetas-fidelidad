@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { NO_ACCESS_PATH } from "@/domain/staff/routes";
 import { requireStaffWithBranch } from "@/lib/staff/session";
+import { demoProductImage } from "@/lib/demo-product-images";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Checkout } from "./Checkout";
 
@@ -23,7 +24,8 @@ export default async function CheckoutPage() {
   const parsed = catalogSchema.safeParse(data);
   if (!parsed.success) return <p>No se pudo leer el catálogo de caja.</p>;
   const products = parsed.data.products.map((product) => ({ ...product,
-    imageUrl: product.image_path ? supabase.storage.from("product-photos").getPublicUrl(product.image_path).data.publicUrl : null,
+    imageUrl: product.image_path ? supabase.storage.from("product-photos").getPublicUrl(product.image_path).data.publicUrl
+      : membership.is_demo ? demoProductImage(membership.business_id, product.name) : null,
     recipeConfigured: product.recipe_configured ?? false,
     missingIngredients: product.missing_ingredients ?? [],
   }));

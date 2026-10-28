@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ExpenseImport, SalesImport } from "@/components/imports/Importers";
 import { Notice } from "@/components/staff/OperationParts";
+import { SectionNav } from "@/components/staff/SectionNav";
 import { formatDate, formatMxn, lastDaysRange } from "@/lib/format";
 import { requireCapability } from "@/lib/staff/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -18,22 +21,34 @@ type ImportRow = {
   period_end: string;
   is_demo: boolean;
 };
-type ExpenseRow = { id: string; spent_on: string; category: string; description: string | null; amount_cents: number; is_demo: boolean; branch_name: string | null };
+type ExpenseRow = { id: string; spent_on: string; category: string; description: string | null; amount_cents: number; is_demo: boolean; branch_id: string | null; branch_name: string | null };
 
 const day = (d: string) => formatDate(`${d}T12:00:00-06:00`);
+const EXPENSE_PAGE_SIZE = 12;
 
-export default async function FinancePage() {
+export default async function FinancePage({ searchParams }: { searchParams: Promise<{ gastos?: string }> }) {
+  const rawPage = (await searchParams).gastos;
+  const requestedPage = typeof rawPage === "string" && /^[1-9]\d{0,3}$/.test(rawPage) ? Number(rawPage) : 1;
   const { membership } = await requireCapability("manage_staff");
   const supabase = await createSupabaseServerClient();
-  const [records, branchesRes] = await Promise.all([
+  const [records, branchesRes, expenseResult] = await Promise.all([
     supabase?.rpc("finance_records", { p_business_id: membership.business_id }),
     supabase?.from("branches").select("id, name, is_demo").eq("business_id", membership.business_id).order("name"),
+    supabase?.from("expenses").select("id, spent_on, category, description, amount_cents, is_demo, branch_id", { count: "exact" })
+      .eq("business_id", membership.business_id).order("spent_on", { ascending: false }).order("created_at", { ascending: false })
+      .range((requestedPage - 1) * EXPENSE_PAGE_SIZE, requestedPage * EXPENSE_PAGE_SIZE - 1),
   ]);
   const imports = (records?.data?.ok ? records.data.imports : []) as ImportRow[];
-  const expenses = (records?.data?.ok ? records.data.expenses : []) as ExpenseRow[];
-  const branches = ((branchesRes?.data ?? []) as { id: string; name: string; is_demo: boolean }[]).filter((b) => !b.is_demo);
-  const hasDemo = imports.some((i) => i.is_demo) || expenses.some((e) => e.is_demo);
+  const allBranches = (branchesRes?.data ?? []) as { id: string; name: string; is_demo: boolean }[];
+  const branchName = new Map(allBranches.map((branch) => [branch.id, branch.name]));
+  const branches = allBranches.filter((b) => !b.is_demo);
+  const expenses = ((expenseResult?.data ?? []) as Omit<ExpenseRow, "branch_name">[]).map((expense) => ({ ...expense, branch_name: expense.branch_id ? branchName.get(expense.branch_id) ?? "Sucursal" : null }));
+  const expenseCount = expenseResult?.count ?? 0;
+  const hasDemo = imports.some((i) => i.is_demo) || ((records?.data?.ok ? records.data.expenses : []) as ExpenseRow[]).some((e) => e.is_demo);
   const today = lastDaysRange(1).to;
+  const expensePages = Math.max(1, Math.ceil(expenseCount / EXPENSE_PAGE_SIZE));
+  const expensePage = Math.min(requestedPage, expensePages);
+  if (!expenseResult?.error && requestedPage > expensePages) redirect(`/negocio/finanzas?gastos=${expensePages}#gastos-recientes`);
 
   return (
     <div className="space-y-8">
@@ -44,6 +59,8 @@ export default async function FinancePage() {
           barra.
         </p>
       </div>
+
+      <SectionNav label="Secciones de ventas y gastos" items={[{ href: "#importar-ventas", label: "Importar ventas" }, { href: "#reportes-importados", label: "Reportes" }, { href: "#nuevo-gasto", label: "Registrar gasto" }, { href: "#gastos-recientes", label: "Gastos recientes" }]} />
 
       <details className={`workspace-card p-6 ${hasDemo ? "border-amber-200" : ""}`}>
         <summary className="cursor-pointer text-lg font-semibold text-tabaco">Opciones de demostración {hasDemo ? "· hay datos DEMO" : ""}</summary>
@@ -59,9 +76,9 @@ export default async function FinancePage() {
         </div>
       </details>
 
-      <SalesImport branches={branches} />
+      <div id="importar-ventas" className="scroll-mt-24"><SalesImport branches={branches} /></div>
 
-      <section aria-labelledby="historial-ventas">
+      <section id="reportes-importados" aria-labelledby="historial-ventas" className="scroll-mt-24">
         <h2 id="historial-ventas" className="text-2xl text-tabaco">
           Reportes importados
         </h2>
@@ -87,8 +104,8 @@ export default async function FinancePage() {
         )}
       </section>
 
-      <section aria-labelledby="nuevo-gasto" className="rounded-3xl bg-papel p-6">
-        <h2 id="nuevo-gasto" className="text-2xl text-tabaco">
+      <section id="nuevo-gasto" aria-labelledby="nuevo-gasto-title" className="scroll-mt-24 rounded-3xl bg-papel p-6">
+        <h2 id="nuevo-gasto-title" className="text-2xl text-tabaco">
           Registrar un gasto
         </h2>
         <div className="mt-4">
@@ -98,11 +115,11 @@ export default async function FinancePage() {
 
       <ExpenseImport branches={branches} />
 
-      <section aria-labelledby="gastos-recientes">
-        <h2 id="gastos-recientes" className="text-2xl text-tabaco">
-          Gastos recientes
+      <section id="gastos-recientes" aria-labelledby="gastos-recientes-title" className="scroll-mt-24">
+        <h2 id="gastos-recientes-title" className="text-2xl text-tabaco">
+          Gastos recientes ({expenseCount})
         </h2>
-        {expenses.length === 0 ? (
+        {expenseResult?.error ? <Notice tone="error" title="No se pudieron cargar los gastos. Actualiza la página para reintentar." /> : expenses.length === 0 ? (
           <Notice tone="info" title="Aún no hay gastos registrados" />
         ) : (
           <ul className="mt-3 divide-y divide-tabaco/10 rounded-3xl bg-papel">
@@ -126,6 +143,11 @@ export default async function FinancePage() {
             ))}
           </ul>
         )}
+        {expensePages > 1 && <nav aria-label="Páginas de gastos" className="mt-4 flex items-center justify-between gap-3 text-sm">
+          {expensePage > 1 ? <Link href={`/negocio/finanzas?gastos=${expensePage - 1}#gastos-recientes`} className="font-semibold text-blue-700">← Anterior</Link> : <span />}
+          <span>Página {expensePage} de {expensePages}</span>
+          {expensePage < expensePages ? <Link href={`/negocio/finanzas?gastos=${expensePage + 1}#gastos-recientes`} className="font-semibold text-blue-700">Siguiente →</Link> : <span />}
+        </nav>}
       </section>
     </div>
   );

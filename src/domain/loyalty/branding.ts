@@ -7,7 +7,7 @@ export type CardTheme = {
 };
 
 export const DEFAULT_CARD_THEME: CardTheme = {
-  businessName: "Café Nómada",
+  businessName: "Loyalty de iautomexa",
   background: "#172b4d",
   secondary: "#f6bb54",
   text: "#ffffff",

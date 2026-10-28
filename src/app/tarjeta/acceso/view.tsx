@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Wordmark } from "@/components/brand/Logo";
 import { PassportCard } from "@/components/loyalty/PassportCard";
 import { PILOT_CAMPAIGN } from "@/domain/loyalty/campaign";
-import { DEFAULT_CARD_THEME } from "@/domain/loyalty/branding";
 import { customerPaths } from "@/domain/customer/business-route";
-import { PHONE_AUTH_ENABLED, PILOT_BUSINESS_SLUG } from "@/lib/business";
+import { PHONE_AUTH_ENABLED } from "@/lib/business";
 import { getCustomerBusiness } from "@/lib/customer/business";
 import { customerEnrollmentOpen } from "@/lib/customer/availability";
 import { getCustomerSession } from "@/lib/customer/session";
@@ -17,8 +15,8 @@ import styles from "./page.module.css";
 
 export async function CustomerAccessView({ businessSlug, searchParams }: { businessSlug: string; searchParams: Promise<{ salida?: string; eliminada?: string; desactivada?: string }> }) {
   const { salida, eliminada, desactivada } = await searchParams;
-  const isPilot = businessSlug === PILOT_BUSINESS_SLUG;
-  const [session, theme] = await Promise.all([getCustomerSession(businessSlug), isPilot ? DEFAULT_CARD_THEME : getCustomerBusiness(businessSlug)]);
+  const isPilot = businessSlug === "cafe-nomada";
+  const [session, theme] = await Promise.all([getCustomerSession(businessSlug), getCustomerBusiness(businessSlug)]);
   const paths = customerPaths(businessSlug);
   const enrollmentOpen = customerEnrollmentOpen(businessSlug);
   if (session.status === "enrolled") redirect(paths.card);
@@ -37,7 +35,7 @@ export async function CustomerAccessView({ businessSlug, searchParams }: { busin
     <main id="contenido" className={styles.access}>
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <Link href={paths.home} className={styles.brand} aria-label={`${theme.businessName}, ir al inicio`}>{isPilot ? <Wordmark /> : <span className="font-bold text-slate-950">{theme.businessName}</span>}</Link>
+          <Link href={paths.home} className={styles.brand} aria-label="Loyalty de iautomexa, ir al inicio"><span className={styles.brandMark} aria-hidden="true">L</span><span><strong>Loyalty</strong><small>de iautomexa</small></span></Link>
           <Link href={paths.home} className={styles.back}>← <span>Conocer el programa</span></Link>
         </div>
       </header>
@@ -45,9 +43,14 @@ export async function CustomerAccessView({ businessSlug, searchParams }: { busin
       <div className={styles.layout}>
         <aside className={styles.story} aria-labelledby="story-title">
           <div className={styles.storyInner}>
-            <p className={styles.storyKicker}><span aria-hidden="true">✳</span> {theme.businessName.toLocaleUpperCase("es-MX")} · FIDELIDAD</p>
-            <h2 id="story-title">Cada visita tiene<br /><em>algo de regreso.</em></h2>
-            <p className={styles.storyCopy}>Lleva tus sellos contigo, sigue tu avance y disfruta tu próxima recompensa.</p>
+            <p className={styles.storyKicker}><span aria-hidden="true">✳</span> {theme.businessName.toLocaleUpperCase("es-MX")} · TARJETA DIGITAL</p>
+            <h2 id="story-title">Tu próxima recompensa empieza aquí.</h2>
+            <p className={styles.storyCopy}>Una tarjeta para tus visitas, tus sellos y tus recompensas. Siempre a la mano, sin instalar otra aplicación.</p>
+            <ol className={styles.steps} aria-label="Cómo funciona la tarjeta">
+              <li><span>01</span> Entra con un código seguro</li>
+              <li><span>02</span> Presenta tu tarjeta al comprar</li>
+              <li><span>03</span> Revisa tu avance cuando quieras</li>
+            </ol>
             <div className={styles.storyCard}>
               <PassportCard
                 sample
@@ -66,7 +69,7 @@ export async function CustomerAccessView({ businessSlug, searchParams }: { busin
           <div className={styles.formCard}>
             <div className={styles.formTop}>
               <span className={styles.formIcon} aria-hidden="true">✦</span>
-              <p>{disabled ? "REACTIVAR TARJETA" : completing ? "UN ÚLTIMO PASO" : "TU TARJETA DIGITAL"}</p>
+              <p>{disabled ? "REACTIVAR TARJETA" : completing ? "UN ÚLTIMO PASO" : "ACCESO A LOYALTY"}</p>
             </div>
             <h1 id="access-title">{title}</h1>
             <p className={styles.description}>{description}</p>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DailyBars, RankBars } from "@/components/charts/Charts";
 import { Notice } from "@/components/staff/OperationParts";
+import { SectionNav } from "@/components/staff/SectionNav";
 import { rpcErrorMessage } from "@/domain/loyalty/messages";
 import { activeCustomerLabel } from "@/domain/loyalty/customer-display";
 import { formatDateTime, formatMxn, lastDaysRange } from "@/lib/format";
@@ -70,6 +71,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const d = (res?.data?.ok ? res.data : null) as Dashboard | null;
   const operations = (operationsResult?.data?.ok ? operationsResult.data : null) as OperationsDashboard | null;
   const activeCardRows = activeCards?.error ? null : activeCards?.data ?? null;
+  const activeBranchReport = d?.by_branch.find((branch) => branch.id === activeBranch?.id);
   const href = (r: number, demo: boolean) => `/negocio?rango=${r}${demo ? "" : "&demo=0"}`;
 
   return (
@@ -88,13 +90,24 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <Link href="/negocio/finanzas" className="workspace-card group p-4 hover:border-blue-300"><span className="workspace-kicker">Reportes</span><strong className="mt-2 block text-slate-950 group-hover:text-blue-700">Importaciones y gastos →</strong><span className="mt-1 block text-xs text-slate-600">Carga reportes del POS externo y gastos.</span></Link>
       </nav>
 
+      <SectionNav label="Secciones del resumen" items={[{ href: "#operacion-semana", label: "Esta semana" }, { href: "#comparar-sucursales", label: "Comparar sucursales" }, { href: "#clientes-activos", label: "Clientes" }, { href: "#analisis-historico", label: "Análisis histórico" }]} />
+
+      <section id="comparar-sucursales" aria-labelledby="comparar-title" className="workspace-card scroll-mt-24 p-5 sm:p-6">
+        <p className="workspace-kicker">Vista sencilla · últimos {days} días</p>
+        <h2 id="comparar-title" className="mt-1 text-2xl font-semibold text-slate-950">Comparar sucursales</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Aquí se comparan solo los reportes de ventas importados y los gastos registrados. Las ventas de la caja de Loyalty no se suman otra vez para evitar duplicados. Los gastos generales sin sucursal quedan fuera del resultado de cada local.</p>
+        {activeBranch && <p className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-950"><strong>Tu sucursal activa: {activeBranch.name}.</strong> Ventas importadas: {formatMxn(activeBranchReport?.pos_sales_cents ?? 0)} · Gastos: {formatMxn(activeBranchReport?.expenses_cents ?? 0)} · Resultado estimado: {formatMxn((activeBranchReport?.pos_sales_cents ?? 0) - (activeBranchReport?.cogs_cents ?? 0) - (activeBranchReport?.expenses_cents ?? 0))}.</p>}
+        {d?.by_branch.length ? <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[580px] text-left text-sm"><caption className="sr-only">Ventas, gastos y resultado estimado por sucursal</caption><thead className="border-b border-slate-200 text-slate-600"><tr><th scope="col" className="p-3">Sucursal</th><th scope="col" className="p-3 text-right">Ventas importadas</th><th scope="col" className="p-3 text-right">Gastos</th><th scope="col" className="p-3 text-right">Resultado estimado</th></tr></thead><tbody>{d.by_branch.map((branch) => <tr key={branch.id} className={`border-b border-slate-100 ${branch.id === activeBranch?.id ? "bg-blue-50 font-semibold" : ""}`}><th scope="row" className="p-3 text-slate-900">{branch.name}{branch.is_demo ? " · DEMO" : ""}{branch.id === activeBranch?.id ? " · activa" : ""}</th><td className="p-3 text-right tabular-nums">{formatMxn(branch.pos_sales_cents)}</td><td className="p-3 text-right tabular-nums">{formatMxn(branch.expenses_cents)}</td><td className="p-3 text-right tabular-nums">{formatMxn(branch.pos_sales_cents - branch.cogs_cents - branch.expenses_cents)}</td></tr>)}</tbody></table></div> : <p className="mt-4 text-sm text-slate-600">Aún no hay datos de sucursales para comparar.</p>}
+        <p className="mt-3 text-xs text-slate-500">Resultado estimado = ventas importadas − costos conocidos − gastos asignados. Si faltan costos, la ganancia real puede ser menor.</p>
+      </section>
+
       {!d ? <Notice tone="error" title={rpcErrorMessage(res?.data?.code)} /> : null}
 
-      <section aria-labelledby="clientes-activos" className="workspace-card p-5 sm:p-6">
+      <section id="clientes-activos" aria-labelledby="clientes-activos-title" className="workspace-card scroll-mt-24 p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="workspace-kicker">Fidelidad · total histórico</p>
-            <h2 id="clientes-activos" className="mt-1 text-2xl font-semibold text-slate-950">Clientes con tarjeta activa</h2>
+            <h2 id="clientes-activos-title" className="mt-1 text-2xl font-semibold text-slate-950">Clientes con tarjeta activa</h2>
             <p className="mt-1 text-sm text-slate-600">Solo clientes vigentes de {membership.business_name}; no depende del periodo de ventas.</p>
           </div>
           <Link href="/negocio/clientes" className="btn border border-tabaco/20 px-4 text-tabaco">Ver todos →</Link>
@@ -118,8 +131,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         )}
       </section>
 
-      <section aria-labelledby="operacion-semana" className="workspace-card p-5 sm:p-6">
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="workspace-kicker">Operación en tiempo real · {activeBranch?.name ?? "todas las sucursales"}</p><h2 id="operacion-semana" className="mt-1 text-2xl font-semibold text-slate-950">Esta semana y pendientes</h2><p className="mt-1 text-sm text-slate-600">Ventas de esta caja desde el lunes; no incluye reportes importados del POS externo.</p></div><Link href="/negocio/inventario" className="text-sm font-semibold text-blue-700">Abrir inventario →</Link></div>
+      <section id="operacion-semana" aria-labelledby="operacion-semana-title" className="workspace-card scroll-mt-24 p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="workspace-kicker">Operación en tiempo real · {activeBranch?.name ?? "todas las sucursales"}</p><h2 id="operacion-semana-title" className="mt-1 text-2xl font-semibold text-slate-950">Esta semana y pendientes</h2><p className="mt-1 text-sm text-slate-600">{activeBranch ? `Solo ${activeBranch.name}.` : "Todas las sucursales."} Ventas de esta caja desde el lunes; no incluye reportes importados del POS externo.</p></div><Link href="/negocio/inventario" className="text-sm font-semibold text-blue-700">Abrir inventario →</Link></div>
         {!operations ? <p role="alert" className="mt-4 text-sm text-red-700">No se pudo cargar el tablero operativo. Revisa la conexión y la migración del tablero.</p> : <>
           <dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl bg-blue-50 p-4"><dt className="text-sm text-blue-900">Ventas de caja esta semana</dt><dd className="mt-1 text-2xl font-bold tabular-nums text-blue-950">{formatMxn(Number(operations.weekly_sales_cents))}</dd><p className="text-xs text-blue-900">{operations.weekly_sales_count} venta(s)</p></div>
@@ -134,7 +147,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </>}
       </section>
 
-      <details open={Boolean(params.rango || params.demo)} className="workspace-card p-5 sm:p-6"><summary className="cursor-pointer text-xl font-bold text-slate-950">Análisis histórico e importaciones <span className="ml-2 text-sm font-medium text-slate-500">(opcional)</span></summary>
+      <details id="analisis-historico" open={Boolean(params.rango || params.demo)} className="workspace-card scroll-mt-24 p-5 sm:p-6"><summary className="cursor-pointer text-xl font-bold text-slate-950">Análisis histórico · todas las sucursales <span className="ml-2 text-sm font-medium text-slate-500">(opcional)</span></summary>
         <div className="mt-5 space-y-6">
         <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950"><strong>Fuentes distintas:</strong> este análisis usa reportes externos importados y registros de fidelidad. Las ventas de la caja de Loyalty se muestran arriba y en “Ventas y empleados”; no se suman aquí para evitar duplicarlas.</p>
         <div className="flex flex-wrap items-center gap-2">
@@ -145,11 +158,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
       {d && d.has_demo && includeDemo ? (
         <p className="rounded-2xl bg-mostaza/30 px-4 py-3 text-sm text-tabaco">
-          <strong>Incluye datos DEMO</strong> (ventas, gastos y la sucursal “Angelópolis (DEMO)” son ficticios). Bórralos en{" "}
-          <Link href="/negocio/finanzas" className="font-semibold underline underline-offset-4">
-            Ventas y gastos
-          </Link>
-          .
+          <strong>Incluye reportes ficticios.</strong> Las ventas importadas y los gastos de este entorno ilustran cómo se vería un negocio en operación; no son transacciones reales. Puedes ocultarlos con el filtro superior.
         </p>
       ) : null}
 

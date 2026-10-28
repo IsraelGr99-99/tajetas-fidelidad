@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { LogoMark, Wordmark } from "@/components/brand/Logo";
 import { PassportCard } from "@/components/loyalty/PassportCard";
 import { PILOT_CAMPAIGN } from "@/domain/loyalty/campaign";
-import { PHONE_AUTH_ENABLED } from "@/lib/business";
+import { PHONE_AUTH_ENABLED, PILOT_BUSINESS_SLUG } from "@/lib/business";
 import styles from "./page.module.css";
 
 const BUSINESS_URL = "https://iautomexa.com";
@@ -42,6 +43,7 @@ const rules = [
 ];
 
 export default function CafeNomadaPage() {
+  if (PILOT_BUSINESS_SLUG !== "cafe-nomada") notFound();
   return (
     <div className={styles.site}>
       <header className={styles.header}>

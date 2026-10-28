@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Notice } from "@/components/staff/OperationParts";
+import { SectionNav } from "@/components/staff/SectionNav";
 import { DEFAULT_CARD_THEME } from "@/domain/loyalty/branding";
 import { formatDateTime, formatMxn } from "@/lib/format";
 import { requireCapability } from "@/lib/staff/session";
@@ -8,6 +10,7 @@ import { CampaignForm } from "./CampaignForm";
 import { CardThemeForm } from "./CardThemeForm";
 
 export const metadata: Metadata = { title: "Campaña" };
+const VERSION_PAGE_SIZE = 8;
 
 type Version = {
   id: string;
@@ -25,7 +28,9 @@ type Version = {
   change_reason: string | null;
 };
 
-export default async function CampaignPage() {
+export default async function CampaignPage({ searchParams }: { searchParams: Promise<{ pagina?: string }> }) {
+  const rawPage = (await searchParams).pagina;
+  const requestedPage = typeof rawPage === "string" && /^[1-9]\d{0,3}$/.test(rawPage) ? Number(rawPage) : 1;
   const { membership } = await requireCapability("manage_campaigns");
   const supabase = await createSupabaseServerClient();
   const themeResult = await supabase?.from("businesses").select("name,card_background_color,card_secondary_color,card_text_color,card_logo_path").eq("id", membership.business_id).single();
@@ -49,6 +54,9 @@ export default async function CampaignPage() {
     : null;
   const list = (versions?.data ?? []) as Version[];
   const current = list[0];
+  const versionPages = Math.max(1, Math.ceil(list.length / VERSION_PAGE_SIZE));
+  const versionPage = Math.min(requestedPage, versionPages);
+  const visibleVersions = list.slice((versionPage - 1) * VERSION_PAGE_SIZE, versionPage * VERSION_PAGE_SIZE);
 
   return (
     <div className="space-y-8">
@@ -60,13 +68,15 @@ export default async function CampaignPage() {
         </p>
       </div>
 
-      {themeResult?.error ? <Notice tone="error" title="El diseño de tarjeta aún no está disponible. Aplica la migración de identidad visual." /> : <CardThemeForm key={themeRow?.card_logo_path ?? "no-logo"} initial={theme} />}
+      <SectionNav label="Secciones del programa" items={[{ href: "#diseno-tarjeta", label: "Diseño de tarjeta" }, { href: "#vigente", label: "Regla actual" }, { href: "#editar-campana", label: "Cambiar regla" }, { href: "#historial-campana", label: "Historial" }]} />
+
+      <div id="diseno-tarjeta" className="scroll-mt-24">{themeResult?.error ? <Notice tone="error" title="El diseño de tarjeta aún no está disponible. Aplica la migración de identidad visual." /> : <CardThemeForm key={themeRow?.card_logo_path ?? "no-logo"} initial={theme} />}</div>
 
       {!current ? (
         <Notice tone="error" title="No hay una campaña activa configurada." />
       ) : (
         <>
-          <section aria-labelledby="vigente" className="rounded-3xl bg-tabaco p-6 text-crema">
+          <section aria-labelledby="vigente" className="scroll-mt-24 rounded-3xl bg-tabaco p-6 text-crema">
             <p className="bitacora text-mostaza">Versión {current.version} · vigente</p>
             <h2 id="vigente" className="mt-2 text-3xl">
               {current.name}
@@ -81,7 +91,7 @@ export default async function CampaignPage() {
             </p>
           </section>
 
-          <section aria-labelledby="editar-campana" className="rounded-3xl bg-papel p-6">
+          <section aria-labelledby="editar-campana" className="scroll-mt-24 rounded-3xl bg-papel p-6">
             <h2 id="editar-campana" className="text-2xl text-tabaco">
               Cambiar la regla
             </h2>
@@ -102,12 +112,12 @@ export default async function CampaignPage() {
             </div>
           </section>
 
-          <section aria-labelledby="historial-campana">
+          <section aria-labelledby="historial-campana" className="scroll-mt-24">
             <h2 id="historial-campana" className="text-2xl text-tabaco">
               Historial de versiones
             </h2>
             <ol className="mt-4 divide-y divide-tabaco/10 rounded-3xl bg-papel">
-              {list.map((v) => (
+              {visibleVersions.map((v) => (
                 <li key={v.id} className="flex flex-wrap justify-between gap-3 p-4 text-sm">
                   <span className="text-tabaco">
                     <strong>v{v.version}</strong> · {v.stamps_required} compras · espera {Math.round(v.min_seconds_between_earns / 60)} min · máx.{" "}
@@ -120,6 +130,11 @@ export default async function CampaignPage() {
                 </li>
               ))}
             </ol>
+            {versionPages > 1 && <nav aria-label="Páginas del historial de versiones" className="mt-4 flex items-center justify-between gap-3 text-sm">
+              {versionPage > 1 ? <Link href={`/negocio/programa?pagina=${versionPage - 1}#historial-campana`} className="font-semibold text-blue-700">← Anterior</Link> : <span />}
+              <span>Página {versionPage} de {versionPages}</span>
+              {versionPage < versionPages ? <Link href={`/negocio/programa?pagina=${versionPage + 1}#historial-campana`} className="font-semibold text-blue-700">Siguiente →</Link> : <span />}
+            </nav>}
           </section>
         </>
       )}

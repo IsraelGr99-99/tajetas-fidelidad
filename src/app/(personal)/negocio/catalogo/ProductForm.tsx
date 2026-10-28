@@ -105,7 +105,7 @@ export function ProductForm({ product, categories }: { product: ProductValues | 
       <button type="submit" disabled={pending} className="workspace-action disabled:opacity-70">
         {pending ? "Guardando…" : savedId ? "Guardar cambios" : "Agregar producto"}
       </button>
-      {state.ok && !p.id && <p className="text-sm text-slate-700">Siguiente: <a href="/negocio/inventario?vista=recetas" className="font-bold text-blue-700 underline underline-offset-2">configura los ingredientes de este producto</a> para que caja los descuente al vender.</p>}
+      {state.ok && !p.id && state.productId && <p className="text-sm text-slate-700">Siguiente: <a href={`/negocio/inventario?vista=recetas&producto=${encodeURIComponent(state.productId)}#recipe-editor`} className="font-bold text-blue-700 underline underline-offset-2">configura la receta de este producto</a> para que caja descuente sus insumos al vender.</p>}
     </form>
     {savedId && <ProductImageManager key={savedId} productId={savedId} initialUrl={savedImageUrl} />}
     </div>

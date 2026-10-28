@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Wordmark } from "@/components/brand/Logo";
 import { PRIVACY_VERSION } from "@/domain/customer/contact";
 import { formatDate } from "@/lib/format";
+import { PILOT_BUSINESS_SLUG } from "@/lib/business";
 
 export const metadata: Metadata = { title: "Aviso de privacidad" };
 
@@ -11,6 +12,17 @@ export const metadata: Metadata = { title: "Aviso de privacidad" };
  * Si cambia el contenido sustancial, actualizar PRIVACY_VERSION para pedir nueva aceptación.
  */
 export default function PrivacyPage() {
+  if (PILOT_BUSINESS_SLUG !== "cafe-nomada") return (
+    <div className="min-h-dvh bg-[#f3f6fb] px-5 py-10 text-slate-900">
+      <main id="contenido" className="mx-auto max-w-2xl rounded-3xl border border-slate-200 bg-white p-7 shadow-sm sm:p-10">
+        <Link href="/" className="text-sm font-bold text-blue-700">← Loyalty de iautomexa</Link>
+        <h1 className="mt-8 text-3xl font-bold">Privacidad en la demostración</h1>
+        <p className="mt-4 leading-7 text-slate-700">Este entorno usa empresas, productos y cifras ficticias para mostrar el funcionamiento del sistema. El registro público de clientes permanece cerrado.</p>
+        <p className="mt-4 leading-7 text-slate-700">Antes de habilitar tarjetas de clientes para un negocio real se publicará su aviso de privacidad correspondiente y se solicitará el consentimiento aplicable. Esta página no sustituye ese aviso.</p>
+        <Link href="/" className="mt-8 inline-block font-semibold text-blue-700 underline underline-offset-4">Volver al inicio</Link>
+      </main>
+    </div>
+  );
   return (
     <div className="min-h-dvh bg-crema text-tabaco">
       <header className="mx-auto max-w-2xl px-5 py-5">

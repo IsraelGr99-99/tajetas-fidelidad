@@ -71,7 +71,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
         Para administrar el negocio, <Link href="/cuenta/verificacion" className="font-bold underline underline-offset-2">confirma tu identidad</Link>. Caja y fidelidad siguen disponibles.
       </p>}
       {membership.is_demo && <p className="border-b border-blue-100 bg-blue-50 px-4 py-2 text-center text-xs font-semibold text-blue-950">
-        Entorno de demostración · productos y cifras marcados DEMO no son datos reales
+        Entorno de demostración · las empresas, productos y cifras de ejemplo son ficticios
       </p>}
 
       <main id="contenido" className="mx-auto max-w-[80rem] px-4 pb-28 pt-7 sm:px-8 lg:pb-14 lg:pt-9">{children}</main>

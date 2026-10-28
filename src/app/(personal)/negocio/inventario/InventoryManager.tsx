@@ -21,10 +21,11 @@ type RecipeRow = { id: number; itemId: string; quantity: string };
 const inputClass = "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-950";
 const secondaryClass = "min-h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:border-blue-400 hover:text-blue-700";
 
-export function InventoryManager({ businessId, branches, initialBranchId, initialView, initialManageMode, data, catalog }: {
-  businessId: string; branches: Branch[]; initialBranchId: string | null; initialView: View; initialManageMode: ManageMode; data: Data; catalog: CatalogProduct[] | null;
+export function InventoryManager({ businessId, branches, initialBranchId, initialView, initialManageMode, initialProductId, data, catalog }: {
+  businessId: string; branches: Branch[]; initialBranchId: string | null; initialView: View; initialManageMode: ManageMode; initialProductId: string | null; data: Data; catalog: CatalogProduct[] | null;
 }) {
   const router = useRouter();
+  const selectedProductId = initialProductId ?? data.products[0]?.id ?? "";
   const [view, setView] = useState<View>(initialView);
   const [manageMode, setManageMode] = useState<ManageMode>(initialManageMode);
   const [branchId, setBranchId] = useState(initialBranchId ?? branches[0]?.id ?? "");
@@ -37,8 +38,8 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
   const [delta, setDelta] = useState("");
   const [minimum, setMinimum] = useState("0");
   const [reason, setReason] = useState("");
-  const [productId, setProductId] = useState(data.products[0]?.id ?? "");
-  const [recipeRows, setRecipeRows] = useState<RecipeRow[]>(() => rowsForProduct(data, data.products[0]?.id ?? ""));
+  const [productId, setProductId] = useState(selectedProductId);
+  const [recipeRows, setRecipeRows] = useState<RecipeRow[]>(() => rowsForProduct(data, selectedProductId));
   const [nextRecipeId, setNextRecipeId] = useState(31);
   const [recipeFilter, setRecipeFilter] = useState("");
   const [recipePage, setRecipePage] = useState(1);
@@ -110,7 +111,7 @@ export function InventoryManager({ businessId, branches, initialBranchId, initia
       </label>
     </header>
 
-    <nav aria-label="Secciones del inventario" className="grid gap-2 rounded-2xl border border-slate-200 bg-white p-2 sm:grid-cols-3">
+    <nav aria-label="Secciones del inventario" className="sticky top-16 z-20 grid gap-2 rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur-lg sm:grid-cols-3">
       {([
         ["stock", "Ver existencias", `${items.length} insumos · ${lowBalances.length} en mínimo`],
         ["manage", "Agregar o corregir", "Insumos y cantidades"],

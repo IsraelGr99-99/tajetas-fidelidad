@@ -78,14 +78,14 @@ export type Json = Record<string, unknown>;
 export class TestDb {
   private constructor(readonly pg: PGlite) {}
 
-  static async create(options: { storage?: boolean } = {}): Promise<TestDb> {
+  static async create(options: { storage?: boolean; seed?: boolean } = {}): Promise<TestDb> {
     const pg = new PGlite();
     await pg.exec(SUPABASE_STUB);
     if (options.storage) await pg.exec(STORAGE_STUB);
     for (const file of readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).sort()) {
       await pg.exec(readFileSync(path.join(MIGRATIONS_DIR, file), "utf8"));
     }
-    await pg.exec(readFileSync(path.join(ROOT, "supabase/seed.sql"), "utf8"));
+    if (options.seed !== false) await pg.exec(readFileSync(path.join(ROOT, "supabase/seed.sql"), "utf8"));
     return new TestDb(pg);
   }
 

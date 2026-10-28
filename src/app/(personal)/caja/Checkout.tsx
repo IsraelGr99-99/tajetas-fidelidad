@@ -13,6 +13,7 @@ type Product = { id: string; name: string; category: string; price_cents: number
   recipeConfigured: boolean; missingIngredients: { name: string; unit: string; needed: number; in_stock: number }[] };
 type Payment = "cash" | "card_manual" | "transfer_manual";
 const searchKey = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es-MX");
+const PAGE_SIZE = 8;
 
 export function Checkout({ branchId, branchName, products }: { branchId: string; branchName: string; products: Product[] }) {
   const router = useRouter();
@@ -20,6 +21,7 @@ export function Checkout({ branchId, branchName, products }: { branchId: string;
   const [cart, setCart] = useState<Record<string, number>>({});
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
+  const [productPage, setProductPage] = useState(1);
   const [payment, setPayment] = useState<Payment>("cash");
   const [cashReceived, setCashReceived] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -69,6 +71,9 @@ export function Checkout({ branchId, branchName, products }: { branchId: string;
 
   const categories = useMemo(() => [...new Set(products.map((product) => product.category))].sort((a, b) => a.localeCompare(b, "es-MX")), [products]);
   const visibleProducts = useMemo(() => products.filter((product) => (!category || product.category === category) && searchKey(product.name).includes(searchKey(query))), [products, query, category]);
+  const productPages = Math.max(1, Math.ceil(visibleProducts.length / PAGE_SIZE));
+  const currentProductPage = Math.min(productPage, productPages);
+  const pagedProducts = visibleProducts.slice((currentProductPage - 1) * PAGE_SIZE, currentProductPage * PAGE_SIZE);
   const unavailableCount = products.filter((product) => product.available <= 0).length;
   const lines = useMemo(() => products.filter((product) => cart[product.id] > 0).map((product) => ({ product_id: product.id, quantity: cart[product.id], name: product.name, price_cents: product.price_cents })), [cart, products]);
   const total = lines.reduce((sum, line) => sum + line.quantity * line.price_cents, 0);
@@ -176,17 +181,18 @@ export function Checkout({ branchId, branchName, products }: { branchId: string;
         <Link href="/barra" className="workspace-action-secondary">Ir a fidelidad →</Link>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#e7dbcd] bg-[#fff8ef]/90 px-4 py-3 text-sm text-[#60442e]">
-        <span aria-hidden="true" className="text-xl">☕</span><span><strong>Pedido → cobro → fidelidad.</strong> El inventario se descuenta al guardar la venta.</span>
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950">
+        <span aria-hidden="true" className="text-xl">✦</span><span><strong>Pedido → cobro → fidelidad.</strong> El inventario se descuenta al guardar la venta.</span>
       </div>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="workspace-card overflow-hidden p-5 sm:p-6" aria-labelledby="catalog-title">
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="workspace-kicker">Elige el pedido</p><h2 id="catalog-title" className="mt-1 text-2xl font-bold text-[#30251f]">Productos</h2></div><span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-[#704b2c]">{products.length} productos</span></div>
-          <label className="mt-5 block"><span className="text-sm font-semibold text-slate-700">Buscar producto</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Escribe el nombre del producto" className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-amber-600 focus:ring-2 focus:ring-amber-100" /></label>
-          {categories.length > 1 && <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Filtrar por categoría">{["", ...categories].map((entry) => <button key={entry || "all"} type="button" aria-pressed={category === entry} onClick={() => setCategory(entry)} className={`min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors ${category === entry ? "border-[#69412a] bg-[#69412a] text-white" : "border-[#e1d4c7] bg-white text-[#60442e] hover:bg-amber-50"}`}>{entry || "Todos"}</button>)}</div>}
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="workspace-kicker">Elige el pedido</p><h2 id="catalog-title" className="mt-1 text-2xl font-bold text-slate-950">Productos</h2></div><span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-800">{products.length} productos</span></div>
+          <label className="mt-5 block"><span className="text-sm font-semibold text-slate-700">Buscar producto</span><input type="search" value={query} onChange={(event) => { setQuery(event.target.value); setProductPage(1); }} placeholder="Escribe el nombre del producto" className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100" /></label>
+          {categories.length > 1 && <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Filtrar por categoría">{["", ...categories].map((entry) => <button key={entry || "all"} type="button" aria-pressed={category === entry} onClick={() => { setCategory(entry); setProductPage(1); }} className={`min-h-10 shrink-0 cursor-pointer rounded-full border px-4 text-sm font-semibold transition-colors ${category === entry ? "border-blue-700 bg-blue-700 text-white" : "border-blue-100 bg-white text-blue-800 hover:bg-blue-50"}`}>{entry || "Todos"}</button>)}</div>}
           {unavailableCount > 0 && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"><strong>{unavailableCount} producto{unavailableCount === 1 ? "" : "s"} no disponible{unavailableCount === 1 ? "" : "s"}.</strong> Revisa las tarjetas para ver qué ingrediente falta o si necesitan receta.</p>}
-          {visibleProducts.length === 0 ? <p className="mt-6 text-sm text-slate-600">No hay productos que coincidan con tu búsqueda.</p> : <div className="mt-5 grid gap-3 sm:grid-cols-2">{visibleProducts.map((product) => <ProductCard key={product.id} product={product} quantity={cart[product.id] ?? 0} blocked={busy || uncertain || completed !== null} onQuantity={changeQuantity} />)}</div>}
+          {visibleProducts.length === 0 ? <p className="mt-6 text-sm text-slate-600">No hay productos que coincidan con tu búsqueda.</p> : <><div className="mt-5 grid gap-3 sm:grid-cols-2">{pagedProducts.map((product) => <ProductCard key={product.id} product={product} quantity={cart[product.id] ?? 0} blocked={busy || uncertain || completed !== null} onQuantity={changeQuantity} />)}</div>
+            {productPages > 1 && <nav aria-label="Páginas de productos" className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-blue-100 pt-4 text-sm"><button type="button" disabled={currentProductPage === 1} onClick={() => setProductPage(currentProductPage - 1)} className="min-h-10 cursor-pointer rounded-xl border border-blue-200 px-4 font-semibold text-blue-800 disabled:cursor-not-allowed disabled:opacity-40">← Anterior</button><span className="text-slate-600">Página {currentProductPage} de {productPages}</span><button type="button" disabled={currentProductPage === productPages} onClick={() => setProductPage(currentProductPage + 1)} className="min-h-10 cursor-pointer rounded-xl border border-blue-200 px-4 font-semibold text-blue-800 disabled:cursor-not-allowed disabled:opacity-40">Siguiente →</button></nav>}</>}
         </section>
 
         <aside id="resumen-cobro" className="workspace-card scroll-mt-5 p-5 lg:sticky lg:top-6" aria-labelledby="checkout-title">
@@ -222,15 +228,15 @@ export function Checkout({ branchId, branchName, products }: { branchId: string;
 
 function ProductCard({ product, quantity, blocked, onQuantity }: { product: Product; quantity: number; blocked: boolean; onQuantity: (id: string, delta: number) => void }) {
   const available = product.available > 0;
-  return <article className={`rounded-2xl border p-3 transition-all duration-150 ${available ? "border-[#e8ddd1] bg-white shadow-[0_5px_18px_rgba(71,47,29,0.05)] hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-[0_12px_26px_rgba(71,47,29,0.1)]" : "border-amber-200 bg-amber-50/70"}`}>
+  return <article className={`rounded-2xl border p-3 transition-all duration-150 ${available ? "border-blue-100 bg-gradient-to-br from-white to-blue-50/70 shadow-[0_5px_18px_rgba(30,64,175,0.06)] hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-[0_12px_26px_rgba(30,64,175,0.12)]" : "border-slate-200 bg-slate-50"}`}>
     <div className="flex gap-3">
       <ProductThumbnail src={product.imageUrl} />
-      <div className="min-w-0 flex-1"><p className="text-xs font-semibold uppercase tracking-wide text-[#8a5a2e]">{product.category}</p><h3 className="mt-1 font-bold leading-5 text-[#30251f]">{product.name}</h3><strong className="mt-2 block text-lg text-[#30251f]">{formatMoney(product.price_cents)}</strong></div>
+      <div className="min-w-0 flex-1"><p className="text-xs font-semibold uppercase tracking-wide text-blue-700">{product.category}</p><h3 className="mt-1 font-bold leading-5 text-slate-950">{product.name}</h3><strong className="mt-2 block text-lg text-slate-950">{formatMoney(product.price_cents)}</strong></div>
     </div>
     {available ? <p className="mt-3 text-xs font-medium text-emerald-800">Disponible · hasta {product.available} {product.available === 1 ? "unidad" : "unidades"}</p>
       : <div className="mt-3 rounded-xl bg-white/80 px-3 py-2 text-xs text-amber-950"><strong>No disponible</strong>
         {!product.recipeConfigured ? <p className="mt-1">Falta configurar la receta.</p> : product.missingIngredients.length > 0 ? <ul className="mt-1 list-inside list-disc">{product.missingIngredients.map((item) => <li key={item.name}>Falta {item.name}: quedan {item.in_stock} {item.unit} y se necesitan {item.needed} {item.unit}</li>)}</ul>
           : <p className="mt-1">Revisa las existencias de sus ingredientes.</p>}</div>}
-    <div className="mt-3 flex items-center justify-end gap-3 border-t border-[#efe7df] pt-3"><button type="button" onClick={() => onQuantity(product.id, -1)} disabled={!quantity || blocked} aria-label={`Quitar ${product.name}`} className="grid h-10 w-10 place-items-center rounded-xl border border-slate-300 bg-white text-xl text-slate-800 hover:border-amber-500 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-40">−</button><span className="min-w-5 text-center font-bold tabular-nums text-[#30251f]">{quantity}</span><button type="button" onClick={() => onQuantity(product.id, 1)} disabled={!available || product.available <= quantity || blocked} aria-label={`Agregar ${product.name}`} className="grid h-10 w-10 place-items-center rounded-xl bg-[#69412a] text-xl text-white shadow-sm hover:bg-[#4b2d1e] disabled:cursor-not-allowed disabled:opacity-40">+</button></div>
+    <div className="mt-3 flex items-center justify-end gap-3 border-t border-blue-100 pt-3"><button type="button" onClick={() => onQuantity(product.id, -1)} disabled={!quantity || blocked} aria-label={`Quitar ${product.name}`} className="grid h-10 w-10 place-items-center rounded-xl border border-blue-200 bg-white text-xl text-blue-800 hover:border-blue-500 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40">−</button><span className="min-w-5 text-center font-bold tabular-nums text-slate-950">{quantity}</span><button type="button" onClick={() => onQuantity(product.id, 1)} disabled={!available || product.available <= quantity || blocked} aria-label={`Agregar ${product.name}`} className="grid h-10 w-10 place-items-center rounded-xl bg-blue-700 text-xl text-white shadow-sm hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-40">+</button></div>
   </article>;
 }

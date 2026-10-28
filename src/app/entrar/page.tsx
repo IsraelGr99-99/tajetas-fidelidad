@@ -35,7 +35,7 @@ export default async function StaffLoginPage({ searchParams }: { searchParams: P
         <div className={styles.formFrame}>{session.status === "not_configured" ? <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm leading-6 text-amber-950"><strong>Acceso no disponible.</strong> Este entorno todavía no tiene conexión con Supabase.</p> : <LoginForm next={next} />}</div>
         <p className={styles.formHelp}>Este acceso es solo para personal autorizado. Si necesitas una cuenta, solicita una invitación al administrador de tu negocio.</p>
       </div>
-      <div className={styles.formFoot}><span>© iautomexa Loyalty</span><Link href="/c/cafe-nomada">¿Buscas tu tarjeta de cliente? →</Link></div>
+      <div className={styles.formFoot}><span>© iautomexa Loyalty</span><Link href="/">Conocer Loyalty →</Link></div>
     </section>
   </main>;
 }

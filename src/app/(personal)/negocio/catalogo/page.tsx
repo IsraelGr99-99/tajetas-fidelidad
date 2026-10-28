@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { ProductImport } from "@/components/imports/Importers";
 import { Notice } from "@/components/staff/OperationParts";
+import { SectionNav } from "@/components/staff/SectionNav";
 import { requireCapability } from "@/lib/staff/session";
+import { demoProductImage } from "@/lib/demo-product-images";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { CatalogList, type CatalogRow } from "./CatalogList";
 import { CategoryManager } from "./CategoryManager";
@@ -13,17 +15,23 @@ export const metadata: Metadata = { title: "Catálogo" };
 export default async function CatalogPage() {
   const { membership } = await requireCapability("manage_campaigns");
   const supabase = await createSupabaseServerClient();
-  const [catalogResult, categoryResult] = await Promise.all([
+  const [catalogResult, categoryResult, inventoryResult] = await Promise.all([
     supabase?.rpc("admin_catalog", { p_business_id: membership.business_id }),
     supabase?.from("product_categories").select("name").eq("business_id", membership.business_id).order("name"),
+    supabase?.rpc("inventory_overview", { p_business_id: membership.business_id }),
   ]);
   const { data, error } = catalogResult ?? { data: null, error: true };
   const products = ((data?.ok ? data.products : []) as (Omit<CatalogRow, "image_url"> & { image_path?: string | null })[])
     .map((product): CatalogRow => ({ ...product, image_url: product.image_path && supabase
-      ? supabase.storage.from("product-photos").getPublicUrl(product.image_path).data.publicUrl : null }));
+      ? supabase.storage.from("product-photos").getPublicUrl(product.image_path).data.publicUrl
+      : membership.is_demo ? demoProductImage(membership.business_id, product.name) : null }));
   const categories = categoryResult?.error ? [...new Set(products.map((p) => p.category))] : (categoryResult?.data ?? []).map((c) => c.name);
   const hasSamples = products.some((p) => p.name.includes("(ejemplo)") || p.name.includes("(DEMO)"));
   const withoutCost = products.filter((p) => p.active && p.cost_cents === null).length;
+  const inventory = inventoryResult?.data?.ok ? inventoryResult.data as {
+    items: { id: string; name: string; unit: string }[];
+    recipes: { product_id: string; item_id: string; quantity: number }[];
+  } : null;
 
   return (
     <div className="space-y-8">
@@ -46,13 +54,9 @@ export default async function CatalogPage() {
         </Notice>
       ) : null}
 
-      <nav aria-label="Acciones del catálogo" className="flex flex-wrap gap-2 text-sm font-semibold">
-        <a href="#nuevo-producto" className="workspace-action">+ Nuevo producto</a>
-        <a href="#categorias" className="workspace-action-secondary">Categorías</a>
-        <a href="#importar-catalogo" className="workspace-action-secondary">Importar Excel</a>
-      </nav>
+      <SectionNav label="Secciones del catálogo" items={[{ href: "#lista-productos", label: "Productos" }, { href: "#nuevo-producto", label: "+ Nuevo producto" }, { href: "#categorias", label: "Categorías" }, { href: "#importar-catalogo", label: "Importar Excel" }, { href: "#calculadora", label: "Calculadora" }]} />
 
-      <CatalogList products={products} categories={categories} />
+      <CatalogList products={products} categories={categories} recipes={inventory?.recipes ?? null} />
 
       <section id="nuevo-producto" className="workspace-card scroll-mt-24 p-5 sm:p-6">
         <h2 className="text-xl font-semibold text-tabaco">Agregar producto o variante</h2>
@@ -63,7 +67,7 @@ export default async function CatalogPage() {
       <section id="categorias" className="scroll-mt-24"><CategoryManager categories={categories} /></section>
       <details id="importar-catalogo" className="workspace-card scroll-mt-24 p-5 sm:p-6"><summary className="cursor-pointer text-lg font-semibold text-slate-950">Importar catálogo desde Excel</summary>
         <div className="mt-5"><ProductImport existingNames={products.map((p) => p.name)} /></div></details>
-      <PricingCalculator />
+      <div id="calculadora" className="scroll-mt-24"><PricingCalculator products={products.map((product) => ({ id: product.id, name: product.name, priceCents: product.price_cents, costCents: product.cost_cents }))} items={inventory?.items ?? []} recipes={inventory?.recipes ?? []} /></div>
       <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-950"><strong>Siguiente paso:</strong> cuando el producto esté listo, <a href="/negocio/inventario?vista=recetas" className="font-bold underline">define su receta</a> para habilitarlo en caja.</p>
     </div>
   );

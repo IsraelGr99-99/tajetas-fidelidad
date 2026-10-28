@@ -20,9 +20,9 @@ const catalogSchema = z.object({
   })),
 });
 
-export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ vista?: string }> }) {
+export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ vista?: string; producto?: string }> }) {
   const params = await searchParams;
-  const initialView = params.vista === "recetas" ? "recipes" : ["gestionar", "ajustar", "importar"].includes(params.vista ?? "") ? "manage" : "stock";
+  const initialView = params.vista === "recetas" || params.producto ? "recipes" : ["gestionar", "ajustar", "importar"].includes(params.vista ?? "") ? "manage" : "stock";
   const initialManageMode = params.vista === "ajustar" ? "adjust" : params.vista === "importar" ? "import" : "create";
   const { membership, activeBranch } = await requireCapability("manage_staff");
   const supabase = await createSupabaseServerClient();
@@ -35,5 +35,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const parsed = dataSchema.safeParse(data);
   if (!parsed.success) return <p>No se pudo leer el inventario.</p>;
   const catalog = catalogSchema.safeParse(catalogResult.data);
-  return <InventoryManager key={params.vista ?? "stock"} businessId={membership.business_id} branches={membership.branches} initialBranchId={activeBranch?.id ?? null} initialView={initialView} initialManageMode={initialManageMode} data={parsed.data} catalog={catalog.success ? catalog.data.products : null} />;
+  const requestedProduct = z.uuid().safeParse(params.producto);
+  const initialProductId = requestedProduct.success && parsed.data.products.some((product) => product.id === requestedProduct.data)
+    ? requestedProduct.data : null;
+  return <InventoryManager key={`${params.vista ?? "stock"}:${initialProductId ?? ""}`} businessId={membership.business_id} branches={membership.branches} initialBranchId={activeBranch?.id ?? null} initialView={initialView} initialManageMode={initialManageMode} initialProductId={initialProductId} data={parsed.data} catalog={catalog.success ? catalog.data.products : null} />;
 }
