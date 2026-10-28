@@ -5,20 +5,20 @@ import { expect, test } from "@playwright/test";
  * proveedor de correo). El envío y la verificación del código se prueban a mano.
  */
 test("la tarjeta exige sesión", async ({ page }) => {
-  await page.goto("/tarjeta");
+  await page.goto("/tarjeta", { waitUntil: "domcontentloaded" });
   await expect(page).toHaveURL(/\/tarjeta\/acceso$/);
   await expect(page.getByRole("heading", { name: "Entra o crea tu tarjeta" })).toBeVisible();
 });
 
 test("correo por defecto; teléfono deshabilitado mientras no haya SMS", async ({ page }) => {
-  await page.goto("/tarjeta/acceso");
+  await page.goto("/tarjeta/acceso", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("radio", { name: "Correo" })).toBeChecked();
   await expect(page.getByRole("radio", { name: "Teléfono" })).toBeDisabled();
   await expect(page.getByText("Por ahora el registro es solo con correo.")).toBeVisible();
 });
 
 test("valida el correo antes de enviar", async ({ page }) => {
-  await page.goto("/tarjeta/acceso");
+  await page.goto("/tarjeta/acceso", { waitUntil: "domcontentloaded" });
   await page.getByLabel("Tu correo").fill("ana@");
   await page.getByRole("button", { name: "Enviarme el código" }).click();
   await expect(page.locator("form").getByRole("alert")).toContainText("Escribe un correo válido");
@@ -35,4 +35,14 @@ test("desde la página de Café Nómada se llega al registro", async ({ page }) 
   await page.getByRole("link", { name: "Quiero mi tarjeta" }).click();
   // La página de acceso consulta la sesión en Supabase: dar margen a la red.
   await expect(page).toHaveURL(/\/tarjeta\/acceso$/, { timeout: 15_000 });
+});
+
+test("el acceso distingue la tarjeta de ejemplo del formulario real sin desbordarse", async ({ page }) => {
+  await page.goto("/tarjeta/acceso", { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { level: 1, name: "Entra o crea tu tarjeta" })).toBeVisible();
+  await expect(page.getByRole("figure", { name: /Tarjeta de fidelidad de ejemplo/ })).toBeVisible();
+  await expect(page.getByText("Tus sellos reales aparecen después de entrar.")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Tu correo" })).toBeVisible();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
 });

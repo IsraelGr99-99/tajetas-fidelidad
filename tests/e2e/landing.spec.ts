@@ -78,6 +78,15 @@ test("la página de Café Nómada presenta el programa con CTA hacia iautomexa",
   await expect(page.getByRole("link", { name: "Crear mi tarjeta" })).toHaveAttribute("href", "/tarjeta/acceso");
 });
 
+test("el piloto explica el recorrido y las condiciones sin desbordarse", async ({ page }) => {
+  await page.goto("/c/cafe-nomada");
+  await expect(page.locator("#como-funciona ol > li")).toHaveCount(3);
+  await expect(page.getByRole("heading", { name: "El buen café no necesita letra pequeña." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Conoce cómo cuidamos tus datos" })).toHaveAttribute("href", "/privacidad");
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
 test("navegación por teclado: enlace para saltar al contenido", async ({ page, isMobile }) => {
   test.skip(isMobile, "Solo aplica con teclado físico");
   await page.goto("/");
