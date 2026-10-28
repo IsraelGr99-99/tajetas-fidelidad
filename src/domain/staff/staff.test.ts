@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { type Membership, can, resolveActiveBranch, staffContextSchema } from "./permissions";
+import { type Membership, can, resolveActiveBranch, resolveActiveMembership, staffContextSchema } from "./permissions";
 import { CONSOLE_HOME, safeNextPath } from "./routes";
 
 describe("permisos por rol (espejo de las funciones SQL)", () => {
@@ -50,6 +50,21 @@ describe("sucursal activa", () => {
   test("valida el contrato de get_staff_context", () => {
     expect(staffContextSchema.safeParse({ ok: true, memberships: [membership] }).success).toBe(true);
     expect(staffContextSchema.safeParse({ ok: true, memberships: [{ ...membership, role: "root" }] }).success).toBe(false);
+  });
+});
+
+describe("negocio activo", () => {
+  const other: Membership = { ...membership, business_id: "00000000-0000-4000-8000-000000000002", business_slug: "heladeria-sol", branches: [] };
+  test("una sola membresía se selecciona sola", () => {
+    expect(resolveActiveMembership([membership], undefined)).toBe(membership);
+  });
+  test("dos membresías requieren elección explícita", () => {
+    expect(resolveActiveMembership([membership, other], undefined)).toBeNull();
+    expect(resolveActiveMembership([membership, other], other.business_id)).toBe(other);
+  });
+  test("cookie de negocio revocado no concede acceso", () => {
+    expect(resolveActiveMembership([membership], other.business_id)).toBeNull();
+    expect(resolveActiveBranch(other, membership.branches[0].id)).toBeNull();
   });
 });
 

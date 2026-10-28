@@ -23,10 +23,12 @@ export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   // Tarjeta del cliente: sin sesión, al acceso con código.
-  const isCard = pathname === "/tarjeta" || (pathname.startsWith("/tarjeta/") && pathname !== "/tarjeta/acceso");
+  const tenantCard = pathname.match(/^\/c\/([a-z0-9]+(?:-[a-z0-9]+)*)\/tarjeta(?:\/(.*))?$/);
+  const isCard = pathname === "/tarjeta" || (pathname.startsWith("/tarjeta/") && pathname !== "/tarjeta/acceso")
+    || Boolean(tenantCard && tenantCard[2] !== "acceso");
   if (isCard && !userId) {
     const url = request.nextUrl.clone();
-    url.pathname = "/tarjeta/acceso";
+    url.pathname = tenantCard ? `/c/${tenantCard[1]}/tarjeta/acceso` : "/tarjeta/acceso";
     url.search = "";
     return NextResponse.redirect(url);
   }

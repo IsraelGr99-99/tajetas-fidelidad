@@ -33,7 +33,7 @@ describe("acceso anónimo", () => {
     expect(rows.map((r) => r.slug)).toContain("cafe-nomada");
   });
 
-  test.each(["record_earn", "redeem_reward", "get_my_card", "adjust_stamps"])("anon no puede ejecutar %s", async (fn) => {
+  test.each(["record_earn", "redeem_reward", "get_my_card", "adjust_stamps", "create_demo_business"])("anon no puede ejecutar %s", async (fn) => {
     await expect(db.as(null, `select public.${fn}()`)).rejects.toThrow(/permission denied|does not exist/);
   });
 
@@ -232,7 +232,10 @@ describe("rate limiting", () => {
   test("limita la emisión de códigos QR por usuario", async () => {
     const c = await db.createCustomer();
     const results = [];
-    for (let i = 0; i < 31; i++) results.push(await db.rpc(c.userId, "issue_scan_token", [c.cardId, "identify", ticketHash(), 60]));
-    expect(results.at(-1)).toMatchObject({ ok: false, code: "rate_limited" });
+    // El límite usa ventanas fijas: si la prueba cruza el minuto, la última
+    // llamada puede caer en la ventana nueva. 61 solicitudes garantizan que
+    // alguna ventana rebase el máximo de 30, aun cruzando una frontera.
+    for (let i = 0; i < 61; i++) results.push(await db.rpc(c.userId, "issue_scan_token", [c.cardId, "identify", ticketHash(), 60]));
+    expect(results.some((result) => result.code === "rate_limited")).toBe(true);
   });
 });

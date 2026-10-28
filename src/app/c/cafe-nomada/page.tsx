@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { LogoMark, Wordmark } from "@/components/brand/Logo";
 import { PassportCard } from "@/components/loyalty/PassportCard";
@@ -6,6 +7,12 @@ import { PHONE_AUTH_ENABLED } from "@/lib/business";
 import styles from "./page.module.css";
 
 const BUSINESS_URL = "https://iautomexa.com";
+
+export const metadata: Metadata = {
+  title: "Café Nómada · tarjeta de fidelidad",
+  description: "Tarjeta de fidelidad digital de Café Nómada en San Pedro Cholula.",
+  robots: { index: false, follow: false },
+};
 
 const steps = [
   {

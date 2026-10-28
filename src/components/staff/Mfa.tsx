@@ -42,7 +42,7 @@ export function MfaChallenge({ onDone }: { onDone: () => void }) {
 
   return (
     <form onSubmit={submit} noValidate className="space-y-4">
-      <p className="leading-7 text-tabaco/80">Abre tu app de autenticación (Google Authenticator, 1Password, etc.) y escribe el código de Café Nómada.</p>
+      <p className="leading-7 text-tabaco/80">Abre tu app de autenticación (Google Authenticator, 1Password, etc.) y escribe el código de Loyalty.</p>
       <div>
         <label htmlFor="totp" className="block text-sm font-semibold text-tabaco">
           Código de 6 dígitos
@@ -86,7 +86,7 @@ export function MfaSetup() {
     // Limpia intentos anteriores sin terminar.
     const { data: list } = await supabase.auth.mfa.listFactors();
     for (const f of list?.all ?? []) if (f.status === "unverified") await supabase.auth.mfa.unenroll({ factorId: f.id });
-    const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Café Nómada ${new Date().toISOString().slice(0, 10)}` });
+    const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Loyalty ${new Date().toISOString().slice(0, 10)}` });
     setBusy(false);
     if (enrollError || !data) return setError("No se pudo iniciar la activación. Verifica que la autenticación en dos pasos esté habilitada en el proyecto.");
     setSetup({ state: "enrolling", factorId: data.id, qr: data.totp.qr_code, secret: data.totp.secret });

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { type FormState, enrollAction } from "../actions";
 
-export function ProfileForm({ contactLabel }: { contactLabel: string | null }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(enrollAction, { error: null });
+export function ProfileForm({ contactLabel, businessSlug, businessName }: { contactLabel: string | null; businessSlug: string; businessName: string }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(enrollAction.bind(null, businessSlug), { error: null });
   const [birthdayOffer, setBirthdayOffer] = useState(false);
 
   return (
@@ -15,7 +15,7 @@ export function ProfileForm({ contactLabel }: { contactLabel: string | null }) {
       ) : null}
       <div>
         <label htmlFor="displayName" className="block text-sm font-semibold text-tabaco">
-          ¿Cómo te llamamos en la barra? <span className="font-normal text-tabaco/75">(opcional)</span>
+          ¿Cómo te llamamos? <span className="font-normal text-tabaco/75">(opcional)</span>
         </label>
         <input
           id="displayName"
@@ -25,7 +25,7 @@ export function ProfileForm({ contactLabel }: { contactLabel: string | null }) {
           disabled={pending}
           className="mt-2 block min-h-12 w-full rounded-xl border border-tabaco/25 bg-papel px-4 text-base text-tinta outline-none focus:border-tabaco focus-visible:outline-3 focus-visible:outline-mostaza"
         />
-        <p className="mt-2 text-sm text-tabaco/75">Solo tu nombre de pila o apodo. El barista lo verá al escanear tu código.</p>
+        <p className="mt-2 text-sm text-tabaco/75">Solo tu nombre de pila o apodo. El personal lo verá al escanear tu código.</p>
       </div>
 
       <label className="flex gap-3 rounded-2xl border border-tabaco/15 bg-papel p-4 text-sm leading-6 text-tabaco">
@@ -42,7 +42,7 @@ export function ProfileForm({ contactLabel }: { contactLabel: string | null }) {
       <fieldset className="rounded-2xl border border-tabaco/15 bg-papel p-4 text-sm text-tabaco">
         <legend className="px-1 font-semibold">Cumpleaños (opcional)</legend>
         <label className="flex items-start gap-3 leading-6"><input type="checkbox" name="birthdayOffer" checked={birthdayOffer} onChange={(e) => setBirthdayOffer(e.target.checked)} disabled={pending} className="mt-1 h-5 w-5 shrink-0 accent-[#3d2c24]" />
-          <span>Acepto guardar solo mi día y mes de cumpleaños para una futura promoción de Café Nómada. Puedo retirarlo después; no es requisito para tener mi tarjeta.</span>
+          <span>Acepto guardar solo mi día y mes de cumpleaños para una futura promoción de {businessName}. Puedo retirarlo después; no es requisito para tener mi tarjeta.</span>
         </label>
         {birthdayOffer && <div className="mt-4 flex flex-wrap gap-3">
           <label className="grid gap-1">Mes<input type="number" name="birthMonth" min={1} max={12} required disabled={pending} className="min-h-11 w-24 rounded-xl border border-tabaco/25 px-3" /></label>

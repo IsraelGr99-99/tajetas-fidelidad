@@ -7,7 +7,7 @@ import { requireStaff } from "@/lib/staff/session";
 
 /** Navegación orientada a tareas: operación diaria primero, administración después. */
 export default async function ConsoleLayout({ children }: { children: React.ReactNode }) {
-  const { membership, activeBranch } = await requireStaff();
+  const { membership, memberships, activeBranch } = await requireStaff();
   const role = membership.role;
   const home: NavItem = { href: "/inicio", label: "Inicio", icon: "home" };
   const cash: NavItem = { href: "/caja", label: "Caja", icon: "cart" };
@@ -43,6 +43,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
       <div className="mb-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-violet-50 px-4 py-3">
         <p className="text-[0.68rem] font-semibold uppercase tracking-wider text-blue-700">Tu negocio</p>
         <p className="mt-1 truncate text-sm font-semibold text-slate-900">{membership.business_name}</p>
+        {memberships.length > 1 ? <Link href="/cuenta" className="mt-2 inline-block text-xs font-bold text-blue-700 hover:underline">Cambiar negocio →</Link> : null}
       </div>
       <nav aria-label="Navegación del espacio de trabajo" className="flex-1"><SideNav groups={groups} light /></nav>
       <div className="mt-8 space-y-3 border-t border-slate-200 pt-5">

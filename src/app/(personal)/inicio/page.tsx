@@ -16,7 +16,8 @@ type Inventory = {
   balances: { branch_id: string; item_id: string; quantity: number }[];
 };
 
-export default async function WorkspaceHome() {
+export default async function WorkspaceHome({ searchParams }: { searchParams: Promise<{ nuevo?: string }> }) {
+  const { nuevo } = await searchParams;
   const { membership, activeBranch } = await requireStaff();
   const admin = membership.role === "owner" || membership.role === "admin";
   const supabase = admin ? await createSupabaseServerClient() : null;
@@ -53,6 +54,7 @@ export default async function WorkspaceHome() {
             : { href: "/caja", label: "Abrir caja", detail: "Registra una venta cobrada y continúa con fidelidad si el cliente participa." };
 
   return <div className="space-y-7">
+    {nuevo === "1" ? <p role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-950">{membership.business_name} ya tiene un espacio de prueba. Configura su campaña y catálogo antes de invitar a clientes.</p> : null}
     <section className="workspace-card overflow-hidden border-[#dce6f4] bg-[linear-gradient(115deg,#fff_60%,#edf4ff)] p-6 sm:p-8">
       <p className="workspace-kicker">Inicio · {membership.business_name}</p>
       <h1 className="mt-2 max-w-2xl text-3xl text-[#14233b] sm:text-4xl">Todo tu trabajo, en un solo lugar.</h1>

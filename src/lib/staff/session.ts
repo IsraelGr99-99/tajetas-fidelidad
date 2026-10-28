@@ -2,12 +2,13 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { type Capability, type Membership, can, resolveActiveBranch, staffContextSchema } from "@/domain/staff/permissions";
+import { type Capability, type Membership, can, resolveActiveBranch, resolveActiveMembership, staffContextSchema } from "@/domain/staff/permissions";
 import { BRANCH_PICKER_PATH, LOGIN_PATH, NO_ACCESS_PATH, safeNextPath } from "@/domain/staff/routes";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /** Cookie con la sucursal elegida. No es una credencial: el servidor la valida contra los permisos. */
 export const BRANCH_COOKIE = "cn_sucursal";
+export const BUSINESS_COOKIE = "loyalty_business";
 
 export type StaffSession =
   | { status: "not_configured" }
@@ -17,6 +18,7 @@ export type StaffSession =
       status: "staff";
       userId: string;
       email: string | null;
+      memberships: Membership[];
       membership: Membership;
       activeBranch: ReturnType<typeof resolveActiveBranch>;
     };
@@ -48,15 +50,18 @@ export const getStaffSession = cache(async (): Promise<StaffSession> => {
     if (!context.ok) return { status: "anonymous" };
   }
 
-  // Piloto: una empresa por persona. Multiempresa en la UI queda para después; el backend ya lo soporta.
-  const membership = context.memberships[0];
-  if (!membership) return { status: "no_access", userId: claims.sub };
-
   const cookieStore = await cookies();
+  const membership = resolveActiveMembership(context.memberships, cookieStore.get(BUSINESS_COOKIE)?.value);
+  if (!membership) {
+    if (context.memberships.length === 0) return { status: "no_access", userId: claims.sub };
+    // Varias empresas, o preferencia anterior revocada: hay que elegir de nuevo.
+    redirect("/seleccionar-negocio");
+  }
   return {
     status: "staff",
     userId: claims.sub,
     email: typeof claims.email === "string" ? claims.email : null,
+    memberships: context.memberships,
     membership,
     activeBranch: resolveActiveBranch(membership, cookieStore.get(BRANCH_COOKIE)?.value),
   };

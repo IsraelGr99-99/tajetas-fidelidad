@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { type FormState, reactivateMyAccountAction } from "../actions";
 
-export function ReactivateAccount() {
-  const [state, action, pending] = useActionState<FormState, FormData>(reactivateMyAccountAction, { error: null });
+export function ReactivateAccount({ businessSlug }: { businessSlug: string }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(reactivateMyAccountAction.bind(null, businessSlug), { error: null });
   return <form action={action} className="space-y-4">
     <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-tabaco">La reactivación vuelve a habilitar tu QR y el programa de fidelidad. No crea una tarjeta nueva.</p>
     <label className="flex gap-3 rounded-xl border border-tabaco/15 p-4 text-sm leading-6 text-tabaco">

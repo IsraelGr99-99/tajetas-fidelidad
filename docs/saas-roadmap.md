@@ -2,6 +2,8 @@
 
 Estado: diagnóstico de producto, no promesa de disponibilidad. El backend contiene bases multiempresa, pero la experiencia actual todavía está anclada al piloto Café Nómada en rutas, sesión del personal, textos y configuración.
 
+Avance del primer corte (rama `feat/multitenant-core`): selección explícita de empresa para personal, rutas de tarjeta por `slug`, alta controlada de negocios DEMO y pruebas de aislamiento. Sigue **pendiente** el registro público autónomo de la primera empresa, el aviso/consentimiento por negocio, límites/planes, cobro de suscripción y despliegue validado. Por ello no debe anunciarse como SaaS listo para contratar.
+
 ## Diferenciación real
 
 Woncards comunica tarjetas diseñables, Apple/Google Wallet, notificaciones y estadísticas para negocios. Loyalty no debe presentarse como superior por tener solo una tarjeta digital: su oportunidad es conectar **venta verificada → inventario/receta → fidelidad → margen y recompra**, con un flujo sencillo para el personal. Las funciones de Wallet y mensajes solo deben mostrarse como operativas cuando tengan credenciales, aprobación y pruebas reales.

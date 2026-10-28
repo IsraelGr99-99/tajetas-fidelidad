@@ -84,7 +84,7 @@ export function PassportCard({
 
   const route = Array.from({ length: total }, (_, i) => slotPosition(i, total));
 
-  if (theme) return <figure aria-label={`Tarjeta de fidelidad de ${theme.businessName}: ${progress.label}`} className={`relative overflow-hidden rounded-[2rem] p-6 shadow-[0_25px_55px_-25px_rgba(15,23,42,.5)] sm:p-8 ${className ?? ""}`} style={{ backgroundColor: theme.background, color: theme.text }}>
+  if (theme) return <figure aria-label={`Tarjeta de fidelidad${sample ? " de ejemplo" : ""} de ${theme.businessName}: ${progress.label}`} className={`relative overflow-hidden rounded-[2rem] p-6 shadow-[0_25px_55px_-25px_rgba(15,23,42,.5)] sm:p-8 ${className ?? ""}`} style={{ backgroundColor: theme.background, color: theme.text }}>
     <div aria-hidden="true" className="pointer-events-none absolute -right-12 -top-20 h-56 w-56 rounded-full opacity-20 blur-3xl" style={{ backgroundColor: theme.secondary }} />
     <div className="relative flex items-center gap-4">
       {theme.logoUrl ? <Image src={theme.logoUrl} width={64} height={64} alt={`Logo de ${theme.businessName}`} unoptimized className="h-16 w-16 shrink-0 rounded-2xl bg-white object-contain p-1.5" /> : <span aria-hidden="true" className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl text-3xl font-black" style={{ backgroundColor: theme.secondary, color: theme.background }}>{theme.businessName.slice(0, 1)}</span>}

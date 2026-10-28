@@ -17,10 +17,10 @@ const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakart
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
-  title: { default: "Café Nómada · Tarjeta de fidelidad", template: "%s · Café Nómada" },
-  description: "Historias que se cuentan taza a taza. Tu tarjeta de fidelidad digital de Café Nómada, San Pedro Cholula.",
-  applicationName: "Café Nómada Fidelidad",
-  openGraph: { locale: "es_MX", type: "website", siteName: "Café Nómada" },
+  title: { default: "Loyalty · Fidelidad digital de iautomexa", template: "%s · Loyalty" },
+  description: "Tarjetas de fidelidad digitales y un panel para operar programas de recompensas por negocio.",
+  applicationName: "iautomexa Loyalty",
+  openGraph: { locale: "es_MX", type: "website", siteName: "iautomexa Loyalty" },
   // Hasta que se autorice el piloto público, no indexar.
   robots: { index: false, follow: false },
 };

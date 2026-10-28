@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { type BirthdayPreferenceState, updateBirthdayOfferAction } from "@/app/tarjeta/actions";
 
-export function BirthdayOfferPreferences({ optedIn, month, day }: { optedIn: boolean; month: number | null; day: number | null }) {
-  const [state, action, pending] = useActionState<BirthdayPreferenceState, FormData>(updateBirthdayOfferAction, { error: null, success: null });
+export function BirthdayOfferPreferences({ optedIn, month, day, businessSlug }: { optedIn: boolean; month: number | null; day: number | null; businessSlug: string }) {
+  const [state, action, pending] = useActionState<BirthdayPreferenceState, FormData>(updateBirthdayOfferAction.bind(null, businessSlug), { error: null, success: null });
   const [enabled, setEnabled] = useState(optedIn);
   return <section aria-labelledby="cumpleanos-title" className="rounded-[2rem] bg-papel p-6 text-tabaco">
     <h2 id="cumpleanos-title" className="text-2xl">Preferencia de cumpleaños</h2>

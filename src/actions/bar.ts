@@ -68,7 +68,7 @@ const claimResponse = z.object({
 
 export async function claimCardAction(input: { payload: string }): Promise<ClaimResult> {
   const scan = parseScanPayload(String(input?.payload ?? "").slice(0, 200));
-  if (!scan) return { ok: false, error: "Ese código no es una tarjeta de Café Nómada.", code: "token_invalid" };
+  if (!scan) return { ok: false, error: "Ese código no es una tarjeta válida de Loyalty.", code: "token_invalid" };
 
   const ctx = await operatorContext();
   if ("error" in ctx) return ctx.error!;

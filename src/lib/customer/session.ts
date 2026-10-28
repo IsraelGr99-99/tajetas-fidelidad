@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { type MyCard, myCardSchema } from "@/domain/customer/card";
-import { PILOT_BUSINESS_SLUG } from "@/lib/business";
+import { isValidBusinessSlug } from "@/domain/customer/business-route";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type CustomerSession =
@@ -12,7 +12,8 @@ export type CustomerSession =
   | { status: "enrolled"; card: MyCard };
 
 /** Sesión del cliente (JWT verificado) y su tarjeta desde `get_my_card()`, una vez por petición. */
-export const getCustomerSession = cache(async (): Promise<CustomerSession> => {
+export const getCustomerSession = cache(async (businessSlug: string): Promise<CustomerSession> => {
+  if (!isValidBusinessSlug(businessSlug)) return { status: "not_enrolled", contact: null };
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { status: "not_configured" };
 
@@ -20,7 +21,7 @@ export const getCustomerSession = cache(async (): Promise<CustomerSession> => {
   const claims = claimsData?.claims;
   if (!claims?.sub) return { status: "anonymous" };
 
-  const { data, error } = await supabase.rpc("get_my_card", { p_business_slug: PILOT_BUSINESS_SLUG });
+  const { data, error } = await supabase.rpc("get_my_card", { p_business_slug: businessSlug });
   if (error) throw new Error(`get_my_card falló (${error.code ?? "sin código"})`);
   const parsed = myCardSchema.parse(data);
   if (parsed.ok) return { status: "enrolled", card: parsed };
@@ -33,7 +34,7 @@ export const getCustomerSession = cache(async (): Promise<CustomerSession> => {
         ? `+${claims.phone.replace(/^\+/, "")}`
         : null;
   if (parsed.code === "not_enrolled") {
-    const account = await supabase.rpc("get_my_account_status", { p_business_slug: PILOT_BUSINESS_SLUG });
+    const account = await supabase.rpc("get_my_account_status", { p_business_slug: businessSlug });
     if (!account.error && account.data?.status === "disabled") return { status: "disabled", contact };
   }
   return { status: "not_enrolled", contact };

@@ -74,6 +74,12 @@ export const staffContextSchema = z.discriminatedUnion("ok", [
 export type Branch = z.infer<typeof branchSchema>;
 export type Membership = z.infer<typeof membershipSchema>;
 
+/** La cookie solo expresa una preferencia; nunca concede acceso a otro negocio. */
+export function resolveActiveMembership(memberships: Membership[], requestedBusinessId: string | undefined): Membership | null {
+  if (requestedBusinessId) return memberships.find((membership) => membership.business_id === requestedBusinessId) ?? null;
+  return memberships.length === 1 ? memberships[0] : null;
+}
+
 /**
  * Elige la sucursal activa: la guardada en la cookie si sigue siendo válida;
  * si el usuario solo opera una, esa; si no, ninguna (debe elegir).

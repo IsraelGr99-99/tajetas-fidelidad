@@ -1,4 +1,4 @@
-/** Empresa del piloto. La arquitectura es multiempresa; la UI del cliente sirve a una por despliegue. */
+/** Slug del piloto para conservar sus enlaces públicos anteriores. */
 export const PILOT_BUSINESS_SLUG = process.env.NEXT_PUBLIC_BUSINESS_SLUG ?? "cafe-nomada";
 
 /** El canal teléfono requiere un proveedor SMS configurado en Supabase Auth. */

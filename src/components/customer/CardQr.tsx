@@ -185,7 +185,7 @@ export function CardQr({
             )}
           </div>
           <p className="mt-4 text-center text-sm text-crema/80">
-            {isRedeem ? "Muéstralo cuando vayas a recibir tu bebida." : "Cambia cada 2 minutos y solo sirve una vez."}
+            {isRedeem ? "Muéstralo cuando vayas a recibir tu recompensa." : "Cambia cada 2 minutos y solo sirve una vez."}
           </p>
           {isRedeem ? (
             <button type="button" onClick={() => request("identify")} className="mx-auto mt-3 block text-sm text-crema/85 underline underline-offset-4">
@@ -202,7 +202,7 @@ export function CardQr({
       {view.state === "scanned" ? (
         <div role="status" className="mt-5 rounded-3xl bg-crema/10 p-6 text-center">
           <p className="font-display text-2xl">Código escaneado</p>
-          <p className="mt-2 text-crema/80">{view.purpose === "redeem" ? "El barista está preparando tu recompensa…" : "El barista está registrando tu compra…"}</p>
+          <p className="mt-2 text-crema/80">{view.purpose === "redeem" ? "El personal está preparando tu recompensa…" : "El personal está registrando tu compra…"}</p>
         </div>
       ) : null}
 
@@ -232,7 +232,7 @@ export function CardQr({
           <p id="confirmar-canje" className="font-semibold">
             ¿Canjear 1 recompensa ahora?
           </p>
-          <p className="mt-2 text-sm leading-6 text-crema/80">Se genera un código de canje. Muéstralo al barista al recibir tu bebida.</p>
+          <p className="mt-2 text-sm leading-6 text-crema/80">Se genera un código de canje. Muéstralo al personal al recibir tu recompensa.</p>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             <button type="button" onClick={() => request("redeem")} className="btn btn-primario">
               Sí, canjear

@@ -10,9 +10,9 @@ const categories = [
   ["otro", "Otro motivo"],
 ] as const;
 
-export function AccountControls() {
-  const [disableState, disableAction, disabling] = useActionState<FormState, FormData>(disableMyAccountAction, { error: null });
-  const [deleteState, deleteAction, deleting] = useActionState<FormState, FormData>(deleteMyDataAction, { error: null });
+export function AccountControls({ businessSlug }: { businessSlug: string }) {
+  const [disableState, disableAction, disabling] = useActionState<FormState, FormData>(disableMyAccountAction.bind(null, businessSlug), { error: null });
+  const [deleteState, deleteAction, deleting] = useActionState<FormState, FormData>(deleteMyDataAction.bind(null, businessSlug), { error: null });
   return <section aria-labelledby="account-controls" className="rounded-[2rem] border border-tabaco/10 bg-papel p-6">
     <h2 id="account-controls" className="text-xl font-semibold text-tabaco">Control de tu cuenta</h2>
     <p className="mt-2 text-sm leading-6 text-tabaco/75">Puedes hacer una pausa y regresar con tus sellos, o eliminar tus datos personales definitivamente.</p>

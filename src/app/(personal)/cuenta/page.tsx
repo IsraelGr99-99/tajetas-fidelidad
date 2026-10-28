@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { selectBranchAction } from "@/actions/staff-session";
+import Link from "next/link";
+import { selectBranchAction, selectBusinessAction } from "@/actions/staff-session";
 import { Notice } from "@/components/staff/OperationParts";
 import { MfaSetup } from "@/components/staff/Mfa";
 import { SignOutButton } from "@/components/staff/SignOutButton";
@@ -23,7 +24,7 @@ const CAPABILITY_TEXT: Record<string, string> = {
 };
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; siguiente?: string }> }) {
-  const { membership, activeBranch, email } = await requireStaff();
+  const { membership, memberships, activeBranch, email } = await requireStaff();
   const { error, siguiente } = await searchParams;
   const returnTo = safeNextPath(siguiente);
 
@@ -44,6 +45,23 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           ))}
         </ul>
       </section>
+
+      {memberships.length > 1 ? <section aria-labelledby="negocios" className="space-y-3">
+        <h2 id="negocios" className="text-2xl text-tabaco">Tus negocios</h2>
+        <p className="text-sm leading-6 text-tabaco/75">Al cambiar de negocio, elegirás una sucursal de ese negocio antes de operar.</p>
+        <ul className="grid gap-2">{memberships.map((item) => <li key={item.business_id}>
+          <form action={selectBusinessAction}>
+            <input type="hidden" name="businessId" value={item.business_id} />
+            <input type="hidden" name="returnTo" value="/inicio" />
+            <button type="submit" disabled={item.business_id === membership.business_id} aria-current={item.business_id === membership.business_id ? "true" : undefined}
+              className="flex min-h-14 w-full items-center justify-between rounded-2xl border border-tabaco/15 bg-papel px-5 text-left text-tabaco transition hover:border-blue-400 disabled:cursor-default disabled:border-blue-300 disabled:bg-blue-50">
+              <span className="font-semibold">{item.business_name}</span><span className="text-sm">{item.business_id === membership.business_id ? "Actual" : "Cambiar"}</span>
+            </button>
+          </form>
+        </li>)}</ul>
+      </section> : null}
+
+      {membership.role === "owner" ? <p><Link href="/negocio/nuevo" className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 bg-blue-50 px-5 text-sm font-bold text-blue-800 hover:bg-blue-100">Agregar otro negocio de prueba →</Link></p> : null}
 
       <section aria-labelledby="sucursales" className="space-y-3">
         <h2 id="sucursales" className="text-2xl text-tabaco">

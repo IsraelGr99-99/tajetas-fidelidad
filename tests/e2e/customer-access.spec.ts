@@ -10,6 +10,11 @@ test("la tarjeta exige sesión", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Entra o crea tu tarjeta" })).toBeVisible();
 });
 
+test("la tarjeta de otro negocio conserva su ruta de acceso", async ({ page }) => {
+  await page.goto("/c/cafe-nomada/tarjeta", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/c\/cafe-nomada\/tarjeta\/acceso$/);
+});
+
 test("correo por defecto; teléfono deshabilitado mientras no haya SMS", async ({ page }) => {
   await page.goto("/tarjeta/acceso", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("radio", { name: "Correo" })).toBeChecked();

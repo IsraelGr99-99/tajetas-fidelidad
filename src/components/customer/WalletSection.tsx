@@ -7,7 +7,7 @@ import { addToGoogleWalletAction } from "@/app/tarjeta/actions";
  * Guardar la tarjeta en Google Wallet. No afirma que se guardó: Google confirma en
  * su propia pantalla. Apple Wallet queda como “no configurado” hasta producción.
  */
-export function WalletSection({ googleConfigured, googleMode, hasGooglePass }: { googleConfigured: boolean; googleMode: "demo" | "public"; hasGooglePass: boolean }) {
+export function WalletSection({ googleConfigured, googleMode, hasGooglePass, businessSlug }: { googleConfigured: boolean; googleMode: "demo" | "public"; hasGooglePass: boolean; businessSlug: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +15,7 @@ export function WalletSection({ googleConfigured, googleMode, hasGooglePass }: {
     setBusy(true);
     setError(null);
     try {
-      const r = await addToGoogleWalletAction();
+      const r = await addToGoogleWalletAction(businessSlug);
       if (r.ok) window.location.assign(r.url);
       else {
         setError(r.error);
@@ -65,7 +65,7 @@ export function WalletSection({ googleConfigured, googleMode, hasGooglePass }: {
           ) : null}
         </>
       ) : (
-        <p className="mt-2 leading-7 text-tabaco/75">Google Wallet todavía no está habilitado para el piloto.</p>
+        <p className="mt-2 leading-7 text-tabaco/75">Google Wallet todavía no está habilitado para este negocio.</p>
       )}
 
       <p className="mt-4 flex flex-wrap gap-2">
