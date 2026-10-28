@@ -42,14 +42,14 @@ export function CardShowcase({ locale }: { locale: Locale }) {
   const section = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
   const t = locale === "es" ? {
-    eyebrow: "03 / UNA IDEA, MUCHAS FORMAS",
+    eyebrow: "UNA IDEA, MUCHAS FORMAS",
     title: "La lealtad no tiene un solo molde.",
     intro: "Desliza y descubre cómo se podría ver Loyalty en cinco giros distintos. Cada tarjeta tiene su propia identidad; el negocio decide las reglas.",
     instruction: "Desplázate para explorar",
     note: "Tarjetas y recompensas ilustrativas; no son promociones activas.",
     progress: "Visitas",
   } : {
-    eyebrow: "03 / ONE IDEA, MANY FORMS",
+    eyebrow: "ONE IDEA, MANY FORMS",
     title: "Loyalty is never one-size-fits-all.",
     intro: "Scroll through five different businesses and see what Loyalty could look like. Every card has its own identity; the business sets the rules.",
     instruction: "Scroll to explore",

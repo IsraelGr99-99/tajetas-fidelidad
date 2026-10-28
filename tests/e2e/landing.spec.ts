@@ -1,34 +1,34 @@
 import { expect, test } from "@playwright/test";
 
-test("la portada explica Loyalty y ofrece una demo pública sin cuenta", async ({ page, isMobile }) => {
+test("la portada presenta el sistema completo y ofrece una demo guiada", async ({ page, isMobile }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/Loyalty de iautomexa/);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Haz que cada visita cuente");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Mucho más que lealtad.");
   await expect(page.getByRole("link", { name: "Una tecnología de iautomexa", exact: true })).toHaveAttribute("href", "https://iautomexa.com/");
-  await expect(page.getByRole("link", { name: "Probar demo interactiva" }).first()).toHaveAttribute("href", "#demo-interactiva");
-  await expect(page.getByRole("link", { name: "Solicitar información" }).first()).toHaveAttribute("href", "https://iautomexa.com/contacto/");
-  await expect(page.getByRole("figure", { name: /Ejemplo de tarjeta digital de lealtad/ })).toContainText("Vista ilustrativa");
-  await expect(page.getByRole("heading", { name: "Una compra mueve mucho más que un sello." })).toBeVisible();
-  await expect(page.locator("#como-funciona ol > li")).toHaveCount(3);
-  await expect(page.getByRole("figure", { name: /Un flujo, no herramientas aisladas/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Solicitar demo guiada" }).first()).toHaveAttribute("href", "https://iautomexa.com/contacto/");
+  await expect(page.getByRole("link", { name: "Explorar el sistema" }).first()).toHaveAttribute("href", "#sistema");
+  await expect(page.getByRole("figure", { name: /Vista ilustrativa del panel/ })).toContainText("Vista ilustrativa");
+  await expect(page.locator("#sistema ol > li")).toHaveCount(6);
+  await expect(page.locator("#funciones article")).toHaveCount(8);
+  // Wallet: estado honesto de cada integración.
+  await expect(page.locator("#wallet")).toContainText("Apple Wallet");
+  await expect(page.locator("#wallet")).toContainText("Próximamente");
+  await expect(page.locator("#demo-interactiva")).toHaveCount(0);
   await expect(page.getByRole("list", { name: "Ejemplos de tarjetas por giro" }).locator("li")).toHaveCount(5);
   if (isMobile) await expect(page.getByRole("button", { name: "Barberías" })).toBeVisible();
   else await expect(page.locator("#aplicaciones").getByText("Barberías", { exact: true }).first()).toBeVisible();
 });
 
-test("la demo ficticia conecta caja, inventario y fidelidad sin escribir datos", async ({ page }) => {
+test("el recorrido del sistema se fija en escritorio y respeta movimiento reducido", async ({ page, isMobile }) => {
+  test.skip(isMobile, "El recorrido fijado solo aplica en escritorio");
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
-  const demo = page.locator("#demo-interactiva");
-  await expect(demo.getByText("DEMO INTERACTIVA · DATOS FICTICIOS")).toBeVisible();
-  const stock = demo.locator("article").filter({ hasText: "Porciones disponibles" });
-  await expect(stock.getByText("12", { exact: true })).toBeVisible();
-  await demo.getByRole("button", { name: "Simular una compra" }).click();
-  await expect(stock.getByText("11", { exact: true })).toBeVisible();
-  await expect(demo.getByRole("status")).toContainText("solo en esta pantalla");
-  await demo.getByRole("button", { name: "Simular una compra" }).click();
-  await expect(demo.getByText("Recompensa disponible en la simulación")).toBeVisible();
-  await demo.getByRole("button", { name: "Reiniciar demo" }).click();
-  await expect(stock.getByText("12", { exact: true })).toBeVisible();
+  const stage = page.locator("[data-tour-stage]");
+  await stage.scrollIntoViewIfNeeded();
+  await expect(stage).toHaveAttribute("data-enhanced", "true");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(stage).not.toHaveAttribute("data-enhanced", "true");
+  await expect(page.locator("#sistema ol > li")).toHaveCount(6);
 });
 
 test("las tarjetas avanzan con el scroll y respetan movimiento reducido", async ({ page, isMobile }) => {
@@ -59,7 +59,7 @@ test("SEO público: canonicals, idiomas, datos estructurados y rutas privadas no
 
 test("la versión en inglés cambia contenido e idioma del documento", async ({ page }) => {
   await page.goto("/en", { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Make every visit count");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Much more than loyalty.");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("link", { name: /Technology by iautomexa/ }).first()).toHaveAttribute("href", "https://iautomexa.com/");
   await page.getByRole("link", { name: "Ver en español" }).click();
@@ -119,12 +119,13 @@ test("el menú móvil abre, navega y se cierra", async ({ page, isMobile }) => {
   const menu = page.locator("details summary").filter({ hasText: "Menú" });
   await menu.click();
   const nav = page.getByRole("navigation", { name: "Navegación móvil" });
-  await expect(nav.getByRole("link", { name: "Prueba la demo" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Funciones" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Solicitar demo guiada" })).toHaveAttribute("href", "https://iautomexa.com/contacto/");
   await page.keyboard.press("Escape");
   await expect(nav).not.toBeVisible();
   await menu.click();
-  await nav.getByRole("link", { name: "Prueba la demo" }).click();
-  await expect(page).toHaveURL(/#demo-interactiva$/);
+  await nav.getByRole("link", { name: "Funciones" }).click();
+  await expect(page).toHaveURL(/#funciones$/);
   await expect(nav).not.toBeVisible();
 });
 
@@ -133,9 +134,10 @@ test("el contenido principal permanece disponible sin JavaScript", async ({ brow
   const page = await context.newPage();
   try {
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Haz que cada visita cuente");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Mucho más que lealtad.");
     await expect(page.getByRole("list", { name: "Ejemplos de tarjetas por giro" }).locator("li")).toHaveCount(5);
-    await expect(page.getByRole("link", { name: "Solicitar información" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Solicitar demo guiada" }).first()).toBeVisible();
+    await expect(page.locator("#sistema ol > li")).toHaveCount(6);
   } finally {
     await context.close();
   }

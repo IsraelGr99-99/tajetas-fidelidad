@@ -4,7 +4,7 @@ import { MarketingJsonLd } from "@/components/marketing/MarketingJsonLd";
 
 export const metadata: Metadata = {
   title: { absolute: "Loyalty by iautomexa · Loyalty, checkout and inventory" },
-  description: "More than a digital loyalty card: Loyalty connects checkout, inventory, customers and rewards. Explore a no-signup interactive demo and discover the business dashboard.",
+  description: "More than a digital loyalty card: Loyalty connects checkout, products, recipes, inventory, reports and rewards for one or many locations. Request a guided demo.",
   applicationName: "iautomexa Loyalty",
   alternates: { canonical: "https://loyalty.iautomexa.com/en", languages: { "es-MX": "https://loyalty.iautomexa.com/", en: "https://loyalty.iautomexa.com/en" } },
   robots: { index: true, follow: true },

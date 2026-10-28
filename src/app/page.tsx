@@ -4,7 +4,7 @@ import { MarketingJsonLd } from "@/components/marketing/MarketingJsonLd";
 
 export const metadata: Metadata = {
   title: { absolute: "Loyalty de iautomexa · Fidelidad, caja e inventario para negocios" },
-  description: "Más que una tarjeta de fidelidad: Loyalty conecta caja, inventario, clientes y recompensas. Explora una demo interactiva sin registro y conoce el panel para negocios.",
+  description: "Más que una tarjeta de fidelidad: Loyalty conecta caja, productos, recetas, inventario, reportes y recompensas para una o muchas sucursales. Solicita una demo guiada.",
   applicationName: "iautomexa Loyalty",
   alternates: { canonical: "https://loyalty.iautomexa.com/", languages: { "es-MX": "https://loyalty.iautomexa.com/", en: "https://loyalty.iautomexa.com/en" } },
   robots: { index: true, follow: true },

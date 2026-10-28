@@ -1,0 +1,75 @@
+/* Recreación ilustrativa de la consola: se reemplaza por capturas reales cuando existan. */
+.window { position: relative; overflow: hidden; border: 1px solid rgb(15 23 42 / .1); border-radius: 18px; background: #fff; box-shadow: 0 1px 0 rgb(255 255 255 / .6) inset, 0 40px 80px -30px rgb(15 23 42 / .35), 0 18px 36px -18px rgb(15 23 42 / .25); color: #0f172a; font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif; text-align: left; }
+.chrome { display: flex; align-items: center; gap: 14px; height: 38px; padding-inline: 14px; border-bottom: 1px solid #eef1f5; background: #f8fafc; }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: #e2e6ec; }
+.dots i:first-child { background: #ff6159; }
+.dots i:nth-child(2) { background: #ffbd2e; }
+.dots i:last-child { background: #28c840; }
+.url { flex: 1; max-width: 340px; margin-inline: auto; padding: 5px 12px; overflow: hidden; border-radius: 8px; background: #eef1f5; color: #64748b; font-size: 11px; font-weight: 600; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.body { position: relative; aspect-ratio: 16 / 10; padding: clamp(12px, 2.2vw, 22px); background: linear-gradient(180deg, #fbfcfe, #f3f6fa); font-size: clamp(9px, 1vw, 12px); }
+.shot { object-fit: cover; object-position: top left; }
+.body span { color: #64748b; font-weight: 600; }
+
+/* Dashboard */
+.dash { height: 100%; display: grid; grid-template-columns: 1.4fr 1fr; grid-template-rows: auto 1fr; gap: 10px; }
+.kpis { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.kpis > div, .chartCard, .branchCard { padding: 10px 12px; border: 1px solid #e8ecf2; border-radius: 12px; background: #fff; }
+.kpis strong { display: block; margin-top: 4px; font-size: 1.7em; font-weight: 800; letter-spacing: -.03em; }
+.kpis em { color: #0f9d6b; font-size: .9em; font-style: normal; font-weight: 700; }
+.chartCard { display: flex; flex-direction: column; }
+.bars { flex: 1; display: flex; align-items: flex-end; gap: 7%; padding-top: 10px; }
+.bars i { flex: 1; border-radius: 6px 6px 3px 3px; background: linear-gradient(180deg, #5b7bff, #2949da); transform-origin: bottom; }
+.branchCard { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.branchCard p { display: grid; gap: 6px; }
+.branchCard b, .ticket b, .table b, .recipe b, .inventory b { font-weight: 700; }
+.branchCard i, .slider i, .level i { display: block; height: 8px; border-radius: 8px; background: linear-gradient(90deg, #7c5cff, #2949da); transform-origin: left; }
+
+/* Caja */
+.checkout { height: 100%; display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; }
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: auto 1fr 1fr; gap: 9px; }
+.search { grid-column: 1 / -1; padding: 8px 12px; border: 1px solid #e2e6ec; border-radius: 10px; background: #fff; color: #94a3b8; }
+.tile { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-content: center; column-gap: 9px; padding: 8px; border: 1px solid #e8ecf2; border-radius: 12px; background: #fff; }
+.tile img { grid-row: 1 / 3; width: 3.6em; height: 3.6em; border-radius: 9px; object-fit: cover; }
+.ticket { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: #0f172a; color: #fff; }
+.ticket > span, .ticket p span { color: #94a3b8; }
+.ticket p { display: flex; justify-content: space-between; gap: 8px; }
+.total { margin-top: auto; padding-top: 8px; border-top: 1px solid #334155; }
+.total strong { font-size: 1.5em; }
+.charge { padding: 9px; border-radius: 10px; background: #2949da; font-weight: 800; text-align: center; }
+
+/* Catálogo e inventario */
+.table, .inventory { display: flex; flex-direction: column; gap: 7px; }
+.table p, .inventory p { display: grid; grid-template-columns: 2fr 1fr 1fr; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid #e8ecf2; border-radius: 12px; background: #fff; }
+.table p > span:first-child { display: flex; align-items: center; gap: 10px; color: #0f172a; }
+.table img { width: 2.8em; height: 2.8em; border-radius: 8px; object-fit: cover; }
+.tableHead, .table .tableHead, .inventory .tableHead { border: 0 !important; background: transparent !important; text-transform: uppercase; letter-spacing: .08em; font-size: .85em; }
+.inventory p { grid-template-columns: 1.3fr 1.4fr auto; }
+.inventory .tableHead { grid-template-columns: 1fr; }
+.level { display: block; height: 8px; border-radius: 8px; background: #eef1f5; }
+.level .levelLow { background: linear-gradient(90deg, #f97316, #ef4444); }
+.badgeLow, .badgeOk { padding: 3px 9px; border-radius: 99px; font-size: .9em; font-style: normal; font-weight: 700; white-space: nowrap; }
+.badgeLow { background: #fff1e6; color: #c2410c; }
+.badgeOk { background: #e7f8ef; color: #047857; }
+
+/* Calculadora */
+.calc { height: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
+.calcInputs { display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 14px; border: 1px solid #e8ecf2; border-radius: 14px; background: #fff; }
+.calcInputs p { display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px dashed #e2e6ec; }
+.slider { height: 8px; border-radius: 8px; background: #eef1f5; }
+.calcResult { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 6px; padding: 16px; border-radius: 14px; background: linear-gradient(135deg, #2949da, #7c5cff); color: #fff; }
+.calcResult span, .calcResult small { color: rgb(255 255 255 / .78) !important; }
+.calcResult strong { font-size: 3em; font-weight: 800; letter-spacing: -.04em; }
+
+/* Recetas */
+.recipe { height: 100%; display: grid; grid-template-columns: .9fr 1.4fr; gap: 12px; }
+.recipeProduct { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; padding: 12px; border: 1px solid #e8ecf2; border-radius: 14px; background: #fff; text-align: center; }
+.recipeProduct img { width: 6em; height: 6em; border-radius: 14px; object-fit: cover; }
+.recipe ul { display: flex; flex-direction: column; justify-content: center; gap: 7px; list-style: none; }
+.recipe li { display: flex; justify-content: space-between; padding: 9px 12px; border: 1px solid #e8ecf2; border-left: 3px solid #7c5cff; border-radius: 10px; background: #fff; }
+
+@media (max-width: 560px) {
+  .body { aspect-ratio: 4 / 3.2; font-size: 9px; }
+  .dash { grid-template-columns: 1fr; }
+  .branchCard { display: none; }
+}
