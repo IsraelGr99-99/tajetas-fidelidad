@@ -95,62 +95,76 @@
 @keyframes arrive { from { opacity: 0; transform: translateY(30px) rotate(9deg) scale(.96); } to { opacity: 1; transform: translateY(0) rotate(4deg) scale(1); } }
 @keyframes rotateIn { from { opacity: 0; transform: rotate(-50deg) scale(.5); } to { opacity: 1; transform: rotate(-14deg) scale(1); } }
 
-.ribbon { background: #212fcb; color: #fff; overflow: hidden; }
-.ribbon > div { width: min(100% - 60px, 1220px); min-height: 77px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 25px; }
-.ribbon span { display: inline-flex; align-items: center; gap: clamp(25px, 4vw, 64px); font-size: clamp(13px, 1.7vw, 21px); font-weight: 800; letter-spacing: 0; word-spacing: .1em; white-space: nowrap; }
-.ribbon b { color: #96d6e5; font-size: 28px; line-height: 1; }
+.ribbon { color: #dbe5ff; background: #202db8; }
+.ribbon > .wrap { min-height: 78px; display: flex; align-items: center; gap: 22px; }
+.ribbonMark { flex: 0 0 43px; width: 43px; height: 43px; display: grid; place-items: center; border: 1px solid rgb(255 255 255 / .28); border-radius: 13px; color: #cbf7dc; font-size: 26px; }
+.ribbon p { flex: 1; display: flex; align-items: center; gap: 11px; font-size: clamp(13px, 1.3vw, 17px); font-weight: 750; }
+.ribbon p span { white-space: nowrap; }
+.ribbon b { margin-left: 11px; color: #a9f4d4; font-weight: 500; }
+.ribbonEnd { color: #b8c5ff; font-size: 10px; font-weight: 800; letter-spacing: .15em; white-space: nowrap; }
 
-.section { padding-block: clamp(85px, 9vw, 125px); scroll-margin-top: 25px; }
+.section { padding-block: clamp(90px, 9vw, 130px); scroll-margin-top: 25px; }
 .sectionHead { display: flex; justify-content: space-between; align-items: end; gap: 35px; margin-bottom: 47px; }
 .sectionHead h2, .technology h2, .faq h2, .final h2 { font-size: clamp(42px, 4.6vw, 68px); }
 .sectionHead h2 { max-width: 730px; margin-top: 17px; }
 .sectionHead > p { max-width: 250px; padding-bottom: 7px; color: #62707a; font-size: 15px; line-height: 1.65; }
-.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 0; list-style: none; }
-.steps li { min-height: 335px; position: relative; padding: 25px 29px 30px; border: 1px solid #dfe5e8; border-radius: 26px; background: #fff; transition: transform .25s, box-shadow .25s; }
-.steps li:hover { transform: translateY(-7px); box-shadow: 0 20px 38px rgb(27 44 60 / .09); }
-.stepNumber { display: block; color: #a4afb6; font-size: 12px; font-weight: 900; }
-.stepIcon { width: 61px; height: 61px; display: grid; place-items: center; margin-top: 23px; border-radius: 18px; color: #2e4fe2; background: #e9ecff; transform: rotate(-5deg); }
-.stepIcon svg { width: 31px; height: 31px; }
+.how { background: #fff; }
+.howLayout { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1fr); gap: clamp(50px, 8vw, 130px); align-items: start; }
+.howIntro { position: sticky; top: 36px; padding-top: 26px; }
+.howIntro h2 { max-width: 570px; margin-top: 19px; font-size: clamp(46px, 5vw, 70px); }
+.howIntro > p:not(.sectionEyebrow) { max-width: 435px; margin-top: 25px; color: #5b6872; font-size: 16px; line-height: 1.75; }
+.howLink { display: inline-flex; align-items: center; gap: 22px; margin-top: 34px; padding-bottom: 9px; border-bottom: 2px solid #3759e7; color: #2947cf; font-size: 13px; font-weight: 850; }
+.howLink:hover { gap: 31px; }
+.steps { display: grid; padding: 0; list-style: none; border-top: 1px solid #dce3e8; }
+.steps li { min-height: 178px; position: relative; display: grid; grid-template-columns: 40px 66px 1fr 20px; align-items: start; gap: 18px; padding: 31px 8px 30px 0; border-bottom: 1px solid #dce3e8; transition: padding .25s, background .25s; }
+.steps li:hover { padding-left: 13px; background: #f7f9ff; }
+.stepNumber { margin-top: 20px; color: #5870a7; font-size: 12px; font-weight: 900; }
+.stepIcon { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 18px; color: #2e4fe2; background: #e9ecff; }
+.stepIcon svg { width: 28px; height: 28px; }
 .steps li:nth-child(2) .stepIcon { color: #9b526a; background: #ffe1e5; }
 .steps li:nth-child(3) .stepIcon { color: #267456; background: #dcf5e9; }
-.steps h3 { margin-top: 27px; font-size: 26px; font-weight: 850; }
-.steps p { max-width: 305px; margin-top: 8px; color: #5b6872; font-size: 14px; line-height: 1.65; }
-.stepArrow { position: absolute; right: 28px; top: 24px; color: #9caab4; font-size: 22px; }
+.stepCopy h3 { margin-top: 2px; font-size: 25px; font-weight: 850; }
+.stepCopy p { max-width: 415px; margin-top: 9px; color: #5b6872; font-size: 14px; line-height: 1.7; }
+.stepArrow { margin-top: 5px; color: #8ca0ae; font-size: 19px; }
 
-.benefits { background: #f6f8fb; }
-.benefitGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.benefitCard { overflow: hidden; background: white; border: 1px solid #e5eaf0; border-radius: 26px; transition: transform .25s, box-shadow .25s; }
-.benefitCard:hover { transform: translateY(-7px); box-shadow: 0 22px 35px rgb(43 57 74 / .1); }
-.benefitVisual { height: 190px; position: relative; display: grid; place-items: center; overflow: hidden; background: #efeaff; }
-.benefitCard:nth-child(2) .benefitVisual { background: #ffece5; }
-.benefitCard:nth-child(3) .benefitVisual { background: #e3f4ef; }
-.visualNumber { position: absolute; top: 22px; left: 24px; color: #6b70ad; font-size: 11px; font-weight: 900; }
-.benefitSymbol { width: 94px; height: 94px; display: grid; place-items: center; color: #5649e3; background: white; border-radius: 27px; transform: rotate(-12deg); box-shadow: 0 16px 25px rgb(67 50 129 / .14); }
-.benefitSymbol svg { width: 48px; height: 48px; }
-.benefitCard:nth-child(2) .benefitSymbol { color: #e47961; transform: rotate(8deg); }
-.benefitCard:nth-child(3) .benefitSymbol { color: #27896a; transform: rotate(-7deg); }
-.miniHeart, .miniSpark, .miniBars { position: absolute; font-size: 52px; line-height: 1; }
-.miniHeart { right: 19%; top: 18%; color: #ff9cbc; transform: rotate(19deg); }
-.miniSpark { right: 17%; top: 13%; color: #f8a681; }
-.miniBars { right: 8%; bottom: 10%; color: #70d3a8; font-size: 25px; font-weight: 900; transform: rotate(-7deg); }
-.benefitBody { padding: 29px 28px 34px; }
+.benefits { background: #f5f7fb; border-top: 1px solid #e6ebf1; }
+.benefits .sectionHead { margin-bottom: 57px; }
+.benefitGrid { display: grid; border-top: 1px solid #d9e1ea; }
+.benefitCard { position: relative; display: grid; grid-template-columns: 138px minmax(0, 1fr) 32px; align-items: center; gap: 35px; min-height: 190px; border-bottom: 1px solid #d9e1ea; transition: background .25s, padding .25s; }
+.benefitCard:hover { background: #fff; padding-inline: 18px; }
+.benefitVisual { width: 138px; height: 119px; position: relative; display: grid; place-items: center; border-radius: 24px; background: #e8e8ff; }
+.benefitCard:nth-child(2) .benefitVisual { background: #ffe8e1; }
+.benefitCard:nth-child(3) .benefitVisual { background: #ddf4e9; }
+.visualNumber { position: absolute; top: 11px; left: 13px; color: #6068a8; font-size: 10px; font-weight: 900; }
+.benefitSymbol { width: 65px; height: 65px; display: grid; place-items: center; color: #5649e3; background: #fff; border-radius: 18px; box-shadow: 0 9px 17px rgb(67 50 129 / .12); }
+.benefitSymbol svg { width: 33px; height: 33px; }
+.benefitCard:nth-child(2) .benefitSymbol { color: #e47961; }
+.benefitCard:nth-child(3) .benefitSymbol { color: #27896a; }
 .benefitBody > span { color: #5264ce; font-size: 10px; font-weight: 900; letter-spacing: .14em; }
-.benefitBody h3 { margin: 13px 0 9px; font-size: 25px; font-weight: 850; line-height: 1.15; }
-.benefitBody p { color: #5c6b75; font-size: 14px; line-height: 1.7; }
+.benefitBody h3 { margin: 9px 0 5px; font-size: 27px; font-weight: 850; line-height: 1.15; }
+.benefitBody p { max-width: 750px; color: #5c6b75; font-size: 14px; line-height: 1.7; }
+.benefitArrow { align-self: start; margin-top: 30px; color: #8396b4; font-size: 20px; }
 
-.technology { padding-block: clamp(85px, 9vw, 120px); background: #192b34; color: white; overflow: hidden; }
-.technologyLayout { display: grid; grid-template-columns: .8fr 1.2fr; gap: 8%; align-items: center; }
-.techDecoration { min-height: 410px; display: grid; place-items: center; position: relative; isolation: isolate; }
-.techDecoration::before { content: ""; position: absolute; z-index: -1; width: 90%; aspect-ratio: 1; border-radius: 50%; border: 1px solid rgb(181 238 217 / .4); box-shadow: 0 0 0 40px rgb(181 238 217 / .04), 0 0 0 90px rgb(181 238 217 / .035); }
-.techDecoration span:first-child { color: #a7f3cb; font-size: clamp(220px, 28vw, 400px); line-height: 1; transform: rotate(-15deg); }
-.techDecoration span:last-child { position: absolute; bottom: 13%; padding: 11px 19px; border-radius: 100px; background: #fff; color: #192b34; font-size: 18px; font-weight: 900; letter-spacing: -.05em; transform: rotate(8deg); box-shadow: 0 12px 20px rgb(0 0 0 / .2); }
+.technology { padding-block: clamp(90px, 9vw, 125px); background: #172834; color: white; overflow: hidden; }
+.technologyLayout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .92fr); gap: 7%; align-items: center; }
 .technology .sectionEyebrow { color: #95eac5; }
 .technology h2 { margin: 18px 0 23px; max-width: 670px; }
 .technology h2 em { color: #b2f4d5; }
-.technologyLayout > div:last-child > p:not(.sectionEyebrow) { max-width: 660px; color: #c4d3d7; font-size: 15px; line-height: 1.8; }
+.technologyLayout > div:first-child > p:not(.sectionEyebrow) { max-width: 660px; color: #c4d3d7; font-size: 15px; line-height: 1.8; }
 .technology ul { display: flex; flex-wrap: wrap; gap: 9px; padding: 0; margin: 28px 0 33px; list-style: none; }
 .technology li { display: flex; gap: 6px; align-items: center; padding: 8px 11px; border: 1px solid #547168; border-radius: 100px; color: #cce9dc; font-size: 11px; font-weight: 700; }
 .technology li span { color: #8eedb4; }
+.techMap { margin: 0; padding: 25px; border: 1px solid rgb(183 229 212 / .31); border-radius: 28px; background: linear-gradient(155deg, #2e4b53, #1b323a); box-shadow: 0 30px 70px rgb(0 0 0 / .2); }
+.techMapTop { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 28px; border-bottom: 1px solid rgb(255 255 255 / .15); color: #9ac5bd; font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.techMapLogo { color: #fff; font-size: 16px; font-weight: 900; letter-spacing: -.05em; }
+.techMap figcaption { max-width: 330px; margin: 28px 0; color: #fff; font-size: clamp(28px, 3vw, 40px); font-weight: 800; line-height: 1.1; letter-spacing: -.055em; }
+.techModules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.techModules > div { min-height: 112px; display: flex; flex-direction: column; align-items: start; padding: 17px; border: 1px solid rgb(255 255 255 / .17); border-radius: 16px; background: rgb(255 255 255 / .08); }
+.techModules > div:nth-child(2), .techModules > div:nth-child(3) { background: rgb(169 240 207 / .13); }
+.techModules > div > span:first-child { color: #abddce; font-size: 10px; font-weight: 800; }
+.techModules strong { margin-top: auto; color: #fff; font-size: 18px; font-weight: 800; }
+.techModules > div > span:last-child { align-self: end; margin-top: -20px; color: #b3e8d8; }
+.techMap > p { margin-top: 20px; color: #aac6c4; font-size: 10px; }
 
 .faq { background: #fff; }
 .faqLayout { display: grid; grid-template-columns: .7fr 1.3fr; gap: 8%; }
@@ -205,10 +219,10 @@
   .hero h1 { max-width: 740px; font-size: clamp(60px, 10vw, 86px); }
   .heroArt { min-height: 560px; max-width: 650px; width: 100%; margin-inline: auto; }
   .artSwoosh { width: 530px; }
-  .ribbon > div { width: 100%; padding-inline: 30px; justify-content: center; }
-  .ribbon span { gap: 25px; }
-  .applicationLayout { gap: 35px; }
-  .applicationDemo { padding: 22px; }
+  .ribbonEnd { display: none; }
+  .howLayout { grid-template-columns: 1fr; gap: 42px; }
+  .howIntro { position: static; padding-top: 0; }
+  .howIntro h2 { max-width: 720px; }
 }
 @media (max-width: 700px) {
   .wrap { width: min(100% - 36px, 1220px); }
@@ -232,25 +246,33 @@
   .cardCenter strong { font-size: 27px; }
   .stamps { gap: 5px; margin-top: 15px; }
   .confirmation { right: -11px; min-width: 190px; bottom: 12px; }
-  .ribbon > div { width: max-content; min-width: 100%; min-height: 62px; padding-inline: 18px; justify-content: flex-start; }
-  .ribbon span { font-size: 13px; gap: 19px; }
-  .ribbon b { font-size: 20px; }
+  .ribbon > .wrap { min-height: 70px; gap: 12px; }
+  .ribbonMark { width: 33px; height: 33px; flex-basis: 33px; font-size: 21px; }
+  .ribbon p { gap: 5px; flex-wrap: wrap; font-size: 11px; line-height: 1.35; }
+  .ribbon b { margin-left: 5px; }
   .section { padding-block: 77px; }
   .sectionHead { display: block; margin-bottom: 30px; }
   .sectionHead h2, .technology h2, .faq h2, .final h2 { font-size: clamp(40px, 9vw, 57px); }
   .sectionHead > p { max-width: 500px; margin-top: 17px; }
-  .steps, .benefitGrid { grid-template-columns: 1fr; }
-  .steps li { min-height: 255px; }
-  .stepIcon { margin-top: 15px; }
-  .steps h3 { margin-top: 18px; }
-  .benefitVisual { height: 155px; }
-  .benefitBody { padding: 23px; }
+  .howIntro h2 { font-size: clamp(42px, 9vw, 60px); }
+  .steps li { grid-template-columns: 27px 48px minmax(0, 1fr); gap: 12px; min-height: 160px; padding-block: 24px; }
+  .stepNumber { margin-top: 15px; }
+  .stepIcon { width: 47px; height: 47px; border-radius: 14px; }
+  .stepIcon svg { width: 23px; height: 23px; }
+  .stepCopy h3 { font-size: 21px; }
+  .stepCopy p { font-size: 13px; }
+  .stepArrow { display: none; }
+  .benefitCard { grid-template-columns: 78px minmax(0, 1fr); gap: 17px; min-height: 160px; }
+  .benefitCard:hover { padding-inline: 0; }
+  .benefitVisual { width: 78px; height: 91px; border-radius: 17px; }
+  .benefitSymbol { width: 46px; height: 46px; border-radius: 13px; }
+  .benefitSymbol svg { width: 26px; height: 26px; }
+  .benefitBody h3 { font-size: 20px; }
+  .benefitBody p { font-size: 12px; }
+  .benefitArrow { display: none; }
   .technologyLayout, .faqLayout { grid-template-columns: 1fr; }
-  .technologyLayout { gap: 35px; }
-  .techDecoration { min-height: 220px; }
-  .techDecoration::before { width: 230px; }
-  .techDecoration span:first-child { font-size: 230px; }
-  .techDecoration span:last-child { bottom: 0; }
+  .technologyLayout { gap: 44px; }
+  .techMap { max-width: 590px; }
   .faqLayout { gap: 30px; }
   .finalLayout { min-height: 0; padding-block: 70px; display: block; }
   .finalActions { justify-content: flex-start; margin-top: 26px; }

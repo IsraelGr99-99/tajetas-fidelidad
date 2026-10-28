@@ -9,6 +9,8 @@ test("la portada explica Loyalty y ofrece una demo pública sin cuenta", async (
   await expect(page.getByRole("link", { name: "Solicitar información" }).first()).toHaveAttribute("href", "https://iautomexa.com/contacto/");
   await expect(page.getByRole("figure", { name: /Ejemplo de tarjeta digital de lealtad/ })).toContainText("Vista ilustrativa");
   await expect(page.getByRole("heading", { name: "Una compra mueve mucho más que un sello." })).toBeVisible();
+  await expect(page.locator("#como-funciona ol > li")).toHaveCount(3);
+  await expect(page.getByRole("figure", { name: /Un flujo, no herramientas aisladas/ })).toBeVisible();
   await expect(page.getByRole("list", { name: "Ejemplos de tarjetas por giro" }).locator("li")).toHaveCount(5);
   if (isMobile) await expect(page.getByRole("button", { name: "Barberías" })).toBeVisible();
   else await expect(page.locator("#aplicaciones").getByText("Barberías", { exact: true }).first()).toBeVisible();
@@ -18,14 +20,15 @@ test("la demo ficticia conecta caja, inventario y fidelidad sin escribir datos",
   await page.goto("/");
   const demo = page.locator("#demo-interactiva");
   await expect(demo.getByText("DEMO INTERACTIVA · DATOS FICTICIOS")).toBeVisible();
-  await expect(demo.getByText("Porciones disponibles").locator("..").getByText("12")).toBeVisible();
+  const stock = demo.locator("article").filter({ hasText: "Porciones disponibles" });
+  await expect(stock.getByText("12", { exact: true })).toBeVisible();
   await demo.getByRole("button", { name: "Simular una compra" }).click();
-  await expect(demo.getByText("Porciones disponibles").locator("..").getByText("11")).toBeVisible();
+  await expect(stock.getByText("11", { exact: true })).toBeVisible();
   await expect(demo.getByRole("status")).toContainText("solo en esta pantalla");
   await demo.getByRole("button", { name: "Simular una compra" }).click();
   await expect(demo.getByText("Recompensa disponible en la simulación")).toBeVisible();
   await demo.getByRole("button", { name: "Reiniciar demo" }).click();
-  await expect(demo.getByText("Porciones disponibles").locator("..").getByText("12")).toBeVisible();
+  await expect(stock.getByText("12", { exact: true })).toBeVisible();
 });
 
 test("las tarjetas avanzan con el scroll y respetan movimiento reducido", async ({ page, isMobile }) => {

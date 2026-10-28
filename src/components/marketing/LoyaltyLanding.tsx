@@ -46,6 +46,9 @@ const content = {
     technologyText: "Loyalty es tecnología de iautomexa para negocios que necesitan más que una tarjeta de sellos. Caja, inventario, clientes y fidelidad comparten un flujo; las reglas de saldo, elegibilidad y canje viven en el servidor, con historial auditable y una base multiempresa.",
     technologyLink: "Conoce iautomexa",
     techTags: ["Operación por sucursal", "Reglas en servidor", "Historial auditable"],
+    techMapTitle: "Un flujo, no herramientas aisladas",
+    techMapNote: "Vista conceptual de los módulos de Loyalty",
+    techModules: ["Caja", "Inventario", "Clientes", "Fidelidad"],
     faqEyebrow: "04 / PREGUNTAS FRECUENTES",
     faqTitle: <>Todo claro{" "}<em>desde el inicio.</em></>,
     faqs: [
@@ -99,6 +102,9 @@ const content = {
     technologyText: "Loyalty is technology by iautomexa for businesses that need more than a punch card. Checkout, inventory, customers, and loyalty share a workflow; balance, eligibility, and redemption rules run on the server, backed by an auditable history and a multi-business foundation.",
     technologyLink: "Discover iautomexa",
     techTags: ["By-location operations", "Server-side rules", "Auditable history"],
+    techMapTitle: "One workflow, not disconnected tools",
+    techMapNote: "Conceptual view of Loyalty modules",
+    techModules: ["Checkout", "Inventory", "Customers", "Loyalty"],
     faqEyebrow: "04 / FREQUENTLY ASKED",
     faqTitle: <>Clear from{" "}<em>day one.</em></>,
     faqs: [
@@ -202,23 +208,23 @@ export function LoyaltyLanding({ locale }: { locale: Locale }) {
       </div>
     </section>
 
-    <div className={styles.ribbon} aria-label={t.strip.join(" · ")}><div>{t.strip.map(item => <span key={item}>{item}<b aria-hidden="true">✳</b></span>)}</div></div>
+    <div className={styles.ribbon}><div className={styles.wrap}><span className={styles.ribbonMark} aria-hidden="true">✳</span><p>{t.strip.map((item, index) => <span key={item}>{item}{index < t.strip.length - 1 && <b aria-hidden="true"> → </b>}</span>)}</p><span className={styles.ribbonEnd}>LOYALTY / IAUTOMEXA</span></div></div>
 
-    <section id="como-funciona" className={`${styles.section} ${styles.how}`} aria-labelledby="how-title"><div className={styles.wrap}>
-      <div className={`${styles.sectionHead} ${styles.reveal}`}><div><p className={styles.sectionEyebrow}>{t.howEyebrow}</p><h2 id="how-title">{t.howTitle}</h2></div><p>{t.howIntro}</p></div>
-      <ol className={styles.steps}>{t.steps.map(step => <li className={styles.reveal} key={step.n}><span className={styles.stepNumber}>{step.n}</span><span className={styles.stepIcon}><Symbol name={step.icon} /></span><h3>{step.title}</h3><p>{step.text}</p><span className={styles.stepArrow} aria-hidden="true">↗</span></li>)}</ol>
+    <section id="como-funciona" className={`${styles.section} ${styles.how}`} aria-labelledby="how-title"><div className={`${styles.wrap} ${styles.howLayout}`}>
+      <div className={`${styles.howIntro} ${styles.reveal}`}><p className={styles.sectionEyebrow}>{t.howEyebrow}</p><h2 id="how-title">{t.howTitle}</h2><p>{t.howIntro}</p><a href="#demo-interactiva" className={styles.howLink}>{t.tryDemo} <Arrow diagonal /></a></div>
+      <ol className={styles.steps}>{t.steps.map(step => <li className={styles.reveal} key={step.n}><span className={styles.stepNumber}>{step.n}</span><span className={styles.stepIcon}><Symbol name={step.icon} /></span><div className={styles.stepCopy}><h3>{step.title}</h3><p>{step.text}</p></div><span className={styles.stepArrow} aria-hidden="true">↗</span></li>)}</ol>
     </div></section>
 
     <DemoPlayground locale={locale} />
 
     <section id="beneficios" className={`${styles.section} ${styles.benefits}`} aria-labelledby="benefits-title"><div className={styles.wrap}>
       <div className={`${styles.sectionHead} ${styles.reveal}`}><div><p className={styles.sectionEyebrow}>{t.benefitsEyebrow}</p><h2 id="benefits-title">{t.benefitsTitle}</h2></div></div>
-      <div className={styles.benefitGrid}>{t.benefits.map((benefit, i) => <article className={`${styles.benefitCard} ${styles.reveal}`} key={benefit.who}><div className={styles.benefitVisual}><span className={styles.visualNumber}>0{i + 1}</span><span className={styles.benefitSymbol}><Symbol name={benefit.icon} /></span>{i === 0 && <span className={styles.miniHeart} aria-hidden="true">♥</span>}{i === 1 && <span className={styles.miniSpark} aria-hidden="true">✳</span>}{i === 2 && <span className={styles.miniBars} aria-hidden="true">▁ ▃ ▆ █</span>}</div><div className={styles.benefitBody}><span>{benefit.who}</span><h3>{benefit.title}</h3><p>{benefit.text}</p></div></article>)}</div>
+      <div className={styles.benefitGrid}>{t.benefits.map((benefit, i) => <article className={`${styles.benefitCard} ${styles.reveal}`} key={benefit.who}><div className={styles.benefitVisual}><span className={styles.visualNumber}>0{i + 1}</span><span className={styles.benefitSymbol}><Symbol name={benefit.icon} /></span></div><div className={styles.benefitBody}><span>{benefit.who}</span><h3>{benefit.title}</h3><p>{benefit.text}</p></div><span className={styles.benefitArrow} aria-hidden="true">↗</span></article>)}</div>
     </div></section>
 
     <CardShowcase locale={locale} />
 
-    <section className={styles.technology} aria-labelledby="technology-title"><div className={`${styles.wrap} ${styles.technologyLayout}`}><div className={styles.techDecoration} aria-hidden="true"><span>✳</span><span>iautomexa</span></div><div className={styles.reveal}><p className={styles.sectionEyebrow}>{t.technologyEyebrow}</p><h2 id="technology-title">{t.technologyTitle}</h2><p>{t.technologyText}</p><ul>{t.techTags.map(tag => <li key={tag}><span aria-hidden="true">✓</span>{tag}</li>)}</ul><a href="https://iautomexa.com/" className={`${styles.button} ${styles.buttonWhite}`}>{t.technologyLink} <Arrow diagonal /></a></div></div></section>
+    <section className={styles.technology} aria-labelledby="technology-title"><div className={`${styles.wrap} ${styles.technologyLayout}`}><div className={styles.reveal}><p className={styles.sectionEyebrow}>{t.technologyEyebrow}</p><h2 id="technology-title">{t.technologyTitle}</h2><p>{t.technologyText}</p><ul>{t.techTags.map(tag => <li key={tag}><span aria-hidden="true">✓</span>{tag}</li>)}</ul><a href="https://iautomexa.com/" className={`${styles.button} ${styles.buttonWhite}`}>{t.technologyLink} <Arrow diagonal /></a></div><figure className={styles.techMap}><div className={styles.techMapTop}><span className={styles.techMapLogo}>✳ Loyalty</span><span>IAUTOMEXA / PLATFORM</span></div><figcaption>{t.techMapTitle}</figcaption><div className={styles.techModules}>{t.techModules.map((module, index) => <div key={module}><span>0{index + 1}</span><strong>{module}</strong><span aria-hidden="true">↗</span></div>)}</div><p>{t.techMapNote}</p></figure></div></section>
 
     <section id="preguntas" className={`${styles.section} ${styles.faq}`} aria-labelledby="faq-title"><div className={`${styles.wrap} ${styles.faqLayout}`}><div className={styles.reveal}><p className={styles.sectionEyebrow}>{t.faqEyebrow}</p><h2 id="faq-title">{t.faqTitle}</h2></div><div className={styles.faqItems}>{t.faqs.map(([question, answer]) => <details key={question} className={styles.reveal}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></div></section>
 

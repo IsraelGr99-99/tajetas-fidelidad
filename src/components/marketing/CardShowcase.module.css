@@ -1,11 +1,12 @@
-.section { background: #101b31; color: #fff; overflow: clip; font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif; }
+.section { position: relative; background: #101b31; color: #fff; overflow: clip; font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif; }
+.section::before { content: ""; position: absolute; right: -8%; top: 8%; width: 42vw; aspect-ratio: 1; border-radius: 50%; background: #283c76; opacity: .17; filter: blur(90px); pointer-events: none; }
 .wrap { width: min(100% - 64px, 1220px); min-height: 780px; margin: auto; padding-block: clamp(80px, 8vw, 110px); }
 .intro { display: grid; grid-template-columns: 1.15fr .75fr; gap: 8%; align-items: end; }
 .eyebrow { color: #a8d8ff; font-size: 11px; font-weight: 850; letter-spacing: .17em; }
 .intro h2 { margin-top: 15px; max-width: 700px; color: #fff; font-family: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif; font-size: clamp(43px, 5.4vw, 76px); font-weight: 850; letter-spacing: -.06em; line-height: 1.03; }
 .intro > p { max-width: 380px; color: #bcc9db; font-size: 16px; line-height: 1.7; }
-.stage { display: grid; grid-template-columns: minmax(180px, .42fr) minmax(0, 1fr); gap: 7%; align-items: center; min-height: 520px; margin-top: 35px; }
-.side { align-self: center; }
+.stage { position: relative; display: grid; grid-template-columns: minmax(180px, .42fr) minmax(0, 1fr); gap: 5%; align-items: center; min-height: 540px; margin-top: 38px; padding: 25px 28px; border: 1px solid #314262; border-radius: 29px; background: linear-gradient(135deg, #182940, #15223a 60%, #1a2a50); box-shadow: inset 0 1px 0 rgb(255 255 255 / .06), 0 30px 65px rgb(0 0 0 / .16); }
+.side { align-self: center; padding-left: 10px; }
 .counter { color: #fff; font-size: clamp(40px, 5vw, 68px); font-weight: 850; letter-spacing: -.08em; }
 .counter span { color: #8197b8; font-size: 21px; letter-spacing: 0; }
 .side p { margin-top: 15px; font-size: 22px; font-weight: 750; }
@@ -33,10 +34,10 @@
 .stamps .filled { border: 0; background: var(--card-accent); box-shadow: 0 0 0 2px rgb(255 255 255 / .2); }
 .reward { max-width: 155px; padding: 11px 14px; border-radius: 13px; background: var(--card-light); color: #182337; font-size: 11px; font-weight: 850; line-height: 1.35; }
 .cardDetail { margin-top: 15px; color: #c3d4e5; font-size: 13px; line-height: 1.5; }
-.note { margin-top: 5px; color: #a2b5cb; font-size: 11px; }
+.note { margin-top: 20px; color: #a2b5cb; font-size: 11px; }
 .mobileNav { display: none; }
 .animated .cards { position: relative; width: 100%; min-height: 510px; display: block; overflow: visible; padding: 0; }
 .animated .card { position: absolute; inset: 30px 0 auto; width: min(100%, 620px); margin-inline: auto; }
 .animated .cardDetail { text-align: center; }
-@media (max-width: 899px) { .wrap { width: min(100% - 36px, 720px); min-height: auto; } .intro { grid-template-columns: 1fr; gap: 18px; } .stage { grid-template-columns: 1fr; gap: 20px; min-height: auto; } .side { display: none; } .card { flex-basis: min(88vw, 530px); } .cardFace { min-height: 360px; } .mobileNav { display: flex; gap: 7px; overflow-x: auto; margin: 10px -4px 20px; padding: 5px 4px; scrollbar-width: none; } .mobileNav button { flex: 0 0 auto; min-height: 39px; padding: 0 12px; border: 1px solid #526681; border-radius: 100px; color: #c9d7e8; font-size: 11px; font-weight: 750; cursor: pointer; } .mobileNav button[aria-pressed="true"] { border-color: #aee8d2; background: #aee8d2; color: #17283b; } }
+@media (max-width: 899px) { .wrap { width: min(100% - 36px, 720px); min-height: auto; } .intro { grid-template-columns: 1fr; gap: 18px; } .stage { grid-template-columns: 1fr; gap: 20px; min-height: auto; padding: 13px; } .side { display: none; } .card { flex-basis: min(88vw, 530px); } .cardFace { min-height: 360px; } .mobileNav { display: flex; gap: 7px; overflow-x: auto; margin: 10px -4px 20px; padding: 5px 4px; scrollbar-width: none; } .mobileNav button { flex: 0 0 auto; min-height: 39px; padding: 0 12px; border: 1px solid #526681; border-radius: 100px; color: #c9d7e8; font-size: 11px; font-weight: 750; cursor: pointer; } .mobileNav button[aria-pressed="true"] { border-color: #aee8d2; background: #aee8d2; color: #17283b; } }
 @media (max-width: 580px) { .cardFace { min-height: 350px; padding: 23px; border-radius: 23px; } .cardTop b { display: none; } .cardBottom { align-items: start; flex-direction: column; gap: 15px; } .reward { max-width: 100%; } .stamps i { width: 22px; height: 22px; } }

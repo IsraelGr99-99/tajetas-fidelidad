@@ -30,6 +30,13 @@ export function DemoPlayground({ locale }: { locale: Locale }) {
     helper: "Así se visualiza el flujo. En la operación real, el servidor confirma precios, existencias y reglas antes de registrar una venta.",
     status: "Compra simulada. Caja, inventario y fidelidad actualizados solo en esta pantalla.",
     features: ["Ventas por sucursal y empleado", "Alertas de insumos y recetas", "Clientes y tarjetas personalizables", "Panel de actividad y reportes"],
+    sampleOrder: "Venta de ejemplo",
+    sampleBranch: "Sucursal de ejemplo",
+    sampleTotal: "Total ilustrativo",
+    sampleNote: "Pulsa “Simular una compra” para ver cómo cambia el recorrido.",
+    effectTitle: "Lo que pasa después de vender",
+    effectNote: "Tres áreas conectadas en un solo flujo",
+    featureTitle: "Y esto es solo el comienzo",
   } : {
     eyebrow: "02 / TRY IT WITHOUT SIGNING UP",
     title: "A purchase moves more than a stamp.",
@@ -50,6 +57,13 @@ export function DemoPlayground({ locale }: { locale: Locale }) {
     helper: "This is a visualization of the flow. In the real operation, the server confirms prices, stock, and rules before recording a sale.",
     status: "Purchase simulated. Checkout, inventory, and loyalty changed only on this screen.",
     features: ["Sales by branch and employee", "Ingredient and recipe alerts", "Customers and customizable cards", "Activity dashboard and reports"],
+    sampleOrder: "Sample sale",
+    sampleBranch: "Sample branch",
+    sampleTotal: "Illustrative total",
+    sampleNote: "Select “Simulate a purchase” to see how the journey changes.",
+    effectTitle: "What happens after a sale",
+    effectNote: "Three areas connected in one workflow",
+    featureTitle: "And that is just the beginning",
   };
 
   return (
@@ -61,12 +75,22 @@ export function DemoPlayground({ locale }: { locale: Locale }) {
         </div>
         <div className={styles.workspace}>
           <div className={styles.workspaceHead}><div><span className={styles.workspaceMark} aria-hidden="true">✳</span><strong>Loyalty</strong><span className={styles.workspaceSub}>{locale === "es" ? "Vista del negocio" : "Business view"}</span></div><span className={styles.badge}>{t.badge}</span></div>
-          <div className={styles.flow}>
-            <article className={styles.metric}><span className={styles.metricIcon} aria-hidden="true">↗</span><p>{t.sale}</p><h3>{t.saleLabel}</h3><strong>{1 + purchases}</strong><small>{t.saleItem} · $58 MXN</small></article>
-            <span className={styles.connector} aria-hidden="true">→</span>
-            <article className={styles.metric}><span className={styles.metricIcon} aria-hidden="true">◈</span><p>{t.stock}</p><h3>{t.stockLabel}</h3><strong>{remaining}</strong><small>{locale === "es" ? "Sucursal de ejemplo" : "Sample branch"}</small></article>
-            <span className={styles.connector} aria-hidden="true">→</span>
-            <article className={`${styles.metric} ${styles.loyalty}`}><span className={styles.metricIcon} aria-hidden="true">✳</span><p>{t.loyalty}</p><h3>{t.loyaltyLabel}</h3><strong>{visits}<span> / 6</span></strong><small>{unlocked ? t.earned : t.pending}</small></article>
+          <div className={styles.workspaceBody}>
+            <div className={styles.orderPanel}>
+              <p className={styles.panelEyebrow}>01 / {t.sale}</p>
+              <h3>{t.sampleOrder}</h3>
+              <div className={styles.orderItem}><span className={styles.productMark} aria-hidden="true">✳</span><div><strong>{t.saleItem}</strong><small>{t.sampleBranch}</small></div><b>$58 MXN</b></div>
+              <div className={styles.orderTotal}><span>{t.sampleTotal}</span><strong>$58 MXN</strong></div>
+              <p className={styles.orderNote}>{t.sampleNote}</p>
+            </div>
+            <div className={styles.resultPanel}>
+              <div className={styles.resultHead}><div><p className={styles.panelEyebrow}>02 / LOYALTY</p><h3>{t.effectTitle}</h3></div><span>{t.effectNote}</span></div>
+              <div className={styles.flow}>
+                <article className={styles.metric}><span className={styles.metricIcon} aria-hidden="true">↗</span><div><p>{t.sale}</p><h4>{t.saleLabel}</h4><small>{t.saleItem} · $58 MXN</small></div><strong>{1 + purchases}</strong></article>
+                <article className={styles.metric}><span className={styles.metricIcon} aria-hidden="true">◈</span><div><p>{t.stock}</p><h4>{t.stockLabel}</h4><small>{t.sampleBranch}</small></div><strong>{remaining}</strong></article>
+                <article className={`${styles.metric} ${styles.loyalty}`}><span className={styles.metricIcon} aria-hidden="true">✳</span><div><p>{t.loyalty}</p><h4>{t.loyaltyLabel}</h4><small>{unlocked ? t.earned : t.pending}</small></div><strong>{visits}<span> / 6</span></strong></article>
+              </div>
+            </div>
           </div>
           <div className={styles.demoControls}>
             <button type="button" onClick={() => setPurchases((n) => Math.min(4, n + 1))} disabled={purchases >= 4} className={styles.simulate}>{purchases >= 4 ? t.done : t.button} <span aria-hidden="true">↗</span></button>
@@ -74,7 +98,7 @@ export function DemoPlayground({ locale }: { locale: Locale }) {
             <span role="status" className={styles.status}>{purchases ? t.status : t.helper}</span>
           </div>
         </div>
-        <div className={styles.beyond}><p>{locale === "es" ? "Y detrás de la tarjeta, un negocio mejor conectado:" : "And behind the card, a better connected business:"}</p><ul>{t.features.map((feature) => <li key={feature}><span aria-hidden="true">✓</span>{feature}</li>)}</ul></div>
+        <div className={styles.beyond}><p>{t.featureTitle}</p><ul>{t.features.map((feature) => <li key={feature}><span aria-hidden="true">✓</span>{feature}</li>)}</ul></div>
       </div>
     </section>
   );
