@@ -1,4 +1,4 @@
-# Despliegue en `fidelidad-demo.iautomexa.com`
+# Despliegue en `loyalty.iautomexa.com`
 
 Guía para publicar la demo en **Hostinger** con Next.js como servidor Node 22+. No basta un hosting de archivos estáticos porque la app tiene rutas y acciones de servidor. Esta fase es una **demo guiada con acceso por invitación**, no un SaaS de autoservicio. El Supabase de pruebas actual puede contener cuentas reales de prueba: no compartas credenciales de propietario ni abras la consola a visitantes anónimos.
 
@@ -12,7 +12,7 @@ Configúralas en **Website Dashboard → Environment variables** de la Node.js W
 
 | Variable | Valor en producción | Secreta |
 |---|---|---|
-| `NEXT_PUBLIC_APP_URL` | `https://fidelidad-demo.iautomexa.com` (**nueva**) | no |
+| `NEXT_PUBLIC_APP_URL` | `https://loyalty.iautomexa.com` | no |
 | `NEXT_PUBLIC_BUSINESS_URL` | `https://iautomexa.com` | no |
 | `NEXT_PUBLIC_BUSINESS_SLUG` | `cafe-nomada` | no |
 | `NEXT_PUBLIC_PHONE_AUTH_ENABLED` | `false` | no |
@@ -32,20 +32,20 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
 ## 3. Dominio
-1. Primero publica en el dominio temporal de la Node.js Web App y verifica que `/` y `/entrar` cargan. Después, en el dashboard de la aplicación, usa **Connect domain** para `fidelidad-demo.iautomexa.com`.
+1. Primero publica en el dominio temporal de la Node.js Web App y verifica que `/` y `/entrar` cargan. Después, en el dashboard de la aplicación, usa **Connect domain** para `loyalty.iautomexa.com`.
 2. Sigue los registros DNS que muestre Hostinger; si `iautomexa.com` usa nameservers externos, actualízalos en el proveedor DNS correspondiente. No copies un destino de otro hosting.
 3. Espera a que el certificado HTTPS esté activo antes de probar cámara, registro o redirecciones de Auth. [Conectar dominio en Hostinger](https://www.hostinger.com/support/how-to-connect-a-custom-domain-to-a-node-js-application/).
 
 ## 4. Supabase (proyecto en la nube)
 - **Authentication → URL Configuration:**
-  - Site URL: `https://fidelidad-demo.iautomexa.com`.
-  - Redirect URLs: agrega `https://fidelidad-demo.iautomexa.com/**`.
+  - Site URL: `https://loyalty.iautomexa.com`.
+  - Redirect URLs: agrega `https://loyalty.iautomexa.com/**`.
 - **Attack Protection → CAPTCHA:**
   1. Crea un widget Turnstile gratuito en Cloudflare, con el dominio de la demo y `localhost`.
   2. Pon su **Secret Key** en Supabase y activa CAPTCHA.
   3. Define `NEXT_PUBLIC_TURNSTILE_SITE_KEY` con la **Site Key**.
   4. Activa los dos lados juntos: si solo lo activas en Supabase, las altas fallan.
-  5. En **Hostname Management** del widget agrega `fidelidad-demo.iautomexa.com` y, mientras desarrollas, `localhost`. Si falta el dominio, el widget muestra "No es posible conectarse al sitio web" (error **110200**). Quita `localhost` antes de producción.
+  5. En **Hostname Management** del widget agrega `loyalty.iautomexa.com` y, mientras desarrollas, `localhost`. Si falta el dominio, el widget muestra "No es posible conectarse al sitio web" (error **110200**). Quita `localhost` antes de producción.
   6. Las direcciones IP (por ejemplo `192.168.100.25`) no se pueden autorizar. Para probar desde el celular en la red local, usa el dominio publicado.
   7. Pruebas automáticas (Playwright): Cloudflare recomienda sus llaves de prueba (`1x00000000000000000000AA` y el secreto `1x0000000000000000000000000000000AA`) en un proyecto de Supabase de pruebas, no en el de producción.
 - **Authentication → Multi-Factor:** confirma que TOTP está habilitado. Después, en `/cuenta`, activa tu verificación en dos pasos como propietario.
@@ -56,20 +56,21 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 
 ## 5. Google Wallet para tus amigos
 - En modo `demo`, agrega cada cuenta de Google que vaya a probar en **Google Pay & Wallet Console → Google Wallet API → Test accounts**.
-- El enlace del pase abrirá `https://fidelidad-demo.iautomexa.com/tarjeta`.
+- El enlace del pase abrirá `https://loyalty.iautomexa.com/tarjeta`.
 - Para que cualquiera pueda guardarlo: *Request publishing access* y luego `GOOGLE_WALLET_MODE=public`.
 
 ## 6. Verificación después de publicar
 - [ ] Solo hay acceso por invitación a la consola; ninguna contraseña de owner/admin se comparte con prospectos. La portada pública deja claro qué funciones aún no están integradas.
 - [ ] Datos personales de pruebas revisados antes de dar acceso a cualquier tercero; si el entorno contiene datos no ficticios, no dar acceso a la consola hasta separarlos.
 - [ ] `/inicio` muestra el recorrido y distingue los reportes DEMO; caja no presenta una venta de ejemplo como cobro real.
-- [ ] `https://fidelidad-demo.iautomexa.com` carga la portada sin errores de CSP en la consola del navegador.
+- [ ] `https://loyalty.iautomexa.com` carga la portada sin errores de CSP en la consola del navegador.
+- [ ] `/` y `/en` tienen canonical al dominio final, `robots` permite indexarlas y `/sitemap.xml` solo enumera esas dos rutas. El panel, cuenta y tarjeta siguen `noindex`.
 - [ ] Registro de cliente con código por correo; el QR aparece en `/tarjeta`.
 - [ ] Login del personal en `/entrar`, barra con cámara (HTTPS permite usar la cámara del celular) y un sello registrado.
 - [ ] El cliente ve "¡Sello registrado!" sin recargar.
 - [ ] "Agregar a Google Wallet" con una cuenta de prueba y el pase actualizado después de otro sello.
 - [ ] `/negocio` solo es accesible para owner/admin; con MFA activada pide el código.
-- [ ] Cabeceras: `curl -I https://fidelidad-demo.iautomexa.com` muestra `content-security-policy` con `nonce-` y `strict-transport-security`.
+- [ ] Cabeceras: `curl -I https://loyalty.iautomexa.com` muestra `content-security-policy` con `nonce-` y `strict-transport-security`.
 
 ## 7. Qué no está listo para producción
 Revisa `docs/seguridad.md` → *Pendientes antes de producción* y `docs/hoja-de-ruta.md`. En resumen:

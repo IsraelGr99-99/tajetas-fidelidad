@@ -1,19 +1,61 @@
 import { expect, test } from "@playwright/test";
 
-test("la portada presenta Loyalty como tecnología de iautomexa y enlaza al piloto", async ({ page }) => {
+test("la portada explica Loyalty y ofrece una demo pública sin cuenta", async ({ page, isMobile }) => {
   await page.goto("/");
-  await expect(page).toHaveTitle(/iautomexa Loyalty/);
+  await expect(page).toHaveTitle(/Loyalty de iautomexa/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Haz que cada visita cuente");
   await expect(page.getByRole("link", { name: "Una tecnología de iautomexa", exact: true })).toHaveAttribute("href", "https://iautomexa.com/");
-  await expect(page.getByRole("link", { name: "Agenda una demo" }).first()).toHaveAttribute("href", "https://iautomexa.com/contacto/");
+  await expect(page.getByRole("link", { name: "Probar demo interactiva" }).first()).toHaveAttribute("href", "#demo-interactiva");
+  await expect(page.getByRole("link", { name: "Solicitar información" }).first()).toHaveAttribute("href", "https://iautomexa.com/contacto/");
   await expect(page.getByRole("figure", { name: /Ejemplo de tarjeta digital de lealtad/ })).toContainText("Vista ilustrativa");
-  await expect(page.getByRole("link", { name: /Conoce el piloto Café Nómada/ })).toHaveAttribute("href", "/c/cafe-nomada");
-  await page.getByRole("button", { name: /Restaurantes/ }).click();
-  await expect(page.getByText("Cada mesa cuenta")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Una compra mueve mucho más que un sello." })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Ejemplos de tarjetas por giro" }).locator("li")).toHaveCount(5);
+  if (isMobile) await expect(page.getByRole("button", { name: "Barberías" })).toBeVisible();
+  else await expect(page.locator("#aplicaciones").getByText("Barberías", { exact: true }).first()).toBeVisible();
+});
+
+test("la demo ficticia conecta caja, inventario y fidelidad sin escribir datos", async ({ page }) => {
+  await page.goto("/");
+  const demo = page.locator("#demo-interactiva");
+  await expect(demo.getByText("DEMO INTERACTIVA · DATOS FICTICIOS")).toBeVisible();
+  await expect(demo.getByText("Porciones disponibles").locator("..").getByText("12")).toBeVisible();
+  await demo.getByRole("button", { name: "Simular una compra" }).click();
+  await expect(demo.getByText("Porciones disponibles").locator("..").getByText("11")).toBeVisible();
+  await expect(demo.getByRole("status")).toContainText("solo en esta pantalla");
+  await demo.getByRole("button", { name: "Simular una compra" }).click();
+  await expect(demo.getByText("Recompensa disponible en la simulación")).toBeVisible();
+  await demo.getByRole("button", { name: "Reiniciar demo" }).click();
+  await expect(demo.getByText("Porciones disponibles").locator("..").getByText("12")).toBeVisible();
+});
+
+test("las tarjetas avanzan con el scroll y respetan movimiento reducido", async ({ page, isMobile }) => {
+  test.skip(isMobile, "ScrollTrigger fijado solo aplica en escritorio");
+  await page.goto("/");
+  const section = page.locator("#aplicaciones");
+  await section.scrollIntoViewIfNeeded();
+  await expect(section).toHaveClass(/_animated/);
+  await page.mouse.wheel(0, 1200);
+  await expect(section.locator('[class*="side"] p')).not.toHaveText("Barberías");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(section).not.toHaveClass(/_animated/);
+  await expect(section.getByRole("listitem")).toHaveCount(5);
+});
+
+test("SEO público: canonicals, idiomas, datos estructurados y rutas privadas no indexadas", async ({ page, request }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "index, follow");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://loyalty.iautomexa.com");
+  expect(await page.locator('script[type="application/ld+json"]').textContent()).toContain('"SoftwareApplication"');
+  await page.goto("/en", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://loyalty.iautomexa.com/en");
+  await page.goto("/entrar", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", "noindex, nofollow");
+  expect((await (await request.get("/sitemap.xml")).text())).toContain("https://loyalty.iautomexa.com/en");
+  expect((await (await request.get("/robots.txt")).text())).toContain("https://loyalty.iautomexa.com/sitemap.xml");
 });
 
 test("la versión en inglés cambia contenido e idioma del documento", async ({ page }) => {
-  await page.goto("/en");
+  await page.goto("/en", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Make every visit count");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect(page.getByRole("link", { name: /Technology by iautomexa/ }).first()).toHaveAttribute("href", "https://iautomexa.com/");
@@ -63,7 +105,8 @@ test("cabeceras de seguridad presentes", async ({ request }) => {
 test("404 con estilo y regreso al inicio", async ({ page }) => {
   const res = await page.goto("/no-existe");
   expect(res?.status()).toBe(404);
-  await expect(page.getByRole("link", { name: "Volver al inicio" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Volver a Loyalty" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Esta ruta tomó otro camino." })).toBeVisible();
 });
 
 test("las páginas principales cargan sin violaciones de CSP", async ({ page }) => {
