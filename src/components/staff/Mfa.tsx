@@ -7,6 +7,9 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 const fieldClass =
   "mt-2 block min-h-12 w-full max-w-xs rounded-xl border border-tabaco/25 bg-papel px-4 text-center font-mono text-2xl tracking-[0.3em] text-tinta outline-none focus:border-tabaco focus-visible:outline-3 focus-visible:outline-mostaza";
 
+const challengeFieldClass =
+  "mt-2 block min-h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-center font-mono text-2xl tracking-[0.3em] text-slate-950 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-600/15";
+
 /** ¿La sesión necesita completar el segundo paso (aal1 → aal2)? */
 export async function needsSecondFactor(): Promise<boolean> {
   const supabase = createSupabaseBrowserClient();
@@ -42,21 +45,21 @@ export function MfaChallenge({ onDone }: { onDone: () => void }) {
 
   return (
     <form onSubmit={submit} noValidate className="space-y-4">
-      <p className="leading-7 text-tabaco/80">Abre tu app de autenticación (Google Authenticator, 1Password, etc.) y escribe el código de Loyalty.</p>
+      <p className="text-sm leading-6 text-slate-600">Abre tu app de autenticación (Google Authenticator, 1Password, etc.) y escribe el código de Loyalty.</p>
       <div>
-        <label htmlFor="totp" className="block text-sm font-semibold text-tabaco">
+        <label htmlFor="totp" className="block text-sm font-semibold text-slate-800">
           Código de 6 dígitos
         </label>
-        <input id="totp" name="totp" inputMode="numeric" autoComplete="one-time-code" maxLength={8} autoFocus required className={fieldClass} />
+        <input id="totp" name="totp" inputMode="numeric" autoComplete="one-time-code" maxLength={8} autoFocus required className={challengeFieldClass} />
       </div>
       <div aria-live="polite">
         {error ? (
-          <p role="alert" className="rounded-xl border border-alerta/30 bg-alerta/5 px-4 py-3 text-sm text-alerta">
+          <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">
             {error}
           </p>
         ) : null}
       </div>
-      <button type="submit" disabled={busy} className="btn btn-oscuro disabled:opacity-70">
+      <button type="submit" disabled={busy} className="inline-flex min-h-13 w-full items-center justify-center rounded-full bg-[#2949da] px-6 text-base font-bold text-white shadow-[0_10px_24px_-10px_rgb(41_73_218/.7)] transition hover:bg-[#1f3bc0] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-orange-400 disabled:cursor-wait disabled:opacity-80">
         {busy ? "Verificando…" : "Verificar"}
       </button>
     </form>
