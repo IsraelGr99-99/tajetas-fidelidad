@@ -34,15 +34,16 @@ function isActive(pathname: string, href: string) {
 
 export function SideNav({ groups, light = false, onNavigate }: { groups: NavGroup[]; light?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
-  return <div className="space-y-6">{groups.map((group) => <div key={group.label}>
-    <p className={`mb-2 px-3 text-[0.7rem] font-bold uppercase tracking-[0.12em] ${light ? "text-slate-500" : "text-slate-400"}`}>{group.label}</p>
+  return <div className="space-y-5">{groups.map((group) => <div key={group.label}>
+    <p className={`mb-1.5 px-3 text-[0.66rem] font-bold uppercase tracking-[0.14em] ${light ? "text-slate-500" : "text-slate-400"}`}>{group.label}</p>
     <ul className="space-y-0.5">{group.items.map((item) => {
       const active = isActive(pathname, item.href);
       return <li key={item.href}><Link href={item.href} onClick={onNavigate} aria-current={active ? "page" : undefined}
-        className={`flex min-h-10 items-center gap-3 rounded-xl px-3 text-[0.9rem] font-semibold transition-colors ${light
-          ? active ? "bg-blue-50 text-blue-800" : "text-slate-700 hover:bg-slate-100"
+        className={`group flex min-h-10 items-center gap-3 rounded-full px-3 text-[0.9rem] font-semibold transition ${light
+          ? active ? "bg-white text-[#2949da] shadow-[0_6px_18px_-10px_rgb(11_18_32/.35)] ring-1 ring-slate-200/80" : "text-slate-600 hover:bg-white/70 hover:text-slate-950"
           : active ? "bg-white/13 text-white" : "text-slate-300 hover:bg-white/8 hover:text-white"}`}>
-        <NavGlyph name={item.icon} /><span>{item.label}</span>{active && <span className={`ml-auto h-1.5 w-1.5 rounded-full ${light ? "bg-blue-600" : "bg-sky-300"}`} />}
+        <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full transition ${light ? active ? "bg-gradient-to-br from-[#2949da] to-[#7c5cff] text-white" : "bg-slate-100 text-slate-500 group-hover:text-slate-800" : ""}`}><NavGlyph name={item.icon} className="h-4 w-4" /></span>
+        <span>{item.label}</span>
       </Link></li>;
     })}</ul>
   </div>)}</div>;
@@ -70,20 +71,23 @@ export function BottomNav({ groups, quick }: { groups: NavGroup[]; quick: NavIte
   }, [open]);
   const moreActive = !quick.some((item) => isActive(pathname, item.href));
   return <>
-    <nav aria-label="Acciones principales" className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/98 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(15,35,60,0.06)] lg:hidden">
-      <ul className="mx-auto grid max-w-lg grid-cols-4">{quick.map((item) => <li key={item.href}><Link href={item.href} aria-current={isActive(pathname, item.href) ? "page" : undefined}
-        className={`flex min-h-16 flex-col items-center justify-center gap-1 text-[0.7rem] font-semibold ${isActive(pathname, item.href) ? "text-blue-700" : "text-slate-600"}`}>
-        <NavGlyph name={item.icon} className="h-5 w-5" />{item.label}
-      </Link></li>)}<li><button ref={trigger} type="button" aria-expanded={open} aria-controls="mobile-workspace-menu" onClick={() => setOpen(true)}
-        className={`flex min-h-16 w-full flex-col items-center justify-center gap-1 text-[0.7rem] font-semibold ${open || moreActive ? "text-blue-700" : "text-slate-600"}`}>
+    <nav aria-label="Acciones principales" className="fixed inset-x-3 bottom-3 z-40 rounded-[1.6rem] border border-white/80 bg-white/90 pb-[env(safe-area-inset-bottom)] shadow-[0_18px_40px_-18px_rgb(11_18_32/.45)] backdrop-blur-xl lg:hidden">
+      <ul className="mx-auto grid max-w-lg grid-cols-4 p-1">{quick.map((item) => {
+        const active = isActive(pathname, item.href);
+        return <li key={item.href}><Link href={item.href} aria-current={active ? "page" : undefined}
+          className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-[1.25rem] text-[0.7rem] font-semibold transition ${active ? "bg-[#2949da]/8 text-[#2949da]" : "text-slate-600"}`}>
+          <NavGlyph name={item.icon} className="h-5 w-5" />{item.label}
+        </Link></li>;
+      })}<li><button ref={trigger} type="button" aria-expanded={open} aria-controls="mobile-workspace-menu" onClick={() => setOpen(true)}
+        className={`flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-[1.25rem] text-[0.7rem] font-semibold transition ${open || moreActive ? "bg-[#2949da]/8 text-[#2949da]" : "text-slate-600"}`}>
         <NavGlyph name="menu" />Menú
       </button></li></ul>
     </nav>
-    {open && <div className="fixed inset-0 z-50 lg:hidden"><button type="button" className="absolute inset-0 bg-slate-950/50" aria-label="Cerrar menú" onClick={() => setOpen(false)} />
+    {open && <div className="fixed inset-0 z-50 lg:hidden"><button type="button" className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px]" aria-label="Cerrar menú" onClick={() => setOpen(false)} />
       <div id="mobile-workspace-menu" ref={panel} role="dialog" aria-modal="true" aria-label="Menú del espacio de trabajo"
-        className="absolute inset-y-0 right-0 w-[min(90vw,23rem)] overflow-y-auto bg-white px-5 pb-12 pt-5 shadow-2xl">
-        <div className="mb-7 flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-widest text-blue-700">Loyalty</p><h2 className="text-xl font-bold text-slate-900">Espacio de trabajo</h2></div>
-          <button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700">Cerrar</button></div>
+        className="absolute inset-y-2 right-2 w-[min(90vw,23rem)] overflow-y-auto rounded-[1.75rem] bg-[#fbfbfd] px-4 pb-10 pt-5 shadow-2xl">
+        <div className="mb-6 flex items-center justify-between px-1"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-[#2949da]">Loyalty</p><h2 className="text-xl font-bold text-slate-900">Espacio de trabajo</h2></div>
+          <button type="button" onClick={() => { setOpen(false); trigger.current?.focus(); }} className="min-h-10 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700">Cerrar</button></div>
         <SideNav groups={groups} light onNavigate={() => setOpen(false)} />
       </div></div>}
   </>;

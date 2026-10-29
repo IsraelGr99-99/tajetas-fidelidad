@@ -34,7 +34,7 @@ export function BranchSwitcher({
         defaultValue={activeId ?? ""}
         onChange={() => formRef.current?.requestSubmit()}
         className={`max-w-full truncate rounded-full border px-3 py-1.5 text-sm font-semibold ${
-          tone === "dark" ? "border-crema/25 bg-tabaco text-crema" : "border-tabaco/20 bg-papel text-tabaco"
+          tone === "dark" ? "border-crema/25 bg-tabaco text-crema" : "min-h-9 border-slate-200 bg-white text-slate-900 shadow-[0_4px_12px_-8px_rgb(11_18_32/.4)] hover:border-slate-300"
         }`}
       >
         {activeId ? null : (

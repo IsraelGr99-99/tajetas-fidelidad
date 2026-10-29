@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DailyBars, RankBars } from "@/components/charts/Charts";
 import { Notice } from "@/components/staff/OperationParts";
-import { SectionNav } from "@/components/staff/SectionNav";
 import { rpcErrorMessage } from "@/domain/loyalty/messages";
 import { activeCustomerLabel } from "@/domain/loyalty/customer-display";
 import { formatDateTime, formatMxn, lastDaysRange } from "@/lib/format";
@@ -74,93 +73,49 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const activeBranchReport = d?.by_branch.find((branch) => branch.id === activeBranch?.id);
   const href = (r: number, demo: boolean) => `/negocio?rango=${r}${demo ? "" : "&demo=0"}`;
 
-  return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="workspace-kicker">Control del negocio · {membership.business_name}</p>
-          <h1 className="mt-1 text-3xl text-slate-950 sm:text-4xl">Resumen del negocio</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">Revisa el desempeño y sigue cada operación desde su módulo correspondiente.</p>
-        </div>
-      </div>
+  const activeCount = activeCards?.count ?? 0;
+  const branchMax = Math.max(0, ...(d?.by_branch.map((b) => b.pos_sales_cents) ?? []));
 
-      <nav aria-label="Acciones de administración" className="grid gap-3 sm:grid-cols-3">
-        <Link href="/negocio/ventas" className="workspace-card group p-4 hover:border-blue-300"><span className="workspace-kicker">Caja</span><strong className="mt-2 block text-slate-950 group-hover:text-blue-700">Ventas y empleados →</strong><span className="mt-1 block text-xs text-slate-600">Operaciones registradas en esta caja.</span></Link>
-        <Link href="/negocio/inventario" className="workspace-card group p-4 hover:border-blue-300"><span className="workspace-kicker">Inventario</span><strong className="mt-2 block text-slate-950 group-hover:text-blue-700">Existencias y alertas →</strong><span className="mt-1 block text-xs text-slate-600">Revisa mínimos, insumos y recetas.</span></Link>
-        <Link href="/negocio/finanzas" className="workspace-card group p-4 hover:border-blue-300"><span className="workspace-kicker">Reportes</span><strong className="mt-2 block text-slate-950 group-hover:text-blue-700">Importaciones y gastos →</strong><span className="mt-1 block text-xs text-slate-600">Carga reportes del POS externo y gastos.</span></Link>
+  return (
+    <div className="space-y-6">
+      {/* Encabezado: título, periodo y accesos */}
+      <header className="flex flex-wrap items-end justify-between gap-5">
+        <div className="min-w-0">
+          <p className="workspace-kicker">Resumen · {membership.business_name}</p>
+          <h1 className="mt-1.5 text-3xl font-extrabold tracking-[-0.045em] text-slate-950 sm:text-[2.6rem] sm:leading-[1.05]">Resumen del negocio</h1>
+          <p className="mt-2 max-w-2xl text-[0.95rem] text-slate-600">Así va {membership.business_name} en los últimos {days} días.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <nav aria-label="Periodo de los reportes" className="flex gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 shadow-[0_6px_16px_-12px_rgb(11_18_32/.4)]">
+            {RANGES.map((r) => <Link key={r} href={href(r, includeDemo)} aria-current={r === days ? "page" : undefined} className={`inline-flex min-h-9 items-center rounded-full px-3.5 text-sm font-semibold transition ${r === days ? "bg-slate-950 text-white" : "text-slate-600 hover:text-slate-950"}`}>{r} días</Link>)}
+          </nav>
+          {d?.has_demo && <Link href={href(days, !includeDemo)} className="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white/80 px-4 text-sm font-semibold text-slate-700 hover:border-slate-300">{includeDemo ? "Ocultar DEMO" : "Mostrar DEMO"}</Link>}
+        </div>
+      </header>
+
+      <nav aria-label="Acciones de administración" className="flex flex-wrap gap-2">
+        <QuickLink href="/negocio/ventas" icon="cart" label="Ventas y empleados" />
+        <QuickLink href="/negocio/inventario" icon="box" label="Existencias y alertas" />
+        <QuickLink href="/negocio/finanzas" icon="doc" label="Importaciones y gastos" />
       </nav>
 
-      <SectionNav label="Secciones del resumen" items={[{ href: "#operacion-semana", label: "Esta semana" }, { href: "#comparar-sucursales", label: "Comparar sucursales" }, { href: "#clientes-activos", label: "Clientes" }, { href: "#analisis-historico", label: "Análisis histórico" }]} />
-
-      <section id="comparar-sucursales" aria-labelledby="comparar-title" className="workspace-card scroll-mt-24 p-5 sm:p-6">
-        <p className="workspace-kicker">Vista sencilla · últimos {days} días</p>
-        <h2 id="comparar-title" className="mt-1 text-2xl font-semibold text-slate-950">Comparar sucursales</h2>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Aquí se comparan solo los reportes de ventas importados y los gastos registrados. Las ventas de la caja de Loyalty no se suman otra vez para evitar duplicados. Los gastos generales sin sucursal quedan fuera del resultado de cada local.</p>
-        {activeBranch && <p className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-950"><strong>Tu sucursal activa: {activeBranch.name}.</strong> Ventas importadas: {formatMxn(activeBranchReport?.pos_sales_cents ?? 0)} · Gastos: {formatMxn(activeBranchReport?.expenses_cents ?? 0)} · Resultado estimado: {formatMxn((activeBranchReport?.pos_sales_cents ?? 0) - (activeBranchReport?.cogs_cents ?? 0) - (activeBranchReport?.expenses_cents ?? 0))}.</p>}
-        {d?.by_branch.length ? <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[580px] text-left text-sm"><caption className="sr-only">Ventas, gastos y resultado estimado por sucursal</caption><thead className="border-b border-slate-200 text-slate-600"><tr><th scope="col" className="p-3">Sucursal</th><th scope="col" className="p-3 text-right">Ventas importadas</th><th scope="col" className="p-3 text-right">Gastos</th><th scope="col" className="p-3 text-right">Resultado estimado</th></tr></thead><tbody>{d.by_branch.map((branch) => <tr key={branch.id} className={`border-b border-slate-100 ${branch.id === activeBranch?.id ? "bg-blue-50 font-semibold" : ""}`}><th scope="row" className="p-3 text-slate-900">{branch.name}{branch.is_demo ? " · DEMO" : ""}{branch.id === activeBranch?.id ? " · activa" : ""}</th><td className="p-3 text-right tabular-nums">{formatMxn(branch.pos_sales_cents)}</td><td className="p-3 text-right tabular-nums">{formatMxn(branch.expenses_cents)}</td><td className="p-3 text-right tabular-nums">{formatMxn(branch.pos_sales_cents - branch.cogs_cents - branch.expenses_cents)}</td></tr>)}</tbody></table></div> : <p className="mt-4 text-sm text-slate-600">Aún no hay datos de sucursales para comparar.</p>}
-        <p className="mt-3 text-xs text-slate-500">Resultado estimado = ventas importadas − costos conocidos − gastos asignados. Si faltan costos, la ganancia real puede ser menor.</p>
-      </section>
+      {/* Fuentes de las cifras: un aviso compacto en lugar de varios párrafos */}
+      <details className="group rounded-2xl border border-slate-200/80 bg-white/70 px-4 py-1 text-sm text-slate-600">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 font-semibold text-slate-800 [&::-webkit-details-marker]:hidden">
+          <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-full bg-[#2949da]/10 text-xs font-bold text-[#2949da]">i</span>
+          ¿De dónde salen estas cifras?
+          {d?.has_demo && includeDemo ? <span className="rounded-full bg-[#7c5cff]/10 px-2.5 py-0.5 text-xs font-bold text-[#5b3fd6]">Incluye reportes ficticios</span> : null}
+          <span aria-hidden="true" className="ml-auto text-slate-400 transition group-open:rotate-180">⌄</span>
+        </summary>
+        <ul className="mb-3 mt-1 space-y-1.5 border-t border-slate-100 pt-3 leading-6">
+          <li><strong className="text-slate-800">Ventas, gastos y gráficas</strong> usan los reportes importados del punto de venta externo y los gastos registrados, según el periodo elegido.</li>
+          <li><strong className="text-slate-800">Esta semana</strong> muestra las ventas de la caja de Loyalty desde el lunes. No se suman a los reportes importados para evitar duplicados.</li>
+          <li><strong className="text-slate-800">Clientes con tarjeta</strong> es el total histórico de clientes vigentes; no depende del periodo.</li>
+          {d?.has_demo && includeDemo ? <li><strong className="text-slate-800">Reportes ficticios:</strong> las ventas importadas y los gastos de este entorno ilustran cómo se vería un negocio en operación; no son transacciones reales. Puedes ocultarlos con «Ocultar DEMO».</li> : null}
+        </ul>
+      </details>
 
       {!d ? <Notice tone="error" title={rpcErrorMessage(res?.data?.code)} /> : null}
-
-      <section id="clientes-activos" aria-labelledby="clientes-activos-title" className="workspace-card scroll-mt-24 p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="workspace-kicker">Fidelidad · total histórico</p>
-            <h2 id="clientes-activos-title" className="mt-1 text-2xl font-semibold text-slate-950">Clientes con tarjeta activa</h2>
-            <p className="mt-1 text-sm text-slate-600">Solo clientes vigentes de {membership.business_name}; no depende del periodo de ventas.</p>
-          </div>
-          <Link href="/negocio/clientes" className="btn border border-tabaco/20 px-4 text-tabaco">Ver todos →</Link>
-        </div>
-        {activeCardRows === null ? (
-          <p role="alert" className="mt-4 text-sm text-red-700">No se pudo consultar el padrón de fidelidad. Intenta actualizar la página.</p>
-        ) : (
-          <div className="mt-4 grid gap-5 sm:grid-cols-[9rem_1fr]">
-            <p className="font-display text-5xl tabular-nums text-slate-950" aria-label={`${activeCards?.count ?? 0} clientes con tarjeta activa`}>{activeCards?.count ?? 0}</p>
-            {activeCardRows.length ? (
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {activeCardRows.map((card) => (
-                  <li key={card.id} className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                    <span className="block font-semibold text-slate-950">{activeCustomerLabel(card.customers, card.public_serial)}</span>
-                    <span>Alta {formatDateTime(card.created_at)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : <p className="text-sm text-slate-600">Aún no hay clientes con tarjeta activa.</p>}
-          </div>
-        )}
-      </section>
-
-      <section id="operacion-semana" aria-labelledby="operacion-semana-title" className="workspace-card scroll-mt-24 p-5 sm:p-6">
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="workspace-kicker">Operación en tiempo real · {activeBranch?.name ?? "todas las sucursales"}</p><h2 id="operacion-semana-title" className="mt-1 text-2xl font-semibold text-slate-950">Esta semana y pendientes</h2><p className="mt-1 text-sm text-slate-600">{activeBranch ? `Solo ${activeBranch.name}.` : "Todas las sucursales."} Ventas de esta caja desde el lunes; no incluye reportes importados del POS externo.</p></div><Link href="/negocio/inventario" className="text-sm font-semibold text-blue-700">Abrir inventario →</Link></div>
-        {!operations ? <p role="alert" className="mt-4 text-sm text-red-700">No se pudo cargar el tablero operativo. Revisa la conexión y la migración del tablero.</p> : <>
-          <dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl bg-blue-50 p-4"><dt className="text-sm text-blue-900">Ventas de caja esta semana</dt><dd className="mt-1 text-2xl font-bold tabular-nums text-blue-950">{formatMxn(Number(operations.weekly_sales_cents))}</dd><p className="text-xs text-blue-900">{operations.weekly_sales_count} venta(s)</p></div>
-            <div className="rounded-xl bg-amber-50 p-4"><dt className="text-sm text-amber-900">Insumos en mínimo</dt><dd className="mt-1 text-2xl font-bold tabular-nums text-amber-950">{operations.low_stock_count}</dd></div>
-            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-sm text-slate-700">Insumos sin conteo</dt><dd className="mt-1 text-2xl font-bold tabular-nums text-slate-950">{operations.missing_stock_count}</dd></div>
-            <div className="rounded-xl bg-slate-50 p-4"><dt className="text-sm text-slate-700">Productos sin receta</dt><dd className="mt-1 text-2xl font-bold tabular-nums text-slate-950">{operations.products_without_recipe}</dd></div>
-          </dl>
-          <div className="mt-6 border-t border-slate-200 pt-5"><h3 className="text-lg font-semibold text-slate-950">Registros recientes</h3>
-            {operations.recent_events.length ? <ul className="mt-3 divide-y divide-slate-100">{operations.recent_events.map((event, index) => <li key={`${event.kind}-${event.created_at}-${index}`} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm"><span className="font-medium text-slate-800">{event.kind === "sale" ? `Venta · ${event.label}` : `Inventario · ${event.label}`}</span><span className="text-slate-600">{event.kind === "sale" && event.amount_cents !== null ? formatMxn(event.amount_cents) : `${event.quantity_delta && event.quantity_delta > 0 ? "+" : ""}${event.quantity_delta ?? 0}`} · {formatDateTime(event.created_at)}</span></li>)}</ul>
-              : <p className="mt-2 text-sm text-slate-600">Aún no hay ventas ni movimientos de stock.</p>}
-          </div>
-        </>}
-      </section>
-
-      <details id="analisis-historico" open={Boolean(params.rango || params.demo)} className="workspace-card scroll-mt-24 p-5 sm:p-6"><summary className="cursor-pointer text-xl font-bold text-slate-950">Análisis histórico · todas las sucursales <span className="ml-2 text-sm font-medium text-slate-500">(opcional)</span></summary>
-        <div className="mt-5 space-y-6">
-        <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950"><strong>Fuentes distintas:</strong> este análisis usa reportes externos importados y registros de fidelidad. Las ventas de la caja de Loyalty se muestran arriba y en “Ventas y empleados”; no se suman aquí para evitar duplicarlas.</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <nav aria-label="Periodo del análisis importado" className="flex gap-1 rounded-full bg-slate-100 p-1">
-            {RANGES.map((r) => <Link key={r} href={href(r, includeDemo)} aria-current={r === days ? "page" : undefined} className={`rounded-full px-3 py-1.5 text-sm font-semibold ${r === days ? "bg-white text-slate-950 shadow" : "text-slate-600"}`}>{r} días</Link>)}
-          </nav>
-          {d?.has_demo && <Link href={href(days, !includeDemo)} className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700">{includeDemo ? "Ocultar DEMO" : "Mostrar DEMO"}</Link>}
-        </div>
-      {d && d.has_demo && includeDemo ? (
-        <p className="rounded-2xl bg-mostaza/30 px-4 py-3 text-sm text-tabaco">
-          <strong>Incluye reportes ficticios.</strong> Las ventas importadas y los gastos de este entorno ilustran cómo se vería un negocio en operación; no son transacciones reales. Puedes ocultarlos con el filtro superior.
-        </p>
-      ) : null}
 
       {d && !d.has_pos_data ? (
         <Notice tone="info" title="Aún no hay ventas del punto de venta en este periodo">
@@ -172,138 +127,239 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </Notice>
       ) : null}
 
+      {/* Cifras clave del periodo */}
       {d ? (
-        <>
-          <dl className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-            <Kpi label="Ventas importadas (POS)" value={formatMxn(d.totals.pos_sales_cents)} hint={`Reporte externo · últimos ${days} días`} strong />
-            <Kpi
-              label="Ganancia bruta"
-              value={formatMxn(d.totals.gross_profit_cents)}
-              hint={d.totals.cost_coverage === null ? "Sin ventas" : `Costo conocido en ${pct(d.totals.cost_coverage)} de las ventas`}
-            />
-            <Kpi label="Gastos" value={formatMxn(d.totals.expenses_cents)} hint="Registrados e importados" />
-            <Kpi
-              label="Utilidad neta"
-              value={formatMxn(d.totals.net_profit_cents)}
-              hint={d.totals.net_profit_cents < 0 ? "Pérdida en el periodo" : "Ventas − costo − gastos"}
-              tone={d.totals.net_profit_cents < 0 ? "negative" : "neutral"}
-            />
-            <Kpi
-              label="Ventas con tarjeta"
-              value={formatMxn(d.totals.card_sales_cents)}
-              hint={`${d.totals.card_visits} visitas${d.totals.card_share !== null ? ` · ${pct(d.totals.card_share)} del POS` : ""}`}
-            />
-            <Kpi
-              label="Recompensas pendientes"
-              value={String(d.loyalty.rewards_outstanding)}
-              hint={`Valor máximo ${formatMxn(d.loyalty.rewards_outstanding_value_cents)}`}
-            />
-          </dl>
+        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Kpi label="Ventas importadas (POS)" value={formatMxn(d.totals.pos_sales_cents)} hint={`Reporte externo · últimos ${days} días`} strong />
+          <Kpi label="Ganancia bruta" value={formatMxn(d.totals.gross_profit_cents)} hint={d.totals.cost_coverage === null ? "Sin ventas" : `Costo conocido en ${pct(d.totals.cost_coverage)} de las ventas`} />
+          <Kpi label="Gastos" value={formatMxn(d.totals.expenses_cents)} hint="Registrados e importados" />
+          <Kpi
+            label="Utilidad neta"
+            value={formatMxn(d.totals.net_profit_cents)}
+            hint={d.totals.net_profit_cents < 0 ? "Pérdida en el periodo" : "Ventas − costo − gastos"}
+            tone={d.totals.net_profit_cents < 0 ? "negative" : "positive"}
+          />
+        </dl>
+      ) : null}
 
-          <section aria-labelledby="ventas-dia" className="rounded-3xl bg-papel p-6">
-            <h2 id="ventas-dia" className="text-2xl text-tabaco">
-              Ventas por día
-            </h2>
-            <p className="text-sm text-tabaco/75">Reporte del punto de venta. Pasa el cursor sobre una barra para ver el monto.</p>
-            <div className="mt-4">
-              <DailyBars
-                title="Ventas por día"
-                points={d.by_day.map((x) => ({ day: x.day, value: x.pos_sales_cents }))}
-                emptyText="Sin ventas importadas en este periodo."
+      {/* Tendencia y productos */}
+      {d ? (
+        <div className="grid gap-6 lg:grid-cols-3 lg:items-start">
+          <section aria-labelledby="ventas-dia" className="workspace-card p-5 sm:p-6 lg:col-span-2">
+            <PanelHead id="ventas-dia" kicker={`Últimos ${days} días`} title="Ventas por día" text="Reporte del punto de venta. Pasa el cursor o el foco sobre una barra para ver el monto." />
+            <div className="mt-5">
+              <DailyBars title="Ventas por día" points={d.by_day.map((x) => ({ day: x.day, value: x.pos_sales_cents }))} emptyText="Sin ventas importadas en este periodo." />
+            </div>
+          </section>
+          <section aria-labelledby="top" className="workspace-card p-5 sm:p-6">
+            <PanelHead id="top" kicker={`Últimos ${days} días`} title="Lo más vendido" />
+            <div className="mt-5">
+              <RankBars
+                emptyText="Sin ventas en este periodo."
+                items={d.top_products.map((p) => ({
+                  label: p.name,
+                  value: p.revenue_cents,
+                  note: `${Number(p.quantity).toLocaleString("es-MX")} vendidos${p.profit_cents !== null ? ` · ganancia ${formatMxn(p.profit_cents)}` : " · sin costo"}`,
+                }))}
               />
             </div>
           </section>
+        </div>
+      ) : null}
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <section aria-labelledby="top" className="rounded-3xl bg-papel p-6">
-              <h2 id="top" className="text-2xl text-tabaco">
-                Lo más vendido
-              </h2>
-              <div className="mt-4">
-                <RankBars
-                  emptyText="Sin ventas en este periodo."
-                  items={d.top_products.map((p) => ({
-                    label: p.name,
-                    value: p.revenue_cents,
-                    note: `${Number(p.quantity).toLocaleString("es-MX")} vendidos${p.profit_cents !== null ? ` · ganancia ${formatMxn(p.profit_cents)}` : " · sin costo"}`,
-                  }))}
-                />
-              </div>
-            </section>
+      {/* Sucursales */}
+      <section id="comparar-sucursales" aria-labelledby="comparar-title" className="workspace-card scroll-mt-24 p-5 sm:p-6">
+        <PanelHead id="comparar-title" kicker={`Últimos ${days} días`} title="Comparar sucursales" text="Reportes importados y gastos asignados a cada local. Los gastos generales sin sucursal quedan fuera." />
+        {activeBranch && <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-[#2949da]/15 bg-[#2949da]/[0.04] px-4 py-3 text-sm text-slate-700">
+          <strong className="text-slate-950">Tu sucursal activa: {activeBranch.name}.</strong>
+          <span>Ventas importadas: <b className="tabular-nums text-slate-950">{formatMxn(activeBranchReport?.pos_sales_cents ?? 0)}</b></span>
+          <span>Gastos: <b className="tabular-nums text-slate-950">{formatMxn(activeBranchReport?.expenses_cents ?? 0)}</b></span>
+          <span>Resultado estimado: <b className="tabular-nums text-slate-950">{formatMxn((activeBranchReport?.pos_sales_cents ?? 0) - (activeBranchReport?.cogs_cents ?? 0) - (activeBranchReport?.expenses_cents ?? 0))}</b></span>
+        </p>}
+        {d?.by_branch.length ? <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <caption className="sr-only">Ventas, gastos, resultado estimado y visitas con tarjeta por sucursal</caption>
+            <thead className="text-xs uppercase tracking-wider text-slate-500"><tr>
+              <th scope="col" className="px-3 pb-2 font-bold">Sucursal</th>
+              <th scope="col" className="px-3 pb-2 text-right font-bold">Ventas importadas</th>
+              <th scope="col" className="px-3 pb-2 text-right font-bold">Gastos</th>
+              <th scope="col" className="px-3 pb-2 text-right font-bold">Resultado estimado</th>
+              <th scope="col" className="px-3 pb-2 text-right font-bold">Visitas con tarjeta</th>
+            </tr></thead>
+            <tbody>{d.by_branch.map((branch) => {
+              const result = branch.pos_sales_cents - branch.cogs_cents - branch.expenses_cents;
+              const active = branch.id === activeBranch?.id;
+              return <tr key={branch.id} className={`border-t border-slate-100 ${active ? "bg-[#2949da]/[0.04]" : ""}`}>
+                <th scope="row" className="px-3 py-3 font-semibold text-slate-900">
+                  {branch.name}
+                  {branch.is_demo ? <span className="ml-2 rounded-full bg-[#7c5cff]/10 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-[#5b3fd6]">DEMO</span> : null}
+                  {active ? <span className="ml-2 rounded-full bg-[#2949da]/10 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-[#2949da]">Activa</span> : null}
+                </th>
+                <td className="px-3 py-3 text-right">
+                  <span className="font-semibold tabular-nums text-slate-950">{formatMxn(branch.pos_sales_cents)}</span>
+                  <span aria-hidden="true" className="ml-auto mt-1.5 block h-1.5 w-28 rounded-full bg-slate-100"><span className="block h-full rounded-full bg-gradient-to-r from-[#2949da] to-[#7c5cff]" style={{ width: `${branchMax ? Math.max(3, (branch.pos_sales_cents / branchMax) * 100) : 0}%` }} /></span>
+                </td>
+                <td className="px-3 py-3 text-right tabular-nums text-slate-700">{formatMxn(branch.expenses_cents)}</td>
+                <td className={`px-3 py-3 text-right font-semibold tabular-nums ${result < 0 ? "text-red-700" : "text-emerald-700"}`}>{formatMxn(result)}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-slate-700">{branch.card_visits}</td>
+              </tr>;
+            })}</tbody>
+          </table>
+        </div> : <EmptyState text="Aún no hay datos de sucursales para comparar." action={{ href: "/negocio/finanzas", label: "Importar un reporte" }} />}
+        <p className="mt-3 text-xs text-slate-500">Resultado estimado = ventas importadas − costos conocidos − gastos asignados. Si faltan costos, la ganancia real puede ser menor.</p>
+        {d && d.unallocated_expenses_cents > 0 ? <p className="mt-1 text-xs text-slate-500">Gastos generales sin sucursal: {formatMxn(d.unallocated_expenses_cents)} (no incluidos en la tabla).</p> : null}
+      </section>
 
-            <section aria-labelledby="sucursales-rank" className="rounded-3xl bg-papel p-6">
-              <h2 id="sucursales-rank" className="text-2xl text-tabaco">
-                Ventas por sucursal
-              </h2>
-              <div className="mt-4">
-                <RankBars
-                  emptyText="Sin ventas por sucursal en este periodo."
-                  items={d.by_branch.map((b) => ({
-                    label: b.name,
-                    value: b.pos_sales_cents,
-                    tag: b.is_demo ? "DEMO" : undefined,
-                    note: `Utilidad ${formatMxn(b.pos_sales_cents - b.cogs_cents - b.expenses_cents)} · ${b.card_visits} visitas con tarjeta`,
-                  }))}
-                />
-                {d.unallocated_expenses_cents > 0 ? (
-                  <p className="mt-3 text-xs text-tabaco/75">Gastos generales sin sucursal: {formatMxn(d.unallocated_expenses_cents)} (no incluidos arriba).</p>
-                ) : null}
-              </div>
-            </section>
-
-            <section aria-labelledby="categorias" className="rounded-3xl bg-papel p-6">
-              <h2 id="categorias" className="text-2xl text-tabaco">
-                Ventas por categoría
-              </h2>
-              <div className="mt-4">
-                <RankBars emptyText="Sin ventas en este periodo." items={d.by_category.map((c) => ({ label: c.category, value: c.revenue_cents }))} />
-              </div>
-            </section>
-
-            <section aria-labelledby="gastos-cat" className="rounded-3xl bg-papel p-6">
-              <h2 id="gastos-cat" className="text-2xl text-tabaco">
-                Gastos por categoría
-              </h2>
-              <div className="mt-4">
-                <RankBars emptyText="Sin gastos en este periodo." items={d.expenses_by_category.map((c) => ({ label: c.category, value: c.amount_cents }))} />
-              </div>
-            </section>
+      {/* Operación de la semana */}
+      <section id="operacion-semana" aria-labelledby="operacion-semana-title" className="workspace-card scroll-mt-24 p-5 sm:p-6">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <PanelHead id="operacion-semana-title" kicker={`Desde el lunes · ${activeBranch?.name ?? "todas las sucursales"}`} title="Esta semana en la operación" text="Ventas registradas en la caja de Loyalty y pendientes de inventario. No incluye reportes importados." />
+          <Link href="/negocio/inventario" className="inline-flex min-h-10 items-center text-sm font-semibold text-[#2949da] hover:underline">Abrir inventario →</Link>
+        </div>
+        {!operations ? <p role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">No se pudo cargar el tablero operativo. Revisa la conexión y la migración del tablero.</p> : <>
+          <dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Stat label="Ventas de caja esta semana" value={formatMxn(Number(operations.weekly_sales_cents))} note={`${operations.weekly_sales_count} venta(s)`} tone="blue" />
+            <Stat label="Insumos en mínimo" value={String(operations.low_stock_count)} note={operations.low_stock_count ? "Revisa y reabastece" : "Todo en orden"} tone={operations.low_stock_count ? "amber" : "green"} />
+            <Stat label="Insumos sin conteo" value={String(operations.missing_stock_count)} note={operations.missing_stock_count ? "Registra su existencia" : "Todo en orden"} tone={operations.missing_stock_count ? "amber" : "green"} />
+            <Stat label="Productos sin receta" value={String(operations.products_without_recipe)} note={operations.products_without_recipe ? "No descuentan inventario" : "Todo en orden"} tone={operations.products_without_recipe ? "amber" : "green"} />
+          </dl>
+          <div className="mt-6 border-t border-slate-100 pt-5">
+            <h3 className="text-base font-bold text-slate-950">Registros recientes</h3>
+            {operations.recent_events.length ? <ul className="mt-2 divide-y divide-slate-100">{operations.recent_events.map((event, index) => <li key={`${event.kind}-${event.created_at}-${index}`} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
+              <span className="flex items-center gap-2.5 font-medium text-slate-800">
+                <span aria-hidden="true" className={`h-2 w-2 rounded-full ${event.kind === "sale" ? "bg-[#2949da]" : "bg-[#7c5cff]"}`} />
+                {event.kind === "sale" ? `Venta · ${event.label}` : `Inventario · ${event.label}`}
+              </span>
+              <span className="tabular-nums text-slate-500">{event.kind === "sale" && event.amount_cents !== null ? formatMxn(event.amount_cents) : `${event.quantity_delta && event.quantity_delta > 0 ? "+" : ""}${event.quantity_delta ?? 0}`} · {formatDateTime(event.created_at)}</span>
+            </li>)}</ul>
+              : <EmptyState text="Aún no hay ventas ni movimientos de stock esta semana." action={{ href: "/caja", label: "Registrar una venta en Caja" }} />}
           </div>
+        </>}
+      </section>
 
-          <section aria-labelledby="fidelidad" className="rounded-3xl bg-tabaco p-6 text-crema">
-            <h2 id="fidelidad" className="text-2xl">
-              Programa de fidelidad
-            </h2>
-            <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* Fidelidad */}
+      <section id="clientes-activos" aria-labelledby="clientes-activos-title" className="workspace-card scroll-mt-24 overflow-hidden">
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+          <div className="p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <PanelHead id="clientes-activos-title" kicker="Fidelidad · total histórico" title="Clientes con tarjeta activa" text={`Clientes vigentes de ${membership.business_name}; no depende del periodo.`} />
+              <Link href="/negocio/clientes" className="workspace-action-secondary min-h-10 px-4">Ver todos →</Link>
+            </div>
+            {activeCardRows === null ? (
+              <p role="alert" className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">No se pudo consultar el padrón de fidelidad. Intenta actualizar la página.</p>
+            ) : (
+              <div className="mt-5">
+                <p className="text-5xl font-extrabold tracking-[-0.04em] tabular-nums text-slate-950" aria-label={`${activeCount} clientes con tarjeta activa`}>{activeCount}</p>
+                {activeCardRows.length ? (
+                  <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                    {activeCardRows.map((card) => (
+                      <li key={card.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 px-3.5 py-2.5 text-sm text-slate-600">
+                        <span className="block font-semibold text-slate-950">{activeCustomerLabel(card.customers, card.public_serial)}</span>
+                        <span>Alta {formatDateTime(card.created_at)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <EmptyState text="Aún no hay clientes con tarjeta activa. Comparte el QR de tu programa para que se registren." action={{ href: "/negocio/programa", label: "Ir a Programa" }} />}
+              </div>
+            )}
+          </div>
+          {d ? <div className="border-t border-slate-100 bg-gradient-to-br from-[#2a1f6b] via-[#3b2ea8] to-[#5b3fd6] p-5 text-white sm:p-6 lg:border-l lg:border-t-0">
+            <p className="text-[0.7rem] font-bold uppercase tracking-[0.14em] text-white/70">Programa de fidelidad · últimos {days} días</p>
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3">
               <Mini label="Clientes nuevos" value={String(d.loyalty.new_customers)} />
               <Mini label="Visitas con tarjeta" value={String(d.totals.card_visits)} />
               <Mini label="Canjes" value={String(d.loyalty.redemptions)} />
               <Mini label="Ticket promedio" value={d.totals.avg_card_ticket_cents === null ? "—" : formatMxn(d.totals.avg_card_ticket_cents)} />
+              <Mini label="Ventas con tarjeta" value={formatMxn(d.totals.card_sales_cents)} note={d.totals.card_share !== null ? `${pct(d.totals.card_share)} del POS` : undefined} />
+              <Mini label="Recompensas pendientes" value={String(d.loyalty.rewards_outstanding)} note={`Valor máximo ${formatMxn(d.loyalty.rewards_outstanding_value_cents)}`} />
             </dl>
-          </section>
-        </>
-      ) : null}
+          </div> : null}
         </div>
-      </details>
+      </section>
+
+      {/* Categorías */}
+      {d ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section aria-labelledby="categorias" className="workspace-card p-5 sm:p-6">
+            <PanelHead id="categorias" kicker={`Últimos ${days} días`} title="Ventas por categoría" />
+            <div className="mt-5"><RankBars emptyText="Sin ventas en este periodo." items={d.by_category.map((c) => ({ label: c.category, value: c.revenue_cents }))} /></div>
+          </section>
+          <section aria-labelledby="gastos-cat" className="workspace-card p-5 sm:p-6">
+            <PanelHead id="gastos-cat" kicker={`Últimos ${days} días`} title="Gastos por categoría" />
+            <div className="mt-5"><RankBars emptyText="Sin gastos en este periodo." items={d.expenses_by_category.map((c) => ({ label: c.category, value: c.amount_cents }))} /></div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function Kpi({ label, value, hint, strong, tone = "neutral" }: { label: string; value: string; hint: string; strong?: boolean; tone?: "neutral" | "negative" }) {
+function PanelHead({ id, kicker, title, text }: { id: string; kicker: string; title: string; text?: string }) {
   return (
-    <div className={`rounded-3xl p-5 ${strong ? "bg-tabaco text-crema" : "bg-papel text-tabaco"}`}>
-      <dt className={`text-sm ${strong ? "text-crema/80" : "text-tabaco/75"}`}>{label}</dt>
-      <dd className={`mt-1 font-display text-3xl tabular-nums ${tone === "negative" ? "text-alerta" : ""}`}>{value}</dd>
-      <dd className={`mt-1 text-xs ${strong ? "text-crema/75" : "text-tabaco/75"}`}>{hint}</dd>
+    <div className="min-w-0">
+      <p className="workspace-kicker">{kicker}</p>
+      <h2 id={id} className="mt-1 text-xl font-bold tracking-[-0.03em] text-slate-950 sm:text-2xl">{title}</h2>
+      {text ? <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{text}</p> : null}
     </div>
   );
 }
 
-function Mini({ label, value }: { label: string; value: string }) {
+function QuickLink({ href, icon, label }: { href: string; icon: "cart" | "box" | "doc"; label: string }) {
+  return (
+    <Link href={href} className="group inline-flex min-h-11 items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/80 py-1.5 pl-1.5 pr-4 text-sm font-semibold text-slate-800 shadow-[0_6px_16px_-12px_rgb(11_18_32/.4)] transition hover:-translate-y-px hover:border-slate-300 hover:bg-white">
+      <span aria-hidden="true" className="grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-600 transition group-hover:bg-[#2949da] group-hover:text-white">
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          {icon === "cart" && <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 9h18M8 14h3M8 17h7" /></>}
+          {icon === "box" && <path d="m3 7 9-4 9 4-9 4-9-4ZM3 7v10l9 4 9-4V7M12 11v10" />}
+          {icon === "doc" && <path d="M4 4h16v16H4zM7 9h10M7 13h10M7 17h6" />}
+        </svg>
+      </span>
+      {label}
+      <span aria-hidden="true" className="text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-[#2949da]">→</span>
+    </Link>
+  );
+}
+
+function EmptyState({ text, action }: { text: string; action?: { href: string; label: string } }) {
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-4 text-sm text-slate-600">
+      <p>{text}</p>
+      {action ? <Link href={action.href} className="inline-flex min-h-10 items-center rounded-full bg-white px-4 font-semibold text-[#2949da] shadow-sm ring-1 ring-slate-200 hover:ring-[#2949da]/40">{action.label} →</Link> : null}
+    </div>
+  );
+}
+
+function Kpi({ label, value, hint, strong, tone = "neutral" }: { label: string; value: string; hint: string; strong?: boolean; tone?: "neutral" | "positive" | "negative" }) {
+  return (
+    <div className={`rounded-[1.5rem] p-5 ${strong ? "bg-slate-950 bg-[radial-gradient(circle_at_100%_0%,rgb(41_73_218/.55),transparent_60%)] text-white shadow-[0_24px_48px_-28px_rgb(11_18_32/.8)]" : "workspace-card"}`}>
+      <dt className={`text-sm font-semibold ${strong ? "text-white/70" : "text-slate-500"}`}>{label}</dt>
+      <dd className={`mt-2 text-[1.65rem] font-extrabold tracking-[-0.04em] tabular-nums sm:text-3xl ${tone === "negative" ? "text-red-700" : strong ? "text-white" : "text-slate-950"}`}>{value}</dd>
+      <dd className={`mt-1 text-xs ${strong ? "text-white/65" : tone === "positive" ? "text-emerald-700" : "text-slate-500"}`}>{hint}</dd>
+    </div>
+  );
+}
+
+function Stat({ label, value, note, tone }: { label: string; value: string; note: string; tone: "blue" | "amber" | "green" }) {
+  const tones = {
+    blue: "border-[#2949da]/15 bg-[#2949da]/[0.05] [&_dd]:text-slate-950 [&_.dot]:bg-[#2949da]",
+    amber: "border-amber-200 bg-amber-50 [&_dd]:text-amber-950 [&_.dot]:bg-amber-500",
+    green: "border-emerald-100 bg-emerald-50/60 [&_dd]:text-slate-950 [&_.dot]:bg-emerald-500",
+  } as const;
+  return (
+    <div className={`rounded-2xl border p-4 ${tones[tone]}`}>
+      <dt className="flex items-center gap-2 text-sm font-semibold text-slate-700"><span aria-hidden="true" className="dot h-2 w-2 rounded-full" />{label}</dt>
+      <dd className="mt-2 text-2xl font-extrabold tracking-[-0.03em] tabular-nums">{value}</dd>
+      <dd className="mt-0.5 text-xs !text-slate-600">{note}</dd>
+    </div>
+  );
+}
+
+function Mini({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
     <div>
-      <dt className="text-sm text-crema/75">{label}</dt>
-      <dd className="font-display text-3xl tabular-nums">{value}</dd>
+      <dt className="text-xs font-semibold text-white/70">{label}</dt>
+      <dd className="mt-1 text-2xl font-extrabold tracking-[-0.03em] tabular-nums">{value}</dd>
+      {note ? <dd className="mt-0.5 text-[0.7rem] text-white/60">{note}</dd> : null}
     </div>
   );
 }

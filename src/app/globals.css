@@ -167,9 +167,11 @@
     --color-arcilla-texto: #315da6;
     --color-tinta: #14233b;
     --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-    background: radial-gradient(circle at 18% 8%, #e5f1ff 0, transparent 32rem),
-      radial-gradient(circle at 95% 28%, #f4e9ff 0, transparent 31rem),
-      radial-gradient(circle at 50% 90%, #e9fbf4 0, transparent 33rem), var(--color-crema);
+    /* Mismo lienzo que la landing: claro con una aurora suave fija. */
+    background: radial-gradient(circle at 12% 0%, rgb(199 210 255 / 0.55) 0, transparent 30rem),
+      radial-gradient(circle at 92% 6%, rgb(229 220 255 / 0.6) 0, transparent 28rem),
+      radial-gradient(circle at 70% 100%, rgb(255 225 212 / 0.4) 0, transparent 30rem), #fbfbfd;
+    background-attachment: fixed;
     color: var(--color-tabaco);
     font-family: var(--font-display);
   }
@@ -185,13 +187,13 @@
   .console-shell :is(button:not(:disabled), a[href], summary, label:has(input[type="radio"]), label:has(input[type="checkbox"])) { cursor: pointer; }
   .console-shell button:disabled { cursor: not-allowed; }
   .console-shell :is(input, select, textarea) { font-size: max(1rem, 16px); }
-  .workspace-card { border: 1px solid rgb(255 255 255 / 0.85); border-radius: 1.35rem; background: rgb(255 255 255 / 0.91); box-shadow: 0 14px 45px rgb(38 61 112 / 0.07), 0 1px 4px rgb(38 61 112 / 0.05); backdrop-filter: blur(18px); }
-  .workspace-kicker { color: #244fbd; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
-  .workspace-action { display: inline-flex; min-height: 2.9rem; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.9rem; background: linear-gradient(135deg, #2859df, #6142d8); padding: 0.65rem 1.1rem; color: #fff; font-size: 0.875rem; font-weight: 700; box-shadow: 0 7px 18px rgb(54 75 195 / 0.2); transition: transform 150ms ease, box-shadow 150ms ease; }
-  .workspace-action:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgb(54 75 195 / 0.27); }
+  .workspace-card { border: 1px solid rgb(228 231 236 / 0.9); border-radius: 1.5rem; background: rgb(255 255 255 / 0.86); box-shadow: 0 1px 0 rgb(255 255 255 / 0.9) inset, 0 24px 48px -32px rgb(11 18 32 / 0.28); backdrop-filter: blur(18px); }
+  .workspace-kicker { color: #2949da; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+  .workspace-action { display: inline-flex; min-height: 2.9rem; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 999px; background: #2949da; padding: 0.65rem 1.25rem; color: #fff; font-size: 0.875rem; font-weight: 700; box-shadow: 0 10px 24px -10px rgb(41 73 218 / 0.7); transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease; }
+  .workspace-action:hover { transform: translateY(-1px); background: #1f3bc0; box-shadow: 0 14px 30px -10px rgb(41 73 218 / 0.8); }
   .workspace-action:disabled { cursor: not-allowed; opacity: 0.5; }
-  .workspace-action-secondary { display: inline-flex; min-height: 2.9rem; align-items: center; justify-content: center; gap: 0.5rem; border: 1px solid #cbd9f6; border-radius: 0.9rem; background: rgb(255 255 255 / 0.84); padding: 0.65rem 1.1rem; color: #184698; font-size: 0.875rem; font-weight: 700; transition: background 150ms ease, border-color 150ms ease; }
-  .workspace-action-secondary:hover { background: #edf3ff; border-color: #7695e7; }
+  .workspace-action-secondary { display: inline-flex; min-height: 2.9rem; align-items: center; justify-content: center; gap: 0.5rem; border: 1px solid #dfe3ea; border-radius: 999px; background: rgb(255 255 255 / 0.84); padding: 0.65rem 1.25rem; color: #0b1220; font-size: 0.875rem; font-weight: 700; transition: background 150ms ease, border-color 150ms ease; }
+  .workspace-action-secondary:hover { background: #fff; border-color: #b9c1cf; }
   @media (prefers-reduced-motion: reduce) { .workspace-action { transition: none; } .workspace-action:hover { transform: none; } }
 }
 

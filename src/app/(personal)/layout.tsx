@@ -33,48 +33,57 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
     { label: "Personal", items: [{ href: "/cuenta", label: "Mi cuenta", icon: "account" }] },
   ];
 
-  return <div className="console-shell min-h-dvh lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)]">
-    <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto border-r border-white/80 bg-white/75 px-4 py-6 text-slate-900 shadow-[8px_0_35px_rgba(44,68,125,0.05)] backdrop-blur-xl lg:flex">
-      <Link href="/inicio" className="mb-8 flex items-center gap-3 px-2" aria-label="Loyalty, ir al inicio">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-xl font-black text-white shadow-lg shadow-blue-200">L</span>
-        <span><span className="block text-[0.65rem] font-bold uppercase tracking-[0.17em] text-blue-700">iautomexa</span>
-          <span className="block text-lg font-bold leading-5">Loyalty</span></span>
+  const initial = membership.display_name.slice(0, 1).toUpperCase();
+
+  return <div className="console-shell min-h-dvh lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
+    <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto border-r border-slate-200/70 bg-white/70 px-4 py-5 text-slate-900 backdrop-blur-xl lg:flex">
+      <Link href="/inicio" className="mb-6 flex items-center gap-2.5 px-2" aria-label="Loyalty, ir al inicio">
+        <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-[0.6rem] bg-gradient-to-br from-[#2949da] to-[#7c5cff] text-xl text-white">✳</span>
+        <span className="text-[1.35rem] font-extrabold tracking-[-0.06em]">Loyalty<span className="text-[#ed815d]">.</span></span>
       </Link>
-      <div className="mb-6 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-violet-50 px-4 py-3">
-        <p className="text-[0.68rem] font-semibold uppercase tracking-wider text-blue-700">Tu negocio</p>
-        <p className="mt-1 truncate text-sm font-semibold text-slate-900">{membership.business_name}</p>
-        {memberships.length > 1 ? <Link href="/cuenta" className="mt-2 inline-block text-xs font-bold text-blue-700 hover:underline">Cambiar negocio →</Link> : null}
+      <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-[0_10px_24px_-18px_rgb(11_18_32/.35)]">
+        <p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-[#2949da]">Tu negocio</p>
+        <p className="mt-1 truncate text-sm font-bold text-slate-950">{membership.business_name}</p>
+        {memberships.length > 1 ? <Link href="/cuenta" className="mt-1.5 inline-flex min-h-8 items-center text-xs font-bold text-[#2949da] hover:underline">Cambiar negocio →</Link> : null}
       </div>
       <nav aria-label="Navegación del espacio de trabajo" className="flex-1"><SideNav groups={groups} light /></nav>
-      <div className="mt-8 space-y-3 border-t border-slate-200 pt-5">
-        <div className="px-2"><p className="text-sm font-semibold">{membership.display_name}</p><p className="text-xs text-slate-600">{ROLE_LABELS[role]}</p></div>
-        <SignOutButton className="min-h-10 w-full rounded-xl border border-slate-200 px-3 text-left text-sm font-semibold text-slate-700 hover:bg-blue-50" />
+      <div className="mt-6 border-t border-slate-200 pt-4">
+        <div className="flex items-center gap-3 px-1">
+          <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#2949da] to-[#7c5cff] text-sm font-bold text-white">{initial}</span>
+          <div className="min-w-0"><p className="truncate text-sm font-semibold">{membership.display_name}</p><p className="text-xs text-slate-500">{ROLE_LABELS[role]}</p></div>
+        </div>
+        <SignOutButton className="mt-3 min-h-10 w-full rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50" />
+        <a href="https://iautomexa.com/" className="mt-3 flex min-h-8 items-center justify-center gap-1 text-[0.7rem] font-semibold text-slate-500 hover:text-[#2949da]">Una tecnología de <strong className="text-slate-700">iautomexa</strong> ↗</a>
       </div>
     </aside>
 
     <div className="min-w-0">
-      <header className="sticky top-0 z-30 border-b border-white/80 bg-white/75 shadow-[0_5px_24px_rgba(44,68,125,0.04)] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[80rem] items-center justify-between gap-3 px-4 py-3 sm:px-8">
-          <div className="min-w-0 lg:hidden"><Link href="/inicio" className="flex items-center gap-2 text-sm font-bold text-[#14233b]">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#3972e4] text-white">L</span>
+      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-[#fbfbfd]/80 backdrop-blur-xl">
+        <div className="mx-auto flex min-h-16 max-w-[80rem] items-center justify-between gap-3 px-4 sm:px-8">
+          <div className="min-w-0 lg:hidden"><Link href="/inicio" className="flex items-center gap-2 text-sm font-bold text-slate-950">
+            <span aria-hidden="true" className="grid h-8 w-8 shrink-0 place-items-center rounded-[0.6rem] bg-gradient-to-br from-[#2949da] to-[#7c5cff] text-lg text-white">✳</span>
             <span className="truncate">{membership.business_name}</span></Link></div>
-          <div className="hidden lg:block"><p className="text-[0.68rem] font-bold uppercase tracking-widest text-[#6380ad]">Espacio de trabajo</p>
-            <p className="text-sm font-semibold text-[#14233b]">{membership.business_name}</p></div>
-          <div className="flex min-w-0 items-center gap-3"><div className="hidden text-right sm:block"><p className="text-[0.68rem] font-bold uppercase tracking-wider text-slate-500">Sucursal activa</p></div>
+          <div className="hidden min-w-0 lg:block"><p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-slate-500">Espacio de trabajo</p>
+            <p className="truncate text-sm font-semibold text-slate-950">{membership.business_name}</p></div>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="hidden text-[0.66rem] font-bold uppercase tracking-[0.14em] text-slate-500 sm:block">Sucursal</span>
             <BranchSwitcher branches={membership.branches} activeId={activeBranch?.id ?? null} />
-            <Link href="/cuenta" aria-label="Mi cuenta" className="hidden h-9 w-9 place-items-center rounded-full border border-[#dce5f1] bg-[#edf2fb] text-sm font-bold text-[#315ca4] sm:grid">{membership.display_name.slice(0, 1).toUpperCase()}</Link>
+            <Link href="/cuenta" aria-label="Mi cuenta" className="hidden h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-[#2949da] to-[#7c5cff] text-sm font-bold text-white shadow-[0_6px_16px_-8px_rgb(41_73_218/.8)] sm:grid">{initial}</Link>
           </div>
         </div>
       </header>
 
-      {membership.mfa_pending && <p className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-950">
+      {membership.mfa_pending && <p className="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-950">
         Para administrar el negocio, <Link href="/cuenta/verificacion" className="font-bold underline underline-offset-2">confirma tu identidad</Link>. Caja y fidelidad siguen disponibles.
       </p>}
-      {membership.is_demo && <p className="border-b border-blue-100 bg-blue-50 px-4 py-2 text-center text-xs font-semibold text-blue-950">
-        Entorno de demostración · las empresas, productos y cifras de ejemplo son ficticios
-      </p>}
+      {membership.is_demo && <div className="flex justify-center px-4 pt-4">
+        <p className="inline-flex items-center gap-2 rounded-full border border-[#2949da]/15 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-[0_6px_16px_-12px_rgb(41_73_218/.6)]">
+          <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[#7c5cff]" />
+          Entorno de demostración · las empresas, productos y cifras de ejemplo son ficticios
+        </p>
+      </div>}
 
-      <main id="contenido" className="mx-auto max-w-[80rem] px-4 pb-28 pt-7 sm:px-8 lg:pb-14 lg:pt-9">{children}</main>
+      <main id="contenido" className="mx-auto max-w-[80rem] px-4 pb-28 pt-6 sm:px-8 lg:pb-14 lg:pt-8">{children}</main>
     </div>
     <BottomNav groups={groups} quick={[home, cash, loyalty]} />
   </div>;
